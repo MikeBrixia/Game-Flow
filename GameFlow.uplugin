@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "GameFlow",
+	"Description": "Game flow is a graph editor which can be used as a base to build your own custom graph editor.",
+	"Category": "Other",
+	"CreatedBy": "Michael Guida",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GameFlow",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "GameFlowEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
