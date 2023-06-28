@@ -2,6 +2,7 @@
 #include "Flow.h"
 #include "GameFlowEditor.h"
 #include "Asset/GameFlowAssetToolkit.h"
+#include "Utils/GameFlowEditorSubsystem.h"
 
 FGameFlowAssetTypeAction::FGameFlowAssetTypeAction()
 {
@@ -30,5 +31,15 @@ FColor FGameFlowAssetTypeAction::GetTypeColor() const
 void FGameFlowAssetTypeAction::OpenAssetEditor(const TArray<UObject*>& InObjects,
 	TSharedPtr<IToolkitHost> EditWithinLevelEditor)
 {
-	MakeShared<GameFlowAssetToolkit>()->InitializeEditor(InObjects);
+	// Create and initialize game flow asset editor.
+	const TSharedPtr<GameFlowAssetToolkit> Editor = MakeShared<GameFlowAssetToolkit>();
+	Editor->InitEditor(InObjects);
+	
+	// Is the global engine pointer valid?
+	if(GEditor)
+	{
+		// If true, then register the new asset editor as an active editor inside game flow editor subsystem.
+		UGameFlowEditorSubsystem* GameFlowSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
+		GameFlowSubsystem->RegisterActiveEditor(Editor.Get());
+	}
 }

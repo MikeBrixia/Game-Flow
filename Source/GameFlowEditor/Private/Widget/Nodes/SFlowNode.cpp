@@ -1,10 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SFlowNode.h"
-#include "BlueprintConnectionDrawingPolicy.h"
-#include "NodeFactory.h"
 #include "SlateOptMacros.h"
-#include "Asset/Graph/GameFlowGraphSchema.h"
 #include "KismetPins/SGraphPinExec.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -16,16 +13,6 @@ void SFlowNode::Construct(const FArguments& InArgs)
 	this->BodyBackgroundColorBrush = InArgs._BodyBackgroundColor;
 	
 	UpdateGraphNode();
-    
-	// Initialize output pin info.
-	FEdGraphPinType OutputPinInfo = {};
-	OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
-	// Create logical pin.
-	UEdGraphPin* PinOut = GraphNode->CreatePin(EGPD_Output, OutputPinInfo, FName(""));
-	GraphNode->GetGraph()->Schema = UGameFlowGraphSchema::StaticClass();
-	// Use the logical pin to create a widget which represents it. This method will alone take care
-	// of adding the pin widget to the node.
-	CreateStandardPinWidget(PinOut);
 }
 
 TSharedRef<SWidget> SFlowNode::CreateNodeWidget()
@@ -131,12 +118,13 @@ void SFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
 	// Create the node pin widget. by default GameFlow will create an
 	// exec pin for the node.
-	const TSharedPtr<SGraphPin> PinWidget = SNew(SGraphPinExec, Pin);
+	const TSharedRef<SGraphPin> PinWidget = SNew(SGraphPinExec, Pin);
 	// Make the pin image white.
 	SImage* PinImage = static_cast<SImage*>(PinWidget->GetPinImageWidget().Get());
 	PinImage->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+	checkf(RightNodeBox, TEXT("Right node box is not valid!"));
 	// Add the pin to this node.
-	this->AddPin(PinWidget.ToSharedRef());
+	this->AddPin(PinWidget);
 }
 
 void SFlowNode::UpdateGraphNode()
@@ -144,14 +132,17 @@ void SFlowNode::UpdateGraphNode()
 	// Reset input pins.
 	InputPins.Empty();
 	OutputPins.Empty();
-
-	// Reset left and right content boxes.
-	RightNodeBox.Reset();
-	LeftNodeBox.Reset();
-
+	
 	// Create node widget and add it to slate.
 	const TSharedRef<SWidget> NodeWidget = CreateNodeWidget();
 	GetOrAddSlot(ENodeZone::Center)[ NodeWidget ];
+
+	// Create widgets for all node pins.
+	// pins widgets MUST be created after the actual node widget.
+	for(UEdGraphPin* Pin : GraphNode->Pins)
+	{
+		CreateStandardPinWidget(Pin);
+	}
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

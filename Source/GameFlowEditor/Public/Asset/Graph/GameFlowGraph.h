@@ -17,4 +17,7 @@ class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
 public:
 	
 	UGameFlowGraph();
+
+	/** Initialize the game flow graph. */
+	virtual void InitGraph();
 };

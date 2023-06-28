@@ -28,4 +28,6 @@ public:
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT("Connect"));
 	}
+
+	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
 };
