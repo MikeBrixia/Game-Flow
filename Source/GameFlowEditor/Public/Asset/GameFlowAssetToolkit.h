@@ -3,8 +3,9 @@
 #include "Toolkits/AssetEditorToolkit.h"
 
 /** The editor of a Game Flow asset. */
-class GameFlowAssetToolkit final: public FAssetEditorToolkit
+class GameFlowAssetToolkit : public FAssetEditorToolkit
 {
+	
 public:
 
 	GameFlowAssetToolkit();
@@ -27,16 +28,23 @@ protected:
 	
 	/** Configure asset editor inputs. All menu and toolbar
 	 * actions will be registered inside this method. */
-	void ConfigureInputs();
+	virtual void ConfigureInputs();
 
 	/** Create Game Flow asset editor menu. */
-	void CreateAssetMenu();
+	virtual void CreateAssetMenu();
 
 	/** Create Game Flow asset editor toolbar. */
-	void CreateAssetToolbar();
+	virtual void CreateAssetToolbar();
+
+	/** Called when the user wants to compile the editor asset.*/
+	virtual void OnCompile();
 	
-private:
-	
+	/** Is the editor asset currently able to be compiled? */
+	FORCEINLINE virtual bool CanCompile()
+	{
+		return true;
+	}
+
 	/* The actual asset from which we're going to create the editor. */
 	TObjectPtr<UObject> Asset;
 
@@ -46,8 +54,8 @@ private:
 	/** The list of command inputs the user can execute. */
 	TSharedPtr<FUICommandList> CommandList;
 	
-	/** Create all the Game Flow editor tabs. */
-	TSharedRef<FTabManager::FLayout> CreateEditorTabs();
+private:
+	
 	/** Get the appearance of the Game Flow graph. */
 	FGraphAppearanceInfo GetGraphAppearance();
 };
