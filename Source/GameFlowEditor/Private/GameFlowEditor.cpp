@@ -2,6 +2,7 @@
 #include "GameFlowEditor.h"
 
 #include "EdGraphUtilities.h"
+#include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
@@ -26,11 +27,14 @@ void FGameFlowEditorModule::StartupModule()
 		GameFlowAsset = MakeShared<FGameFlowAssetTypeAction>();
 		AssetToolModule.Get().RegisterAssetTypeActions(GameFlowAsset.ToSharedRef());
 
-		// Register game flow node stylesheet.
+		// Register game flow stylesheets.
 		const FFlowNodeStyle& GameFlowNodeStyle = FFlowNodeStyle::GetDefault();
 		FSlateStyleRegistry::RegisterSlateStyle(GameFlowNodeStyle.GetStyle());
-
-		// Register Game Flow graph visual factories.
+        const FGameFlowEditorStyle& AssetEditorStyle = FGameFlowEditorStyle::GetDefault();
+		FSlateStyleRegistry::RegisterSlateStyle(AssetEditorStyle.GetStyle());
+		
+		// Register Game Flow graph visual factories. these factories will be used as the default
+		// strategy to instantiate all the involved items.
 		FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FGraphPanelPinConnectionFactory));
 	}
 }

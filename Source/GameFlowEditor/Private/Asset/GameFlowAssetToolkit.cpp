@@ -1,40 +1,98 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
 #include "GraphEditorActions.h"
+#include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Kismet2/DebuggerCommands.h"
 #include "Utils/GameFlowFactory.h"
 
 GameFlowAssetToolkit::GameFlowAssetToolkit()
 {
 	this->CommandList = MakeShared<FUICommandList>();
+	
 }
 
 void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 {
 	// The asset being edited.
 	Asset = InObjects[0];
-	
+    
 	// Create the graph.
 	Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
-
+	
 	// Create editor tabs.
 	const TSharedRef<FTabManager::FLayout> Layout = CreateEditorTabs();
+	
+	// Initialize Asset editor with the new layout.
+	InitAssetEditor(EToolkitMode::Standalone, {}, "GameFlowAssetEditor",
+				   Layout, true, true, InObjects);
 
 	// Configure all the editor inputs.
 	ConfigureInputs();
-	
-	// Initialize Asset editor with the new layout.
-	InitAssetEditor(EToolkitMode::Standalone, nullptr, "GameFlowAssetEditor",
-				   Layout, true, true, InObjects);
+
+	// Create asset menu for this editor.
+	CreateAssetMenu();
+
+	// Create asset toolbar for this editor.
+	CreateAssetToolbar();
+
 }
 
 void GameFlowAssetToolkit::ConfigureInputs()
 {
+	// Engine's Play commands.
+	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+}
+
+void GameFlowAssetToolkit::CreateAssetMenu()
+{
+	// Register editor commands.
 	FGraphEditorCommands::Register();
-	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
+	FGameFlowEditorCommands::Register();
 	
-	//CommandList->MapAction(GraphEditorCommands.SummonCreateNodeMenu,
-	//	                   FExecuteAction::CreateSP(this, &)
+	// Get all Game Flow editor commands.
+	const FGameFlowEditorCommands GameFlowCommands = FGameFlowEditorCommands::Get();
+	
+	// Get 'Asset' tool menu of this editor.
+	FName MenuName = FName(GetToolMenuName().ToString() + ".Asset");
+	UToolMenu* AssetMenu = UToolMenus::Get()->ExtendMenu(MenuName);
+	// Have we found the tool menu?
+	if(AssetMenu != nullptr)
+	{
+		// If true, Create a new Game Flow section inside the Asset tool menu.
+		FToolMenuSection& Section = AssetMenu->FindOrAddSection("AssetFlow");
+		Section.Label = INVTEXT("Game Flow");
+		// Add compile command to Asset tool menu, inside 'Game Flow' section.
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileAsset, CommandList);
+	}
+}
+
+void GameFlowAssetToolkit::CreateAssetToolbar()
+{
+	// Register editor commands.
+	//FPlayWorldCommands::Register();
+	FGraphEditorCommands::Register();
+	FGameFlowEditorCommands::Register();
+	
+	// Get all Game Flow editor commands.
+	const FGameFlowEditorCommands GameFlowCommands = FGameFlowEditorCommands::Get();
+	
+	// Try finding Game Flow asset toolbar.
+	FName MenuName = FName(GetToolMenuToolbarName());
+	UToolMenu* AssetToolbar = UToolMenus::Get()->ExtendMenu(MenuName);
+	
+	// Have we found the asset toolbar?
+	if(AssetToolbar != nullptr)
+	{
+		// If true, Create a new Game Flow section inside the Asset tool menu.
+		FToolMenuSection& GameFlowSection = AssetToolbar->FindOrAddSection("Game_flow");
+		GameFlowSection.AddEntry(FToolMenuEntry::InitToolBarButton(GameFlowCommands.CompileAsset));
+
+		// Create toolbar play section(Play section is the part of the toolbar of Unreal which
+		// contains actions to start the editor game application).
+		FToolMenuSection& PlaySection = AssetToolbar->FindOrAddSection("Play");
+		FPlayWorldCommands::BuildToolbar(PlaySection);
+	}
 }
 
 TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorTabs()
@@ -60,7 +118,7 @@ TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorTabs()
 	NodesTab->SetSizeCoefficient(0.2f);
 	NodesTab->AddTab("NodesTab", ETabState::OpenedTab);
 
-	// Split Graph and details tab.
+	// Split Graph and details tab in two parts.
 	Splitter->Split(GraphTab);
 	Splitter->Split(NodesTab);
 	PrimaryArea->Split(Splitter);
@@ -71,7 +129,7 @@ TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorTabs()
 	return Layout;
 }
 
-FGraphAppearanceInfo GameFlowAssetToolkit::GetGraphApperance()
+FGraphAppearanceInfo GameFlowAssetToolkit::GetGraphAppearance()
 {
 	FGraphAppearanceInfo GraphAppearanceInfo;
 	GraphAppearanceInfo.CornerText = NSLOCTEXT("GameFlow","GameFlowGraph","Game Flow Editor");
@@ -109,7 +167,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		[
 			SNew(SGraphEditor)
 			.GraphToEdit(Graph)
-			.Appearance(GetGraphApperance())
+			.Appearance(GetGraphAppearance())
 			.ShowGraphStateOverlay(true)
 		];
 		return Tab;
@@ -124,6 +182,11 @@ void GameFlowAssetToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
 	InTabManager->UnregisterTabSpawner("GraphTab");
 	InTabManager->UnregisterTabSpawner("NodesTab");
+
+	// Unregister editor menu and toolbar.
+	UToolMenus::UnRegisterStartupCallback(this);
+	UToolMenus::UnregisterOwner(this);
+	FGameFlowEditorCommands::Unregister();
 }
 
 

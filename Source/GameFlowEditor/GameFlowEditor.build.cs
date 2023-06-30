@@ -26,7 +26,7 @@ public class GameFlowEditor : ModuleRules
 			new string[]
 			{
 				"Core", "GameFlow", "UnrealEd", "AssetTools", "AssetRegistry", "UMGEditor",
-				"UMG", "GraphEditor", "BlueprintGraph", "Projects", "EditorSubsystem"
+				"UMG", "GraphEditor", "BlueprintGraph", "Projects", "EditorSubsystem", "ToolMenus"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -38,7 +38,7 @@ public class GameFlowEditor : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore"
+				"SlateCore", 
 				// .. add private dependencies that you statically link with here ...	
 			}
 		);

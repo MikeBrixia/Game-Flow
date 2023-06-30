@@ -3,7 +3,7 @@
 #include "Toolkits/AssetEditorToolkit.h"
 
 /** The editor of a Game Flow asset. */
-class GameFlowAssetToolkit : public FAssetEditorToolkit
+class GameFlowAssetToolkit final: public FAssetEditorToolkit
 {
 public:
 
@@ -11,9 +11,9 @@ public:
 
 	/** Initialize game flow asset editor. */
 	void InitEditor(const TArray<UObject*>& InObjects);
-	/** Register editor the tab widget and create the contained widgets. */
+	/** Register editor tab widget and create the contained widgets. */
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
-	/** Unregister editor the tab widget and all the contained UI elements. */
+	/** Unregister editor tab widget and all the contained UI elements. */
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
     
 	/** Get the asset inspected by this editor. */
@@ -23,6 +23,18 @@ public:
 	FORCEINLINE virtual FString GetWorldCentricTabPrefix() const override { return "Game Flow Asset"; }
 	FORCEINLINE virtual FLinearColor GetWorldCentricTabColorScale() const override { return FLinearColor::Yellow; }
 
+protected:
+	
+	/** Configure asset editor inputs. All menu and toolbar
+	 * actions will be registered inside this method. */
+	void ConfigureInputs();
+
+	/** Create Game Flow asset editor menu. */
+	void CreateAssetMenu();
+
+	/** Create Game Flow asset editor toolbar. */
+	void CreateAssetToolbar();
+	
 private:
 	
 	/* The actual asset from which we're going to create the editor. */
@@ -34,10 +46,9 @@ private:
 	/** The list of command inputs the user can execute. */
 	TSharedPtr<FUICommandList> CommandList;
 	
-	/** Configure asset editor inputs. */
-	void ConfigureInputs();
 	/** Create all the Game Flow editor tabs. */
 	TSharedRef<FTabManager::FLayout> CreateEditorTabs();
 	/** Get the appearance of the Game Flow graph. */
-	FGraphAppearanceInfo GetGraphApperance();
+	FGraphAppearanceInfo GetGraphAppearance();
 };
+
