@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Utils/GameFlowFactory.h"
-#include "Flow.h"
+#include "GameFlowAsset.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
 UGameFlowFactory::UGameFlowFactory()
 {
-	SupportedClass = UFlow::StaticClass();
+	SupportedClass = UGameFlowAsset::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = false;
 }
@@ -14,7 +14,7 @@ UGameFlowFactory::UGameFlowFactory()
 UObject* UGameFlowFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags,
 										   UObject* Context, FFeedbackContext* Warn)
 {
-	return NewObject<UFlow>(InParent, InClass, InName, Flags, Context);
+	return NewObject<UGameFlowAsset>(InParent, InClass, InName, Flags, Context);
 }
 
 UEdGraph* UGameFlowFactory::CreateGraph(UObject* Asset, const TSubclassOf<UGameFlowGraph> GraphClass, const TSubclassOf<UEdGraphSchema> SchemaClass)
@@ -25,8 +25,9 @@ UEdGraph* UGameFlowFactory::CreateGraph(UObject* Asset, const TSubclassOf<UGameF
 	
 	// Create and initialize the Game Flow graph.
 	UGameFlowGraph* Graph = Cast<UGameFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(Asset, "Flow Graph", GraphClass, SchemaClass));
+	Graph->GameFlowAsset = CastChecked<UGameFlowAsset>(Asset);
 	Graph->InitGraph();
-
+	
 	return Graph;
 }
 
@@ -43,46 +44,10 @@ TGraphType* UGameFlowFactory::CreateGraph(UObject* Asset)
 
 	// Create and initialize the Game Flow graph.
 	UGameFlowGraph* Graph = Cast<UGameFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(Asset, "Flow Graph", GraphClass, SchemaClass));
+	Graph->GameFlowAsset = CastChecked<UGameFlowAsset>(Asset);
 	Graph->InitGraph();
-
-	return Graph;
-}
-
-template <typename TNodeClass>
-TNodeClass* UGameFlowFactory::CreateNode(UEdGraph* Graph)
-{
-	const UClass* NodeClass = TNodeClass::StaticClass();
 	
-	// Make sure both node class and parent graph are valid.
-	checkf(NodeClass->IsChildOf(UGameFlowGraphNode::StaticClass()), TEXT("Invalid node class! Node must be child of UGameFlowGraphNode."));
-	checkf(Graph, TEXT("Invalid parent graph! Nodes must be created inside a valid graph(not nullptr)."));
-
-	// Create the node
-	FGraphNodeCreator<UGameFlowGraphNode> Factory {*Graph};
-	TNodeClass* Node = Factory.CreateNode(false);
-	Factory.Finalize();
-
-	// Initialize the node.
-	Node->InitNode();
-
-	return Node;
-}
-
-UEdGraphNode* UGameFlowFactory::CreateNode(TSubclassOf<UGameFlowGraphNode> NodeClass, UEdGraph* Graph)
-{
-	// Make sure both node class and parent graph are valid.
-	checkf(NodeClass, TEXT("Cannot create a node of type nullptr."));
-    checkf(Graph, TEXT("Invalid parent graph! Nodes must be created inside a valid graph(not nullptr)."));
-
-	// Create the node
-	FGraphNodeCreator<UGameFlowGraphNode> Factory {*Graph};
-	UGameFlowGraphNode* Node = Factory.CreateNode(false);
-	Factory.Finalize();
-
-	// Initialize the node.
-	Node->InitNode();
-
-	return Node;
+	return Graph;
 }
 
 

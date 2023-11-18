@@ -1,5 +1,6 @@
 ﻿#include "Asset/GameFlowAssetTypeAction.h"
-#include "Flow.h"
+
+#include "GameFlowAsset.h"
 #include "GameFlowEditor.h"
 #include "Asset/GameFlowAssetToolkit.h"
 #include "Utils/GameFlowEditorSubsystem.h"
@@ -20,7 +21,7 @@ FText FGameFlowAssetTypeAction::GetName() const
 
 UClass* FGameFlowAssetTypeAction::GetSupportedClass() const
 {
-	return UFlow::StaticClass();
+	return UGameFlowAsset::StaticClass();
 }
 
 FColor FGameFlowAssetTypeAction::GetTypeColor() const

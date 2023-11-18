@@ -1,4 +1,6 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
+
+#include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
@@ -20,7 +22,7 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 {
 	// The asset being edited.
 	Asset = InObjects[0];
-    
+	
 	// Create the graph.
 	Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
 	
@@ -54,7 +56,6 @@ void GameFlowAssetToolkit::ConfigureInputs()
 	ToolkitCommands->MapAction(GameFlowCommands.CompileAsset,
 		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::OnCompile),
 		                       FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile));
-	
 }
 
 void GameFlowAssetToolkit::CreateAssetMenu()
@@ -101,7 +102,10 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 
 void GameFlowAssetToolkit::OnCompile()
 {
-	
+	UGameFlowGraph* GameFlowGraph = Cast<UGameFlowGraph>(Graph);
+	checkf(GameFlowGraph, TEXT("Asset could not be compiled! Graph is nullptr"));
+	// Begins asset compilation.
+	GameFlowGraph->CompileGraph(Asset);
 }
 
 FGraphAppearanceInfo GameFlowAssetToolkit::GetGraphAppearance()

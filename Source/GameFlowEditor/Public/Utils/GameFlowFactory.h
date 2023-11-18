@@ -41,21 +41,6 @@ public:
 	 */
 	template<typename TGraphType, typename TGraphSchemaType>
 	static TGraphType* CreateGraph(UObject* Asset);
-
-	/** Create a brand new Game Flow node
-	 * @param NodeClass The class of the node to create.
-	 * @param Graph The graph to which the node is going to belong.
-	 * @return A pointer to the created graph node.
-	 */
-	static UEdGraphNode* CreateNode(TSubclassOf<UGameFlowGraphNode> NodeClass, UEdGraph* Graph);
-
-	/** Create a brand new Game Flow node
-	 * @tparam TNodeClass The class of the node to create.
-	 * @param Graph The graph to which the node is going to belong.
-	 * @return A pointer to the created graph node.
-	 */
-	template<typename TNodeClass>
-	static TNodeClass* CreateNode(UEdGraph* Graph);
 };
 
 

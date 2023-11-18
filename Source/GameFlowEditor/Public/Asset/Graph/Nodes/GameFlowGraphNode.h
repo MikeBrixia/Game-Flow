@@ -3,21 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Nodes/GameFlowNode.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
 /**
- * A node used inside the Game Flow graph.
+ * A node used inside Game Flow graphs.
  */
-UCLASS()
+UCLASS(NotBlueprintable, NotBlueprintType)
 class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 {
-	// Allow game flow factory to access any member of this class.
-	// Game Flow Factory should be the only class to have access
-	// to initialization methods.
-	friend class UGameFlowFactory;
+	friend class UGameFlowNodeFactory;
 	
 	GENERATED_BODY()
+
+private:
+
+	/* The game flow node asset encapsulated inside this graph node.*/
+	TObjectPtr<UGameFlowNode> NodeAsset;
 	
 public:
 
@@ -25,11 +28,18 @@ public:
 	
 	/** Create the default pins for this node. */
 	virtual void AllocateDefaultPins() override;
+	
 	/** Create the visual widget for this node. */
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
+	
+	/** Get the asset contained inside this graph node. */
+	FORCEINLINE UGameFlowNode* GetNodeAsset() const
+	{
+		return NodeAsset;
+	}
 
 protected:
-
+	
 	/** Initialize this node properties. */
 	virtual void InitNode();
 };

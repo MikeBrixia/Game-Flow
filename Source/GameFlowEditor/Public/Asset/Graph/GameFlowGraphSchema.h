@@ -23,11 +23,14 @@ public:
 	                                                                const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
 	                                                                UEdGraph* InGraphObj) const override;
 	
-	
-	FORCEINLINE virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override
-	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT("Connect"));
-	}
 
+	/** Can we create a connection between these two pins? */
+	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
+	
+	/** Create the default nodes which will be already placed in the graph after
+	 *  it's creation.
+	 */
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
+
+	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
 };
