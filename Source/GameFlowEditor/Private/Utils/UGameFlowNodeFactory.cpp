@@ -1,6 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Utils/UGameFlowNodeFactory.h"
 
 UObject* UGameFlowNodeFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags,
@@ -17,11 +16,15 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(UGameFlowNode* NodeAss
 	// Create the node
 	FGraphNodeCreator<UGameFlowGraphNode> Factory {*Graph};
 	UGameFlowGraphNode* Node = Factory.CreateNode(false);
-	Factory.Finalize();
-	
+
 	// Initialize the node.
 	Node->NodeAsset = NodeAsset;
+	Node->NodePosX = NodeAsset->GraphPosition.X;
+	Node->NodePosY = NodeAsset->GraphPosition.Y;
 	Node->InitNode();
+
+	// Call this to end node construction.
+	Factory.Finalize();
 	
 	return Node;
 }
@@ -32,7 +35,7 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(const TSubclassOf<UGam
 	const FName NodeInstanceName = FName(ParentAsset->GetName() + "_GameFlowNode");
 	// Create a brand new instance of node of supplied class.
 	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(ParentAsset, NodeClass, NodeInstanceName);
-    ParentAsset->Nodes.Add(NewNode);
+    ParentAsset->Nodes.Add(NewNode->GetUniqueID(), NewNode);
 	
 	// Create and return the graph node.
 	return CreateGraphNode(NewNode, Graph);

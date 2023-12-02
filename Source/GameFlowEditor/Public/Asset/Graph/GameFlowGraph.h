@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFlowAsset.h"
+#include "Nodes/GameFlowGraphNode.h"
 #include "UObject/Object.h"
 #include "GameFlowGraph.generated.h"
 
@@ -16,12 +17,15 @@ UCLASS()
 class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
 {
 	GENERATED_BODY()
-	
+
 public:
 
 	/* Asset currently edited by this graph. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowAsset> GameFlowAsset;
+
+	UPROPERTY()
+	TArray<UGameFlowGraphNode*> RootNodes;
 	
 	UGameFlowGraph();
 
@@ -33,6 +37,19 @@ public:
 	 * @return True if asset was compiled successfully, false
 	 *         otherwise.
 	 */
-	virtual bool CompileGraph(UObject* Asset);
+	void CompileGraph(UGameFlowAsset* Asset);
+
+	/**
+	 * @brief Starting from a input node, compile all it's connections onto a tree.
+	 * @param InputNode The node from which the compilation will start.
+	 */
+	void CompileInputNode(UGameFlowGraphNode* InputNode);
+
+	/**
+	 * @brief Rebuild graph using GameFlow asset data.
+	 */
+	void RebuildGraphFromAsset();
 	
+	virtual void NotifyGraphChanged() override;
 };
+

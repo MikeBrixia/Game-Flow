@@ -7,23 +7,33 @@ UGameFlowNode::UGameFlowNode()
 {
 }
 
-void UGameFlowNode::Execute_Implementation()
+void UGameFlowNode::Execute_Implementation(const FName& PinName)
 {
 }
 
-void UGameFlowNode::FinishExecute(const FName OutputPin, bool Finish)
+void UGameFlowNode::AddOutput(const FName& PinName, UGameFlowNode* Output)
+{
+	UE_LOG(LogTemp, Warning, TEXT("The node of type: %s cannot have any output nodes, skipping instruction."), *StaticClass()->GetName());
+}
+
+void UGameFlowNode::RemoveOutput(const FName& PinName)
+{
+	UE_LOG(LogTemp, Warning, TEXT("The node of type: %s cannot have any output nodes, skipping instruction."), *StaticClass()->GetName());
+}
+
+void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
 {
 	// Find and mark as active the next node.
-	UGameFlowNode* NextNode = Outputs.FindChecked(OutputPin);
+	UGameFlowNode* NextNode = GetNextNode(OutputPin);
 	UGameFlowAsset* OwnerAsset = Cast<UGameFlowAsset>(GetOuter());
 	
 	// If node has finished executing, remove it from asset active nodes.
-	if(Finish && OwnerAsset != nullptr)
+	if(bFinish && OwnerAsset != nullptr)
 	{
 		OwnerAsset->RemoveActiveNode(this);
 	}
 	
 	// Execute the next node.
 	OwnerAsset->AddActiveNode(NextNode);
-	NextNode->Execute();
+	NextNode->Execute(OutputPin);
 }

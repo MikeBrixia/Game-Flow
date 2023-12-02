@@ -2,8 +2,10 @@
 #include "GameFlowEditor.h"
 
 #include "EdGraphUtilities.h"
+#include "ISettingsModule.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
+#include "Config/GameFlowEditorSettings.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
 
@@ -12,12 +14,12 @@ DEFINE_LOG_CATEGORY(LogGameFlow)
 
 EAssetTypeCategories::Type FGameFlowEditorModule::GameFlowCategory = EAssetTypeCategories::None;
 
+// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 void FGameFlowEditorModule::StartupModule()
 {
 	// Initialize asset tools modules
 	const FAssetToolsModule& AssetToolModule = FAssetToolsModule::GetModule();
 	
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
 		// Register game flow as a standalone category inside the asset panel.
@@ -37,13 +39,20 @@ void FGameFlowEditorModule::StartupModule()
 		// strategy to instantiate all the involved items.
 		FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FGraphPanelPinConnectionFactory));
 	}
+
+	// Add GameFlow to project settings.
+	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		SettingsModule->RegisterSettings("Project", "Plugins", "Game Flow",
+			LOCTEXT("RuntimeSettingsName", "Game Flow"), LOCTEXT("RuntimeSettingsDescription", "Configure Game Flow editor properties"),
+			GetMutableDefault<UGameFlowEditorSettings>());
+	}
 }
 
+// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
+// we call this function before unloading the module.
 void FGameFlowEditorModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
-	
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
 		FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(GameFlowAsset.ToSharedRef());
@@ -51,6 +60,12 @@ void FGameFlowEditorModule::ShutdownModule()
 		// Unregister game flow node stylesheet.
 		const FFlowNodeStyle& GameFlowNodeStyle = FFlowNodeStyle::GetDefault();
 		FSlateStyleRegistry::UnRegisterSlateStyle(GameFlowNodeStyle.GetStyle());
+	}
+
+	// Remove GameFlow from project settings.
+	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		SettingsModule->UnregisterSettings("Project", "Plugins", "Game Flow");
 	}
 }
 

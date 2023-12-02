@@ -1,6 +1,4 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
-
-#include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
@@ -8,6 +6,7 @@
 #include "Kismet2/DebuggerCommands.h"
 #include "Utils/GameFlowEditorUtils.h"
 #include "Utils/GameFlowFactory.h"
+#include "Widget/SGameFlowGraph.h"
 
 GameFlowAssetToolkit::GameFlowAssetToolkit()
 {
@@ -21,7 +20,7 @@ GameFlowAssetToolkit::GameFlowAssetToolkit()
 void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 {
 	// The asset being edited.
-	Asset = InObjects[0];
+	Asset = CastChecked<UGameFlowAsset>(InObjects[0]);
 	
 	// Create the graph.
 	Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
@@ -41,7 +40,6 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 
 	// Create asset toolbar for this editor.
 	CreateAssetToolbar();
-	
 }
 
 void GameFlowAssetToolkit::ConfigureInputs()
@@ -102,19 +100,9 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 
 void GameFlowAssetToolkit::OnCompile()
 {
-	UGameFlowGraph* GameFlowGraph = Cast<UGameFlowGraph>(Graph);
-	checkf(GameFlowGraph, TEXT("Asset could not be compiled! Graph is nullptr"));
+	checkf(Graph, TEXT("Asset could not be compiled! Graph is nullptr"));
 	// Begins asset compilation.
-	GameFlowGraph->CompileGraph(Asset);
-}
-
-FGraphAppearanceInfo GameFlowAssetToolkit::GetGraphAppearance()
-{
-	FGraphAppearanceInfo GraphAppearanceInfo;
-	GraphAppearanceInfo.CornerText = NSLOCTEXT("GameFlow","GameFlowGraph","Game Flow Editor");
-	GraphAppearanceInfo.InstructionText = NSLOCTEXT("GameFlow", "GameFlowGraphInstruction", 
-                                                    "Create a Start node to use it as an entry point for your logic!");
-	return GraphAppearanceInfo;
+	Graph->CompileGraph(Asset);
 }
 
 void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -144,10 +132,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
 		[
-			SNew(SGraphEditor)
-			.GraphToEdit(Graph)
-			.Appearance(GetGraphAppearance())
-			.ShowGraphStateOverlay(true)
+			SNew(SGameFlowGraph, SharedThis(this))
 		];
 		return Tab;
 	}));
@@ -166,6 +151,18 @@ void GameFlowAssetToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	UToolMenus::UnRegisterStartupCallback(this);
 	UToolMenus::UnregisterOwner(this);
 	FGameFlowEditorCommands::Unregister();
+}
+
+void GameFlowAssetToolkit::SaveAsset_Execute()
+{
+	FAssetEditorToolkit::SaveAsset_Execute();
+	for(const auto Node : Graph->Nodes)
+	{
+		const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
+		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+		NodeAsset->GraphPosition.X = GraphNode->NodePosX;
+		NodeAsset->GraphPosition.Y = GraphNode->NodePosY;
+	}
 }
 
 

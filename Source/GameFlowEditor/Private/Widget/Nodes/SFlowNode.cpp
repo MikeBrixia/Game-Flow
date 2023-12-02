@@ -1,6 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SFlowNode.h"
+
+#include "GameFlowEditor.h"
 #include "SlateOptMacros.h"
 #include "KismetPins/SGraphPinExec.h"
 
@@ -136,7 +138,7 @@ void SFlowNode::UpdateGraphNode()
 	// Create node widget and add it to slate.
 	const TSharedRef<SWidget> NodeWidget = CreateNodeWidget();
 	GetOrAddSlot(ENodeZone::Center)[ NodeWidget ];
-
+	
 	// Create widgets for all node pins.
 	// pins widgets MUST be created after the actual node widget.
 	for(UEdGraphPin* Pin : GraphNode->Pins)

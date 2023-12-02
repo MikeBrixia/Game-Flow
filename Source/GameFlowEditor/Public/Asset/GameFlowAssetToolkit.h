@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "GameFlowAsset.h"
+#include "Graph/GameFlowGraph.h"
 #include "Toolkits/AssetEditorToolkit.h"
 
 /** The editor of a Game Flow asset. */
@@ -10,20 +12,24 @@ public:
 
 	GameFlowAssetToolkit();
 
-	/** Initialize game flow asset editor. */
+	/* Initialize game flow asset editor. */
 	void InitEditor(const TArray<UObject*>& InObjects);
-	/** Register editor tab widget and create the contained widgets. */
+	
+	/* Register editor tab widget and create the contained widgets. */
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
-	/** Unregister editor tab widget and all the contained UI elements. */
+	
+	/* Unregister editor tab widget and all the contained UI elements. */
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
-    
-	/** Get the asset inspected by this editor. */
-	FORCEINLINE UObject* GetAsset() const{ return Asset; }
+	
+	virtual void SaveAsset_Execute() override;
+	
+	FORCEINLINE UObject* GetAsset() const { return Asset; }
 	FORCEINLINE virtual FText GetBaseToolkitName() const override { return INVTEXT("GameFlowToolkit"); }
 	FORCEINLINE virtual FName GetToolkitFName() const override { return "Game Flow Toolkit"; }
 	FORCEINLINE virtual FString GetWorldCentricTabPrefix() const override { return "Game Flow Asset"; }
 	FORCEINLINE virtual FLinearColor GetWorldCentricTabColorScale() const override { return FLinearColor::Yellow; }
-
+    FORCEINLINE UGameFlowGraph* GetGraph() const { return Graph;}
+	
 protected:
 	
 	/** Configure asset editor inputs. All menu and toolbar
@@ -46,17 +52,12 @@ protected:
 	}
 
 	/* The actual asset from which we're going to create the editor. */
-	TObjectPtr<UObject> Asset;
+	TObjectPtr<UGameFlowAsset> Asset;
 
 	/** The graph being created. */
-	TObjectPtr<UEdGraph> Graph;
+	TObjectPtr<UGameFlowGraph> Graph;
 
 	/** The list of command inputs the user can execute. */
 	TSharedPtr<FUICommandList> CommandList;
-	
-private:
-	
-	/** Get the appearance of the Game Flow graph. */
-	FGraphAppearanceInfo GetGraphAppearance();
 };
 

@@ -6,7 +6,6 @@
 #include "Asset/GameFlowAssetTypeAction.h"
 #include "Modules/ModuleManager.h"
 
-
 DECLARE_LOG_CATEGORY_EXTERN(LogGameFlow, Display, All);
 
 class FGameFlowEditorModule final : public IModuleInterface

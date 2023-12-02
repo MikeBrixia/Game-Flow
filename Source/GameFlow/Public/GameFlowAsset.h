@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "Nodes/GameFlowNode.h"
+#include "Nodes/GameFlowNode_Input.h"
+#include "Nodes/GameFlowNode_Output.h"
 #include "GameFlowAsset.generated.h"
 
 /**
@@ -16,6 +18,26 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 {
 	GENERATED_BODY()
 
+public:
+
+#if WITH_EDITORONLY_DATA
+	/* All asset nodes mapped by their corresponding guid.*/
+	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|Defaults")
+	TMap<uint32, UGameFlowNode*> Nodes;
+
+	/* True if this asset has already been opened inside a GameFlow editor, false otherwise. */
+	UPROPERTY()
+	bool bHasAlreadyBeenOpened;
+#endif
+	
+	/* All the user-defined entry points of the asset. */
+	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
+	TMap<FName, UGameFlowNode_Input*> CustomInputs;
+	
+	/* All the user-defined exit points of the asset. */
+	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
+	TMap<FName, UGameFlowNode_Output*> CustomOutputs;
+	
 private:
 	
 	/* The nodes currently being executed. */
@@ -23,19 +45,6 @@ private:
 	TArray<UGameFlowNode*> ActiveNodes;
 	
 public:
-
-#if WITH_EDITORONLY_DATA
-	UPROPERTY()
-	TArray<UGameFlowNode*> Nodes;
-#endif
-	
-	/* All the user-defined entry points of the asset. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
-	TMap<FName, UGameFlowNode*> CustomInputs;
-	
-	/* All the user-defined exit points of the asset. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
-	TMap<FName, UGameFlowNode*> CustomOutputs;
 	
 	UGameFlowAsset();
 
@@ -70,13 +79,22 @@ public:
 	 */
 	void RemoveActiveNode(UGameFlowNode* Node);
 
+	/**
+	 * @brief Call this method when you need to terminate
+	 * the execution of this GameFlow object.
+	 */
+	void TerminateExecution();
+
 #if WITH_EDITOR
 	
 	/**
 	 * @brief Check if the asset has been corrupted, and in case
-	 *        adjust it.
+	 * adjust it.
 	 */
 	void ValidateAsset();
+
+    UGameFlowNode_Input* CreateDefaultStartNode();
+    UGameFlowNode_Output* CreateDefaultFinishNode();
 
 #endif
 };

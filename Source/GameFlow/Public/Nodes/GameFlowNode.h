@@ -10,14 +10,26 @@
 UCLASS(Abstract, NotBlueprintable)
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
-	GENERATED_BODY()
- 
-    friend class UGameFlowNodeFactory;
+	friend class UGameFlowNodeFactory;
 	
+	GENERATED_BODY()
+
+#if WITH_EDITORONLY_DATA
+public:
+	/* The last tracked position of the node inside the graph.*/
+	UPROPERTY()
+	FVector2D GraphPosition;
+	
+protected:
+	/* All the possible output pins for this node. */
+	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+    TArray<FName> OutputPins;
+#endif
+
 private:
 
-	/* Output children nodes mapped by their respective output pin name. */
-	UPROPERTY()
+	/* All the possible outputs of this node. */
+	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
 	TMap<FName, UGameFlowNode*> Outputs;
 
 public:
@@ -26,17 +38,41 @@ public:
 	
 	/* Execute GameFlow blueprint. */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	void Execute();
-	virtual void Execute_Implementation();
+	void Execute(const FName& PinName);
+	virtual void Execute_Implementation(const FName& PinName);
+	
+	//-------- Functions with return types cannot be declared PURE_VIRTUAL(),
+    //-------- for this reason we need to create empty return type functions.
+	
+	FORCEINLINE virtual TArray<FName> GetInputPins() const { return {}; }
+	FORCEINLINE virtual TArray<FName> GetOutputPins() const { return {}; }
+	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
 
+	//--------
+	
+#if WITH_EDITORONLY_DATA
+	/**
+	 * @brief Connect this node to another graph node.
+	 * @param PinName The name of the output pin which connects this node, to the next.
+	 * @param Output The node to connect to.
+	 */
+	virtual void AddOutput(const FName& PinName, UGameFlowNode* Output);
+
+	/**
+	 * @brief Disconnect this node from the other node connected through the supplied pin.
+	 * @param PinName The name of the pin which holds the connection.
+	 */
+	virtual void RemoveOutput(const FName& PinName);
+#endif
+	
 protected:
 	
 	/**
-	* @brief Call this function to trigger an output and execute the next node.
+	 * @brief Call this function to trigger an output and execute the next node.
 	 * @param OutputPin Name of the pin to which the next node has been mapped.
-	 * @param Finish If true, this node will be the only output and node will be unloaded.
+	 * @param bFinish If true, this node will be the only output and node will be unloaded.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void FinishExecute(FName OutputPin, bool Finish);
+	void FinishExecute(FName OutputPin, bool bFinish);
 };
 

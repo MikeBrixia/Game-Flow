@@ -18,8 +18,8 @@ class GAMEFLOWEDITOR_API SFlowNode : public SGraphNode
 {
 public:
 	SLATE_BEGIN_ARGS(SFlowNode)
-		: _TitleBackgroundColor(FSlateColorBrush(FLinearColor::Gray)),
-	      _BodyBackgroundColor(FSlateColorBrush(FLinearColor(0, 0, 0, 0)))
+			: _TitleBackgroundColor(FSlateColorBrush(FLinearColor::Gray)),
+			  _BodyBackgroundColor(FSlateColorBrush(FLinearColor(0, 0, 0, 0)))
 	{}
 	    SLATE_ARGUMENT(UGameFlowGraphNode*, Node)
 	    SLATE_ARGUMENT(FSlateColorBrush, TitleBackgroundColor)
