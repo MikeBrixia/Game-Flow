@@ -32,6 +32,8 @@ public:
 	
 	/* Create the visual widget for this node. */
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
+
+	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
 	/* Get the asset contained inside this graph node. */
 	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }

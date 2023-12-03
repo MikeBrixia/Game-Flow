@@ -12,7 +12,7 @@
  * inside the GameFlow graph. This type of node doesn't have any input
  * pins, only single outputs.
  */
-UCLASS()
+UCLASS(DisplayName="Start")
 class GAMEFLOW_API UGameFlowNode_Input final : public UGameFlowNode
 {
 	GENERATED_BODY()

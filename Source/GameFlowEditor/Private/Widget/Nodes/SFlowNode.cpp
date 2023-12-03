@@ -13,6 +13,7 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	this->GraphNode = InArgs._Node;
 	this->TitleBackgroundColorBrush = InArgs._TitleBackgroundColor;
 	this->BodyBackgroundColorBrush = InArgs._BodyBackgroundColor;
+	this->TitleText = InArgs._TitleText;
 	
 	UpdateGraphNode();
 }
@@ -72,7 +73,7 @@ TSharedRef<SWidget> SGameFlowNode::CreateTitleWidget(TSharedPtr<SNodeTitle> Node
 			[
 				SNew(SImage)
 				.Image(GetNodeTitleBrush())
-				.ColorAndOpacity(GetTitleWidgetColor())
+				.ColorAndOpacity(TitleBackgroundColorBrush)
 			]
 		]
 		+ SOverlay::Slot()
@@ -82,7 +83,7 @@ TSharedRef<SWidget> SGameFlowNode::CreateTitleWidget(TSharedPtr<SNodeTitle> Node
 			.AutoWidth()
 			[
 				SNew(STextBlock)
-				.Text(FText::FromString("Start"))
+				.Text(TitleText)
 				.Justification(ETextJustify::Left)
 				.Margin(FMargin(10, 6,0,0))
 				.TextStyle(FAppStyle::Get(), "Graph.Node.FTextBlockStyle")
@@ -113,7 +114,6 @@ TSharedRef<SWidget> SGameFlowNode::CreateNodeContentArea()
 				SAssignNew(RightNodeBox, SVerticalBox)
 			]
 		];
-	
 }
 
 void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)

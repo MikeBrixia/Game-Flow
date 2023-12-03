@@ -11,7 +11,7 @@
  * The exit node of the GameFlow asset. This nodes are used
  * to terminate the execution of a GameFlow asset.
  */
-UCLASS()
+UCLASS(DisplayName="Finish")
 class GAMEFLOW_API UGameFlowNode_Output final : public UGameFlowNode
 {
 	GENERATED_BODY()

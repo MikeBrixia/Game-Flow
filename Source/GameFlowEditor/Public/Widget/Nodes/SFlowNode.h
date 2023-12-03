@@ -18,23 +18,32 @@ class GAMEFLOWEDITOR_API SGameFlowNode : public SGraphNode
 {
 public:
 	SLATE_BEGIN_ARGS(SGameFlowNode)
-			: _TitleBackgroundColor(FSlateColor(FLinearColor::Gray)),
-			  _BodyBackgroundColor(FSlateColor(FLinearColor(0, 0, 0, 0)))
+			: _Node(nullptr),
+			  _TitleBackgroundColor(FSlateColor(FLinearColor::Red)),
+	          _BodyBackgroundColor(FSlateColor(FLinearColor::Black)),
+	          _TitleText(INVTEXT("Dummy_Node"))
 	{}
 	    SLATE_ARGUMENT(UGameFlowGraphNode*, Node)
 	    SLATE_ARGUMENT(FSlateColor, TitleBackgroundColor)
 	    SLATE_ARGUMENT(FSlateColor, BodyBackgroundColor)
+	    SLATE_ARGUMENT(FText, TitleText)
 	SLATE_END_ARGS()
-	
-	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs);
 
 protected:
-	
 	/* The image used as a background color for the title area of the node.*/
-	FSlateColor TitleBackgroundColorBrush = FSlateColor(FLinearColor::Red);
+	FSlateColor TitleBackgroundColorBrush;
+	
 	/* The image used as a background color for the body area of the node.*/
-	FSlateColor BodyBackgroundColorBrush = FSlateColor(FLinearColor::Black);
+	FSlateColor BodyBackgroundColorBrush;
+
+	/* The text displayed inside the node titlebar. */
+	FText TitleText;
+	
+public:
+	/** Constructs this widget with InArgs */
+	void Construct(const FArguments& InArgs);
+	
+protected:
 
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
@@ -79,11 +88,6 @@ protected:
 	FORCEINLINE virtual FSlateColor GetTitleTextColor() const
 	{
 		return FSlateColor(FLinearColor::White);
-	}
-	
-	virtual FSlateColor GetTitleWidgetColor()
-	{
-		return TitleBackgroundColorBrush;
 	}
 	
 	FORCEINLINE virtual const FSlateBrush* GetNodeTitleBrush() const
