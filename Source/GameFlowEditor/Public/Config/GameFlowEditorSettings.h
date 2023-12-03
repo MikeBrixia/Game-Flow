@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FGameFlowNodeInfo.h"
 #include "UObject/Object.h"
+#include "Nodes/GameFlowNode.h"
 #include "GameFlowEditorSettings.generated.h"
 
 /**
@@ -16,18 +16,16 @@ class GAMEFLOWEDITOR_API UGameFlowEditorSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-
-	UGameFlowEditorSettings();
 	
 	FORCEINLINE static UGameFlowEditorSettings* Get()
 	{
 		UObject* DefaultObject = StaticClass()->GetDefaultObject();
 		return CastChecked<UGameFlowEditorSettings>(DefaultObject);
 	}
-
+	
 	UPROPERTY(Config, EditAnywhere, Category="Nodes")
 	bool bEditNodesStyles;
-	
+
 	/* All the possible types of nodes available inside GameFlow editor.*/
 	UPROPERTY(Config, EditAnywhere, Category="Nodes|Style", meta=(EditCondition="bEditNodesStyles"))
 	TMap<FName, FGameFlowNodeInfo> NodesTypes;
@@ -39,4 +37,6 @@ public:
 	/* This nodes will not be displayed inside the palette tab. */
 	UPROPERTY(Config, EditAnywhere, Category="Nodes")
 	TArray<TSubclassOf<UGameFlowNode>> HiddenFromPalette;
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 };

@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "FGameFlowNodeInfo.generated.h"
 
 /**
@@ -14,7 +13,7 @@ struct FGameFlowNodeInfo
 
 	FGameFlowNodeInfo();
 	
-	FGameFlowNodeInfo(const FSlateColor& TitleBarColor, const FSlateBrush& Icon, UClass* NodeClass);
+	FGameFlowNodeInfo(const FSlateColor& TitleBarColor, const FSlateBrush& Icon);
 	
 	/* The color of the bar who contains the node name. */
 	UPROPERTY(EditAnywhere)
@@ -25,10 +24,4 @@ struct FGameFlowNodeInfo
 	 */
 	UPROPERTY(EditAnywhere)
 	FSlateBrush Icon;
-	
-	/* The source class of this specific graph node, controls which class should be
-	 * used to create the graph node.
-	 */
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UGameFlowGraphNode> Class;
 };

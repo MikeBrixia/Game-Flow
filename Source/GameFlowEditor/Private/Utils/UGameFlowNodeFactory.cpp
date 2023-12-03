@@ -32,9 +32,8 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(UGameFlowNode* NodeAss
 UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(const TSubclassOf<UGameFlowNode> NodeClass,
 	UGameFlowAsset* ParentAsset, UGameFlowGraph* Graph)
 {
-	const FName NodeInstanceName = FName(ParentAsset->GetName() + "_GameFlowNode");
 	// Create a brand new instance of node of supplied class.
-	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(ParentAsset, NodeClass, NodeInstanceName);
+	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(ParentAsset, NodeClass);
     ParentAsset->Nodes.Add(NewNode->GetUniqueID(), NewNode);
 	
 	// Create and return the graph node.

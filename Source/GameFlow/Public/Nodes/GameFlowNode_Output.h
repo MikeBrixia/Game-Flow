@@ -17,8 +17,9 @@ class GAMEFLOW_API UGameFlowNode_Output final : public UGameFlowNode
 	GENERATED_BODY()
 
 public:
+
+	UGameFlowNode_Output();
 	
-	FORCEINLINE TArray<FName> GetInputPins() const override { return {"Out"}; }
 	virtual void Execute_Implementation(const FName& PinName) override;
 	
 };

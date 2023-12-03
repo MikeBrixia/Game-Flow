@@ -24,9 +24,8 @@ protected:
 	TObjectPtr<UGameFlowNode> OutputNode;
 
 public:
-	
-	FORCEINLINE virtual TArray<FName> GetOutputPins() const override { return {"Exec"}; }
-	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const override { return OutputNode; }
+
+	UGameFlowNode_Input();
 	
 	virtual void AddOutput(const FName& PinName, UGameFlowNode* Output) override;
 	virtual void RemoveOutput(const FName& PinName) override;

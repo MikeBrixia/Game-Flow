@@ -4,9 +4,8 @@ FGameFlowNodeInfo::FGameFlowNodeInfo()
 {
 }
 
-FGameFlowNodeInfo::FGameFlowNodeInfo(const FSlateColor& TitleBarColor, const FSlateBrush& Icon, UClass* NodeClass)
+FGameFlowNodeInfo::FGameFlowNodeInfo(const FSlateColor& TitleBarColor, const FSlateBrush& Icon)
 {
 	this->TitleBarColor = TitleBarColor;
 	this->Icon = Icon;
-	this->Class = NodeClass;
 }

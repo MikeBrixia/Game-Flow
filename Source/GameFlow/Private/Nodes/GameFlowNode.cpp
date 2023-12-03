@@ -11,6 +11,11 @@ void UGameFlowNode::Execute_Implementation(const FName& PinName)
 {
 }
 
+void UGameFlowNode::OnFinishExecute_Implementation()
+{
+}
+
+#if WITH_EDITORONLY_DATA
 void UGameFlowNode::AddOutput(const FName& PinName, UGameFlowNode* Output)
 {
 	UE_LOG(LogTemp, Warning, TEXT("The node of type: %s cannot have any output nodes, skipping instruction."), *StaticClass()->GetName());
@@ -20,6 +25,7 @@ void UGameFlowNode::RemoveOutput(const FName& PinName)
 {
 	UE_LOG(LogTemp, Warning, TEXT("The node of type: %s cannot have any output nodes, skipping instruction."), *StaticClass()->GetName());
 }
+#endif
 
 void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
 {
@@ -31,6 +37,7 @@ void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
 	if(bFinish && OwnerAsset != nullptr)
 	{
 		OwnerAsset->RemoveActiveNode(this);
+		OnFinishExecute();
 	}
 	
 	// Execute the next node.

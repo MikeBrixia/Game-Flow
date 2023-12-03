@@ -1,12 +1,14 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GameFlow.h"
+#include "ISettingsModule.h"
+#include "Config/GameFlowSettings.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowModule"
 
 void FGameFlowModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	
 }
 
 void FGameFlowModule::ShutdownModule()

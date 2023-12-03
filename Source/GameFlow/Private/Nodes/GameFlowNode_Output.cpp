@@ -3,10 +3,17 @@
 #include "Nodes/GameFlowNode_Output.h"
 #include "GameFlowAsset.h"
 
+UGameFlowNode_Output::UGameFlowNode_Output()
+{
+	TypeName = "Output";
+	
+	InputPins.Add("Exec");
+}
+
 void UGameFlowNode_Output::Execute_Implementation(const FName& PinName)
 {
 	Super::Execute_Implementation(PinName);
-
+    
 	// Terminate the execution of the parent game flow asset.
 	UGameFlowAsset* GameFlowAsset = CastChecked<UGameFlowAsset>(GetOuter());
 	GameFlowAsset->TerminateExecution();

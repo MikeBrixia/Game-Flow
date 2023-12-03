@@ -1,10 +1,8 @@
 ﻿
 #include "GameFlowEditor.h"
-
 #include "EdGraphUtilities.h"
 #include "ISettingsModule.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
-#include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
@@ -45,7 +43,7 @@ void FGameFlowEditorModule::StartupModule()
 	{
 		SettingsModule->RegisterSettings("Project", "Plugins", "Game Flow",
 			LOCTEXT("RuntimeSettingsName", "Game Flow"), LOCTEXT("RuntimeSettingsDescription", "Configure Game Flow editor properties"),
-			GetMutableDefault<UGameFlowEditorSettings>());
+			 GetMutableDefault<UGameFlowEditorSettings>());
 	}
 }
 

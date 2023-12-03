@@ -14,27 +14,27 @@
  * Extend this class if you want to change the behavior
  * and look of a Game Flow node or create brand new ones.
  */
-class GAMEFLOWEDITOR_API SFlowNode : public SGraphNode
+class GAMEFLOWEDITOR_API SGameFlowNode : public SGraphNode
 {
 public:
-	SLATE_BEGIN_ARGS(SFlowNode)
-			: _TitleBackgroundColor(FSlateColorBrush(FLinearColor::Gray)),
-			  _BodyBackgroundColor(FSlateColorBrush(FLinearColor(0, 0, 0, 0)))
+	SLATE_BEGIN_ARGS(SGameFlowNode)
+			: _TitleBackgroundColor(FSlateColor(FLinearColor::Gray)),
+			  _BodyBackgroundColor(FSlateColor(FLinearColor(0, 0, 0, 0)))
 	{}
 	    SLATE_ARGUMENT(UGameFlowGraphNode*, Node)
-	    SLATE_ARGUMENT(FSlateColorBrush, TitleBackgroundColor)
-	    SLATE_ARGUMENT(FSlateColorBrush, BodyBackgroundColor)
+	    SLATE_ARGUMENT(FSlateColor, TitleBackgroundColor)
+	    SLATE_ARGUMENT(FSlateColor, BodyBackgroundColor)
 	SLATE_END_ARGS()
 	
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
 protected:
-    
+	
 	/* The image used as a background color for the title area of the node.*/
-	FSlateColorBrush TitleBackgroundColorBrush = FSlateColorBrush(FLinearColor::Red);
+	FSlateColor TitleBackgroundColorBrush = FSlateColor(FLinearColor::Red);
 	/* The image used as a background color for the body area of the node.*/
-	FSlateColorBrush BodyBackgroundColorBrush = FSlateColorBrush(FLinearColor::Black);
+	FSlateColor BodyBackgroundColorBrush = FSlateColor(FLinearColor::Black);
 
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
@@ -83,7 +83,7 @@ protected:
 	
 	virtual FSlateColor GetTitleWidgetColor()
 	{
-		return FSlateColor(FLinearColor(1.f, 0, 0, 1.f));
+		return TitleBackgroundColorBrush;
 	}
 	
 	FORCEINLINE virtual const FSlateBrush* GetNodeTitleBrush() const

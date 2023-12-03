@@ -18,14 +18,12 @@ void UGameFlowGraph::InitGraph()
 	// Create default nodes only on first-time asset editor opening.
 	if(!GameFlowAsset->bHasAlreadyBeenOpened)
     {
-		UE_LOG(LogGameFlow, Display, TEXT("Create default nodes"))
 		// Create the default nodes which will appear in the graph
 		// when the graph editor gets opened.
 		GraphSchema->CreateDefaultNodesForGraph(*this);
     }
 	else
 	{
-		UE_LOG(LogGameFlow, Display, TEXT("Rebuild"))
 		RebuildGraphFromAsset();
 	}
 }
@@ -78,39 +76,15 @@ void UGameFlowGraph::CompileInputNode(UGameFlowGraphNode* InputNode)
 
 void UGameFlowGraph::RebuildGraphFromAsset()
 {
-	// Recreate all nodes by reading the game flow asset data.
-	for(const auto Pair : GameFlowAsset->CustomInputs)
+	for(const auto Pair : GameFlowAsset->Nodes)
 	{
-		UGameFlowNode* NodeAsset = nullptr;
-		UGameFlowGraphNode* CurrentNode = nullptr;
-		UGameFlowGraphNode* PreviousNode = nullptr;
-		
-		TQueue<UGameFlowNode*> ToRebuild;
-        ToRebuild.Enqueue(Pair.Value);
-		
-		while(!ToRebuild.IsEmpty())
+		UGameFlowNode* Node = Pair.Value;
+		if(Pair.Value != nullptr)
 		{
-			// Extract the next node asset to rebuild.
-			ToRebuild.Dequeue(NodeAsset);
-
-			// Initialize previous node and create a brand new graph node.
-			PreviousNode = CurrentNode;
-			CurrentNode = UGameFlowNodeFactory::CreateGraphNode(NodeAsset, this);
-			Nodes.Add(CurrentNode);
-			
-			for(const FName& PinName : NodeAsset->GetOutputPins())
-			{
-				UGameFlowNode* NextNode = NodeAsset->GetNextNode(PinName);
-				ToRebuild.Enqueue(NextNode);
-			}
-			
-			if(PreviousNode != nullptr)
-			{
-			}
+			UGameFlowGraphNode* GraphNode = UGameFlowNodeFactory::CreateGraphNode(Node, this);
+			Nodes.Add(GraphNode);
 		}
 	}
-    
-	// Recreate all links starting from game flow asset root nodes.
 }
 
 void UGameFlowGraph::NotifyGraphChanged()

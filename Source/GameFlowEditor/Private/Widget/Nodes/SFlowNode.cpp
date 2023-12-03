@@ -8,7 +8,7 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-void SFlowNode::Construct(const FArguments& InArgs)
+void SGameFlowNode::Construct(const FArguments& InArgs)
 {
 	this->GraphNode = InArgs._Node;
 	this->TitleBackgroundColorBrush = InArgs._TitleBackgroundColor;
@@ -17,7 +17,7 @@ void SFlowNode::Construct(const FArguments& InArgs)
 	UpdateGraphNode();
 }
 
-TSharedRef<SWidget> SFlowNode::CreateNodeWidget()
+TSharedRef<SWidget> SGameFlowNode::CreateNodeWidget()
 {
 	// Create node title widget and initialize it.
 	const TSharedRef<SNodeTitle> NodeTitleWidget = SNew(SNodeTitle, GraphNode)
@@ -59,7 +59,7 @@ TSharedRef<SWidget> SFlowNode::CreateNodeWidget()
 	return NodeWidget;
 }
 
-TSharedRef<SWidget> SFlowNode::CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle)
+TSharedRef<SWidget> SGameFlowNode::CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle)
 {
 	return SNew(SOverlay)
 		+ SOverlay::Slot()
@@ -91,7 +91,7 @@ TSharedRef<SWidget> SFlowNode::CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitl
 		];
 }
 
-TSharedRef<SWidget> SFlowNode::CreateNodeContentArea()
+TSharedRef<SWidget> SGameFlowNode::CreateNodeContentArea()
 {
 	return SNew(SOverlay)
 		+ SOverlay::Slot()
@@ -116,7 +116,7 @@ TSharedRef<SWidget> SFlowNode::CreateNodeContentArea()
 	
 }
 
-void SFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
+void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
 	// Create the node pin widget. by default GameFlow will create an
 	// exec pin for the node.
@@ -129,7 +129,7 @@ void SFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	this->AddPin(PinWidget);
 }
 
-void SFlowNode::UpdateGraphNode()
+void SGameFlowNode::UpdateGraphNode()
 {
 	// Reset input pins.
 	InputPins.Empty();

@@ -2,6 +2,12 @@
 
 #include "Nodes/GameFlowNode_Input.h"
 
+UGameFlowNode_Input::UGameFlowNode_Input()
+{
+	TypeName = "Input";
+	OutputPins.Add("Out");
+}
+
 void UGameFlowNode_Input::AddOutput(const FName& PinName, UGameFlowNode* Output)
 {
 	// Are the output node and pin name valid?

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Config/GameFlowSettings.h"
 #include "UObject/Interface.h"
 #include "GameFlowNode.generated.h"
 
@@ -19,8 +20,15 @@ public:
 	/* The last tracked position of the node inside the graph.*/
 	UPROPERTY()
 	FVector2D GraphPosition;
+
+	/* The type of this node(Latent, Event ecc.)*/
+	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
+	FName TypeName;
 	
 protected:
+	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+	TArray<FName> InputPins;
+	
 	/* All the possible output pins for this node. */
 	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
@@ -40,12 +48,16 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void Execute(const FName& PinName);
 	virtual void Execute_Implementation(const FName& PinName);
+
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
+	void OnFinishExecute();
+	virtual void OnFinishExecute_Implementation();
 	
 	//-------- Functions with return types cannot be declared PURE_VIRTUAL(),
     //-------- for this reason we need to create empty return type functions.
 	
-	FORCEINLINE virtual TArray<FName> GetInputPins() const { return {}; }
-	FORCEINLINE virtual TArray<FName> GetOutputPins() const { return {}; }
+	FORCEINLINE virtual TArray<FName> GetInputPins() const { return InputPins; }
+	FORCEINLINE virtual TArray<FName> GetOutputPins() const { return OutputPins; }
 	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
 
 	//--------
@@ -63,6 +75,13 @@ public:
 	 * @param PinName The name of the pin which holds the connection.
 	 */
 	virtual void RemoveOutput(const FName& PinName);
+
+	/**
+	 * @brief Get all the registered Game Flow node types
+	 * @return An array of node types.
+	 */
+	UFUNCTION(CallInEditor)
+    FORCEINLINE TArray<FName> GetNodeTypeOptions() const { return UGameFlowSettings::Get()->Options; }
 #endif
 	
 protected:

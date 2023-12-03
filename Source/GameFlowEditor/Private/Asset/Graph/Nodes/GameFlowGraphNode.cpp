@@ -1,6 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+
+#include "GameFlowEditor.h"
+#include "Config/FGameFlowNodeInfo.h"
+#include "Config/GameFlowEditorSettings.h"
+#include "Config/GameFlowSettings.h"
 #include "Widget/Nodes/SFlowNode.h"
 
 UGameFlowGraphNode::UGameFlowGraphNode()
@@ -19,8 +24,12 @@ void UGameFlowGraphNode::AllocateDefaultPins()
 
 TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 {
-	return SNew(SFlowNode)
-	       .Node(this);
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	const FGameFlowNodeInfo NodeSettings = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	
+	return SNew(SGameFlowNode)
+	       .Node(this)
+	       .TitleBackgroundColor(NodeSettings.TitleBarColor);
 }
 
 void UGameFlowGraphNode::InitNode()

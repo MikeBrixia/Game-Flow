@@ -19,28 +19,26 @@ class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 
 private:
 	
-	/* The game flow node asset encapsulated inside this graph node.*/
+	/* The game flow node asset encapsulated inside this graph node. */
+	UPROPERTY()
 	TObjectPtr<UGameFlowNode> NodeAsset;
 	
 public:
 
 	UGameFlowGraphNode();
 	
-	/** Create the default pins for this node. */
+	/* Create the default pins for this node. */
 	virtual void AllocateDefaultPins() override;
 	
-	/** Create the visual widget for this node. */
+	/* Create the visual widget for this node. */
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	
-	/** Get the asset contained inside this graph node. */
-	FORCEINLINE UGameFlowNode* GetNodeAsset() const
-	{
-		return NodeAsset;
-	}
+	/* Get the asset contained inside this graph node. */
+	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }
 
 protected:
 	
-	/** Initialize this node properties. */
+	/* Initialize this node properties. */
 	virtual void InitNode();
 
 private:
