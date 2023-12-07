@@ -32,7 +32,7 @@ public:
 	
 	/* The color of the execution pin. */
 	UPROPERTY(Config, EditAnywhere, Category="Nodes|Style", meta=(EditCondition="bEditNodesStyles"))
-	FSlateColor ExecPinColor;
+	FLinearColor ExecPinColor;
 
 	/* This nodes will not be displayed inside the palette tab. */
 	UPROPERTY(Config, EditAnywhere, Category="Nodes")

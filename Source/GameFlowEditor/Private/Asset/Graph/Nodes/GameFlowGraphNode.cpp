@@ -3,7 +3,7 @@
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Widget/Nodes/SFlowNode.h"
+#include "Widget/Nodes/SGameFlowNode.h"
 
 UGameFlowGraphNode::UGameFlowGraphNode()
 {
@@ -21,29 +21,27 @@ void UGameFlowGraphNode::AllocateDefaultPins()
 
 TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 {
-	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
-	const FGameFlowNodeInfo NodeSettings = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	// Use UCLASS display name attribute value as node title.
+	const FText TitleText = GetNodeTitle(ENodeTitleType::EditableTitle);
 	
-	const FText TitleText = NodeAsset->GetClass()->GetDisplayNameText();
 	// Create and initialize node widget.
 	return SNew(SGameFlowNode)
 	       .Node(this)
-	       .TitleBackgroundColor(NodeSettings.TitleBarColor)
 	       .TitleText(TitleText);
 }
 
 FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return Super::GetNodeTitle(TitleType);
+	return NodeAsset->GetClass()->GetDisplayNameText();
 }
 
 void UGameFlowGraphNode::InitNode()
 {
 	// Vital assertions.
 	checkf(NodeAsset != nullptr, TEXT("Node asset is invalid(nullptr)"));
-	
-	// Once everything has been initialized, create node widget.
-	CreateVisualWidget();
+
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 }
 
 void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection,

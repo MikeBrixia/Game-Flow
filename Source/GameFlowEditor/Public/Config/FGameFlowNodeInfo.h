@@ -13,11 +13,11 @@ struct FGameFlowNodeInfo
 
 	FGameFlowNodeInfo();
 	
-	FGameFlowNodeInfo(const FSlateColor& TitleBarColor, const FSlateBrush& Icon);
+	FGameFlowNodeInfo(const FLinearColor& TitleBarColor, const FSlateBrush& Icon);
 	
 	/* The color of the bar who contains the node name. */
 	UPROPERTY(EditAnywhere)
-	FSlateColor TitleBarColor;
+	FLinearColor TitleBarColor;
 
 	/* An icon that will appear in the top-left of the node.
 	 * Should be use to visually identify a node category.

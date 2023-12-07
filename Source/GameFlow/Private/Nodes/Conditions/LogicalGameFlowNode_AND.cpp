@@ -13,6 +13,7 @@ ULogicalGameFlowNode_AND::ULogicalGameFlowNode_AND()
 	// Initialize input pins.
 	InputPins.Add("1");
 	InputPins.Add("2");
+	bCanAddInputPin = true;
 
 	// Initialize output pins.
 	OutputPins.Add("Out");

@@ -32,6 +32,15 @@ protected:
 	/* All the possible output pins for this node. */
 	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
+
+	/* True if user should be able to add more input pins than defaults by clicking on a '+' icon. */
+    UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+    bool bCanAddInputPin;
+
+	/* True if user should be able to add more output pins than defaults by clicking on a '+' icon. */
+	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+	bool bCanAddOutputPin;
+
 #endif
 
 private:
@@ -59,7 +68,9 @@ public:
 	FORCEINLINE virtual TArray<FName> GetInputPins() const { return InputPins; }
 	FORCEINLINE virtual TArray<FName> GetOutputPins() const { return OutputPins; }
 	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
-
+    FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
+	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
+	
 	//--------
 	
 #if WITH_EDITORONLY_DATA

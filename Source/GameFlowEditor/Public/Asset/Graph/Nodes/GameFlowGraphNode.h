@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Config/FGameFlowNodeInfo.h"
+#include "Config/GameFlowEditorSettings.h"
 #include "Nodes/GameFlowNode.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
@@ -22,22 +24,26 @@ private:
 	/* The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowNode> NodeAsset;
-	
+
+	/* Node asset info read from global GameFlow plugin settings. */
+	UPROPERTY()
+	FGameFlowNodeInfo Info;
 public:
 
 	UGameFlowGraphNode();
 	
-	/* Create the default pins for this node. */
 	virtual void AllocateDefaultPins() override;
-	
-	/* Create the visual widget for this node. */
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
-
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
 	/* Get the asset contained inside this graph node. */
 	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }
 
+	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override
+	{
+		return Info.TitleBarColor;
+	}
+	
 protected:
 	
 	/* Initialize this node properties. */
