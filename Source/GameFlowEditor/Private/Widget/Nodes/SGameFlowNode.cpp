@@ -1,9 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SGameFlowNode.h"
-
 #include "GameFlowAsset.h"
 #include "GameFlowEditor.h"
+#include "GraphEditorSettings.h"
+#include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "KismetPins/SGraphPinExec.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -13,11 +14,11 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SGameFlowNode::Construct(const FArguments& InArgs)
 {
 	SGraphNode::Construct();
-
+	
 	// Initialize node widget arguments.
 	this->GraphNode = InArgs._Node;
 	this->TitleText = InArgs._TitleText;
-
+   
 	// Use UCLASS display name attribute value as node title.
 	if(InlineEditableText != nullptr)
 	{
@@ -26,31 +27,51 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	
 	// Update the node(will be drawn if non-existing).
 	UpdateGraphNode();
+}
 
-	UGameFlowNode* NodeAsset = InArgs._Node->GetNodeAsset();
-	if(NodeAsset != nullptr)
+void SGameFlowNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)
+{
+	const UGameFlowNode* NodeAsset = CastChecked<UGameFlowGraphNode>(GraphNode)->GetNodeAsset();
+	
+	// Add input pin button only if node asset allows it.
+	if(NodeAsset != nullptr && NodeAsset->CanAddInputPin())
 	{
-		if(NodeAsset->CanAddInputPin())
-		{
-			TSharedRef<SWidget> AddInputPinButton = AddPinButtonContent(INVTEXT("Add Pin"), INVTEXT("Add a new input pin to this node"), false);
-			LeftNodeBox->AddSlot()
-		     .AutoHeight()
-		     .VAlign(VAlign_Center)    
-		    [
-			    AddInputPinButton
-		    ];
-		}
-        
-		if(NodeAsset->CanAddOutputPin())
-		{
-			TSharedRef<SWidget> AddOutputPinButton = AddPinButtonContent(INVTEXT("Add Pin"), INVTEXT("Add a new output pin to this node"), true);
-			RightNodeBox->AddSlot()
-			 .AutoHeight()
-			 .VAlign(VAlign_Center)    
-			[
-				AddOutputPinButton
-			];
-		}
+		AddInputPinButton = StaticCastSharedRef<SButton>(AddPinButtonContent(INVTEXT("Add Pin"),
+			INVTEXT("Add a new input pin to this node"), false));
+		InputBox->AddSlot()
+		 .AutoHeight()
+		 .VAlign(VAlign_Center)
+		 .Padding(FMargin(10.f, 4.f))
+		[
+			AddInputPinButton.ToSharedRef()
+		];
+		
+		FOnClicked OnButtonClicked;
+		OnButtonClicked.BindRaw(this, &SGameFlowNode::OnAddInputPin);
+		AddInputPinButton->SetOnClicked(OnButtonClicked);
+	}
+}
+
+void SGameFlowNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
+{
+	const UGameFlowNode* NodeAsset = CastChecked<UGameFlowGraphNode>(GraphNode)->GetNodeAsset();
+	
+	// Add output pin button only if node asset allows it.
+	if(NodeAsset != nullptr && NodeAsset->CanAddOutputPin())
+	{
+		AddOutputPinButton = StaticCastSharedRef<SButton>(AddPinButtonContent(INVTEXT("Add Pin"),
+			INVTEXT("Add a new output pin to this node"), true));
+		OutputBox->AddSlot()
+		 .AutoHeight()
+		 .VAlign(VAlign_Center)
+		 .Padding(FMargin(10.f, 4.f))
+		[
+			AddOutputPinButton.ToSharedRef()
+		];
+		
+		FOnClicked OnButtonClicked;
+		OnButtonClicked.BindRaw(this, &SGameFlowNode::OnAddOutputPin);
+		AddInputPinButton->SetOnClicked(OnButtonClicked);
 	}
 }
 
@@ -63,10 +84,65 @@ void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	// Make the pin image white.
 	SImage* PinImage = static_cast<SImage*>(PinWidget->GetPinImageWidget().Get());
 	PinImage->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-	checkf(RightNodeBox, TEXT("Right node box is not valid!"));
 	
 	// Add the pin to this node.
 	this->AddPin(PinWidget);
+}
+
+FReply SGameFlowNode::OnAddInputPin()
+{
+	CreateGameFlowWidgetPin(EGPD_Input);
+	return FReply::Handled();
+}
+
+FReply SGameFlowNode::OnAddOutputPin()
+{
+	CreateGameFlowWidgetPin(EGPD_Output);
+	return FReply::Handled();
+}
+
+void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
+{
+	PinToAdd->SetOwner(SharedThis(this));
+
+	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
+	const bool bAdvancedParameter = (PinObj != nullptr) && PinObj->bAdvancedView;
+	if (bAdvancedParameter)
+	{
+		PinToAdd->SetVisibility( TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced) );
+	}
+
+	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
+	{
+		LeftNodeBox->InsertSlot(LeftNodeBox->NumSlots() - 1)
+			.AutoHeight()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Center)
+			.Padding(Settings->GetInputPinPadding())
+		[
+			PinToAdd
+		];
+		InputPins.Add(PinToAdd);
+	}
+	else // Direction == EEdGraphPinDirection::EGPD_Output
+		{
+		RightNodeBox->InsertSlot(RightNodeBox->NumSlots() - 1)
+			.AutoHeight()
+			.HAlign(HAlign_Right)
+			.VAlign(VAlign_Center)
+			.Padding(Settings->GetOutputPinPadding())
+		[
+			PinToAdd
+		];
+		OutputPins.Add(PinToAdd);
+		}
+}
+
+void SGameFlowNode::CreateGameFlowWidgetPin(EEdGraphPinDirection PinDirection)
+{
+	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
+	UEdGraphPin* NewPin = GameFlowGraphNode->CreateNodePin(PinDirection);
+	CreateStandardPinWidget(NewPin);
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

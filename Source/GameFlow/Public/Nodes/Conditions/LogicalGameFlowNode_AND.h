@@ -13,7 +13,6 @@
 UCLASS(DisplayName="AND")
 class GAMEFLOW_API ULogicalGameFlowNode_AND : public UGameFlowNode
 {
-
 	GENERATED_BODY()
 
 public:
@@ -23,6 +22,8 @@ public:
 	virtual void OnFinishExecute_Implementation() override;
 	
 private:
-	bool bFirstPinTriggered;
-	bool bSecondPinTriggered;
+	
+	/* All the ports which should evaluate to true for the AND operator to execute it's output. */
+	UPROPERTY()
+	TArray<bool> ConditionsPorts;
 };

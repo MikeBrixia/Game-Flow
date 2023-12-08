@@ -6,13 +6,17 @@ ULogicalGameFlowNode_AND::ULogicalGameFlowNode_AND()
 {
 	// Initialize AND node as a conditional node.
 	TypeName = "Conditional";
-	
-	bFirstPinTriggered = false;
-	bSecondPinTriggered = false;
-	
-	// Initialize input pins.
-	InputPins.Add("1");
-	InputPins.Add("2");
+
+	// Initialize AND operator I/O default ports
+	ConditionsPorts.Add(false);
+	ConditionsPorts.Add(false);
+	for(int i = 0; i < ConditionsPorts.Num(); i++)
+	{
+		const int PortNumber = i + 1;
+		FName PortName = FName(FString::FromInt(PortNumber));
+		// Initialize input pins.
+		InputPins.Add(PortName);
+	}
 	bCanAddInputPin = true;
 
 	// Initialize output pins.
@@ -23,18 +27,28 @@ void ULogicalGameFlowNode_AND::Execute_Implementation(const FName& PinName)
 {
 	Super::Execute_Implementation(PinName);
 
-	// Mark the pins has triggered.
-	if(PinName == "1") bFirstPinTriggered = true;
-	if(PinName == "2") bSecondPinTriggered = true;
+	bool bCanPass = false;
+	// Check if all pins have been activated.
+	for(const bool& ActivePort : ConditionsPorts)
+	{
+		bCanPass = ActivePort;
+		if (!ActivePort) break;
+	}
 
-	// If both pins have been triggered, trigger output pin.
-	const bool bFinished = bFirstPinTriggered && bSecondPinTriggered;
-	FinishExecute("Out", bFinished);
+	// If all pins have been activated, finish execution
+	// and trigger next node.
+	if(bCanPass)
+	{
+		FinishExecute("Out", true);
+	}
 }
 
 void ULogicalGameFlowNode_AND::OnFinishExecute_Implementation()
 {
 	// Reset node state after execution is ended. 
-	bFirstPinTriggered = false;
-	bSecondPinTriggered = false;
+	// Check if all pins have been activated.
+	for(int i = 0; i < ConditionsPorts.Num(); i++)
+	{
+		ConditionsPorts[i] = false;
+	}
 }

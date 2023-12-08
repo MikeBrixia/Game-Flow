@@ -28,8 +28,8 @@ private:
 	/* Node asset info read from global GameFlow plugin settings. */
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
+	
 public:
-
 	UGameFlowGraphNode();
 	
 	virtual void AllocateDefaultPins() override;
@@ -43,14 +43,14 @@ public:
 	{
 		return Info.TitleBarColor;
 	}
-	
-protected:
-	
-	/* Initialize this node properties. */
-	virtual void InitNode();
 
-private:
-	
+	FORCEINLINE static FEdGraphPinType GetGraphPinType()
+	{
+		FEdGraphPinType OutputPinInfo = {};
+		OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
+		return OutputPinInfo;
+	}
+
 	/**
 	 * @brief Read GameFlow node asset and create graph node pins.
 	 * @param PinCategory Properties used to identify and create pins.
@@ -58,4 +58,10 @@ private:
 	 * @param PinNames An array containing all the pin names.
 	 */
 	void CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames);
+
+	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None);
+protected:
+	
+	/* Initialize this node properties. */
+	virtual void InitNode();
 };

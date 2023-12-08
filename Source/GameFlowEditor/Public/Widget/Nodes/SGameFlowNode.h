@@ -35,14 +35,24 @@ public:
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
-
+	TSharedPtr<SButton> AddInputPinButton;
+	TSharedPtr<SButton> AddOutputPinButton;
+	
 	/* Stylesheet which determines the look of the node. */
 	const TSharedPtr<ISlateStyle> NodeStyle;
+
+private:
+	/* The direction of the most recently added pin. */
+    EEdGraphPinDirection AddedPinDirection = EGPD_MAX;
 	
-    /* The widget which represents the node body area.*/
-	//TSharedRef<SBorder> BodyAreaWidget;
-	
+protected:
+	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
+	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
+	
+	virtual FReply OnAddInputPin();
+	virtual FReply OnAddOutputPin();
+	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	
 	/** Get the slate brush of the GameFlow node body. */
 	FORCEINLINE virtual const FSlateBrush* GetNodeBodyBrush() const override
@@ -56,4 +66,8 @@ protected:
 		checkf(Style, TEXT("GameFlow Node stylesheet was null, make sure that your style has been registered inside the Slate Style Registry"));
 		return Style;
 	}
+
+private:
+	void CreateGameFlowWidgetPin(EEdGraphPinDirection PinDirection);
 };
+

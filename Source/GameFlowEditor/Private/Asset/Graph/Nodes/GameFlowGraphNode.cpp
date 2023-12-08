@@ -11,8 +11,7 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
-	FEdGraphPinType OutputPinInfo = {};
-	OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
+	const FEdGraphPinType OutputPinInfo = GetGraphPinType();
 	
 	// Create pins for graph node.
 	CreateNodePins(OutputPinInfo, EGPD_Input, NodeAsset->GetInputPins());
@@ -50,10 +49,25 @@ void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const
 	// Create all input pins.
 	for(FName Pin : PinNames)
 	{
-		if(Pin.IsEqual("Exec") || Pin.IsEqual("Out")) Pin = EName::None;
+		FString PinNameText = Pin.ToString();
+		if(PinNameText.Contains("Exec") || PinNameText.Contains("Out")) Pin = EName::None;
 		// Create logical pin and add it to the node pins list.
 		CreatePin(PinDirection, PinCategory, Pin);
 	}
+}
+
+UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
+{
+	const FEdGraphPinType PinType = GetGraphPinType();
+	const FString PinPrefix = PinDirection == EGPD_Input? "Exec_" : "Out_";
+	
+	FString PinNameText = PinName.ToString();
+	if(PinNameText.Contains("Exec") || PinNameText.Contains("Out")) PinName = EName::None;
+	
+	PinName = FName(FString::Printf(TEXT("%s %d"), *PinPrefix, Pins.Num()));
+	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
+
+	return Pin;
 }
 
 
