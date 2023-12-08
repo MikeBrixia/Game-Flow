@@ -47,10 +47,8 @@ void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const
 	const TArray<FName> PinNames)
 {
 	// Create all input pins.
-	for(FName Pin : PinNames)
+	for(const FName& Pin : PinNames)
 	{
-		FString PinNameText = Pin.ToString();
-		if(PinNameText.Contains("Exec") || PinNameText.Contains("Out")) Pin = EName::None;
 		// Create logical pin and add it to the node pins list.
 		CreatePin(PinDirection, PinCategory, Pin);
 	}
@@ -59,14 +57,39 @@ void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const
 UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
 {
 	const FEdGraphPinType PinType = GetGraphPinType();
-	const FString PinPrefix = PinDirection == EGPD_Input? "Exec_" : "Out_";
-	
-	FString PinNameText = PinName.ToString();
-	if(PinNameText.Contains("Exec") || PinNameText.Contains("Out")) PinName = EName::None;
-	
-	PinName = FName(FString::Printf(TEXT("%s %d"), *PinPrefix, Pins.Num()));
+
+	// When name is 'None', use a generated one.
+	if(PinName.IsEqual(EName::None))
+	{
+		// Generated pin name structure will be following. '{Prefix}_{CurrentPinsNumber};
+		// For example it could be: "Exec_2", for the second input pin.
+		const FString PinPrefix = PinDirection == EGPD_Input? "Exec_" : "Out_";
+		FString PinNameString = FString::Printf(TEXT("%s %d"), *PinPrefix, Pins.Num());
+		PinName = FName(PinNameString);
+	}
 	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
 
+	// Update Node asset depending on the new pin direction.
+	switch(PinDirection)
+	{
+		// Direction is not valid, do nothing.
+	default:
+		break;
+	     // Add input pin to node asset.
+	case EGPD_Input:
+		{
+			TArray<FName> InputPins = NodeAsset->GetInputPins();
+			InputPins.Add(PinName);
+			break;
+		}
+		// Add input pin to node asset.	
+	case EGPD_Output:
+		{
+			NodeAsset->AddOutput(PinName, nullptr);
+			break;
+		}
+	}
+	
 	return Pin;
 }
 

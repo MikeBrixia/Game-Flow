@@ -12,8 +12,9 @@ public:
 
 	GameFlowAssetToolkit();
 
-	/* Initialize game flow asset editor. */
+	
 	void InitEditor(const TArray<UObject*>& InObjects);
+	TSharedRef<IDetailsView> CreateAssetDetailsTab();
 	
 	/* Register editor tab widget and create the contained widgets. */
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;

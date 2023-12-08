@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Config/FGameFlowNodeInfo.h"
-#include "Config/GameFlowEditorSettings.h"
 #include "Nodes/GameFlowNode.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
@@ -25,7 +24,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UGameFlowNode> NodeAsset;
 
-	/* Node asset info read from global GameFlow plugin settings. */
+	/* Node asset info red from global GameFlow plugin settings. */
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
 	

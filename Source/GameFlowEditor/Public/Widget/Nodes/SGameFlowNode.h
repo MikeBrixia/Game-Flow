@@ -35,17 +35,12 @@ public:
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
+	
+	// -------------------- Widget pins --------------------------------
+
 	TSharedPtr<SButton> AddInputPinButton;
 	TSharedPtr<SButton> AddOutputPinButton;
 	
-	/* Stylesheet which determines the look of the node. */
-	const TSharedPtr<ISlateStyle> NodeStyle;
-
-private:
-	/* The direction of the most recently added pin. */
-    EEdGraphPinDirection AddedPinDirection = EGPD_MAX;
-	
-protected:
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
@@ -54,20 +49,27 @@ protected:
 	virtual FReply OnAddOutputPin();
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	
+private:
+	void CreateGameFlowWidgetPin(EEdGraphPinDirection PinDirection);
+	
+	// ----------------- Widget styling ----------------------------------
+
+	/* Stylesheet which determines the look of the node. */
+	const TSharedPtr<ISlateStyle> NodeStyle;
+	
 	/** Get the slate brush of the GameFlow node body. */
 	FORCEINLINE virtual const FSlateBrush* GetNodeBodyBrush() const override
 	{
 		return FAppStyle::GetBrush("Graph.Node.Body");
 	}
 	
-	virtual const ISlateStyle* GetNodeStyle() const
+	FORCEINLINE virtual const ISlateStyle* GetNodeStyle() const
 	{
 		const ISlateStyle* Style = FSlateStyleRegistry::FindSlateStyle("Flow Node Style");
 		checkf(Style, TEXT("GameFlow Node stylesheet was null, make sure that your style has been registered inside the Slate Style Registry"));
 		return Style;
 	}
 
-private:
-	void CreateGameFlowWidgetPin(EEdGraphPinDirection PinDirection);
+	// ---------------------------------------------------
 };
 
