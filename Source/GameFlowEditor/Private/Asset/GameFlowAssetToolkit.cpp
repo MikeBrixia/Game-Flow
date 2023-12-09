@@ -1,4 +1,6 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
+
+#include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
@@ -25,21 +27,54 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	// Create the graph.
 	Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
 	
-	// Create editor tabs.
-	const TSharedRef<FTabManager::FLayout> Layout = GameFlowEditorUtils::CreateEditorTabs();
-	
-	// Initialize Asset editor with the new layout.
+	// Initialize all different components of the Game Flow editor.
+	TSharedRef<FTabManager::FLayout> Layout = CreateEditorLayout();
 	InitAssetEditor(EToolkitMode::Standalone, {}, "GameFlowAssetEditor",
 				   Layout, true, true, InObjects);
-	
-	// Configure all the editor inputs.
 	ConfigureInputs();
-
-	// Create asset menu for this editor.
 	CreateAssetMenu();
-
-	// Create asset toolbar for this editor.
 	CreateAssetToolbar();
+}                                           
+
+TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorLayout()
+{
+	TSharedRef<FTabManager::FLayout> Layout = FTabManager::NewLayout("Game Flow Layout")
+	->AddArea
+	(
+		FTabManager::NewPrimaryArea()->SetOrientation(Orient_Horizontal)
+		->Split
+		(
+			FTabManager::NewSplitter()
+			->SetSizeCoefficient(0.2)
+			->SetOrientation(Orient_Vertical)
+			->Split
+			(
+				FTabManager::NewStack()
+				->SetSizeCoefficient(0.5)
+				->AddTab(DetailsTabName, ETabState::OpenedTab)
+			)
+			->Split
+			(
+			FTabManager::NewStack()
+			      ->SetSizeCoefficient(0.5)
+			      ->AddTab(NodeDetailsTabName, ETabState::OpenedTab)
+			)
+		)
+		->Split
+		(
+			FTabManager::NewStack()
+			->SetSizeCoefficient(0.6)
+			->AddTab(GraphTabName, ETabState::OpenedTab)
+		)
+		->Split
+		(
+			FTabManager::NewStack()
+			->SetSizeCoefficient(0.2)
+			->AddTab(PaletteTabName, ETabState::OpenedTab)
+		)
+	);
+	
+	return Layout;
 }
 
 TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetDetailsTab()
@@ -127,7 +162,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(INVTEXT("Game Flow Graph Editor"));
 	
 	// Create palette tab, responsible for displaying all available GameFlow nodes.
-	FTabSpawnerEntry& PaletteTab = InTabManager->RegisterTabSpawner("NodesTab",
+	FTabSpawnerEntry& PaletteTab = InTabManager->RegisterTabSpawner(PaletteTabName,
 		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
@@ -141,7 +176,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	PaletteTab.SetGroup(WorkspaceMenuCategory.ToSharedRef());
 	
 	// Register asset graph tab. This area will be used by developers to create GameFlow logic.
-	FTabSpawnerEntry& GraphTab = InTabManager->RegisterTabSpawner("GraphTab",
+	FTabSpawnerEntry& GraphTab = InTabManager->RegisterTabSpawner(GraphTabName,
 		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
@@ -154,7 +189,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	GraphTab.SetGroup(WorkspaceMenuCategory.ToSharedRef());
 
 	// Register details tab responsible for letting developers edit asset exposed properties.
-	FTabSpawnerEntry& DetailsTab = InTabManager->RegisterTabSpawner("DetailsTab",
+	FTabSpawnerEntry& DetailsTab = InTabManager->RegisterTabSpawner(DetailsTabName,
 		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
 		{
 			TSharedRef<SDockTab> Tab = SNew(SDockTab)
@@ -165,15 +200,31 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		}));	
 	DetailsTab.SetDisplayName(INVTEXT("Details"));
 	DetailsTab.SetGroup(WorkspaceMenuCategory.ToSharedRef());
+
+	// Create palette tab, responsible for displaying all available GameFlow nodes.
+	FTabSpawnerEntry& NodeDetailsTab = InTabManager->RegisterTabSpawner(NodeDetailsTabName,
+		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
+	{
+		TSharedRef<SDockTab> Tab = SNew(SDockTab)
+		[
+			SNew(STextBlock)
+			.Text(INVTEXT("Node Details..."))
+		];
+		return Tab;
+	}));
+	NodeDetailsTab.SetDisplayName(INVTEXT("Node Details"));
+	NodeDetailsTab.SetGroup(WorkspaceMenuCategory.ToSharedRef());
 }
 
 void GameFlowAssetToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
 	// Unregisters all tabs
 	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
-	InTabManager->UnregisterTabSpawner("GraphTab");
-	InTabManager->UnregisterTabSpawner("NodesTab");
-
+	InTabManager->UnregisterTabSpawner(GraphTabName);
+	InTabManager->UnregisterTabSpawner(DetailsTabName);
+    InTabManager->UnregisterTabSpawner(NodeDetailsTabName);
+	InTabManager->UnregisterTabSpawner(PaletteTabName);
+	
 	// Unregister editor menu and toolbar.
 	UToolMenus::UnRegisterStartupCallback(this);
 	UToolMenus::UnregisterOwner(this);
