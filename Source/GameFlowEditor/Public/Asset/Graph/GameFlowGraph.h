@@ -8,13 +8,14 @@
 #include "UObject/Object.h"
 #include "GameFlowGraph.generated.h"
 
+class GameFlowAssetToolkit;
 /**
  * Class representing a Game Flow graph.
  * The graph is responsible for managing and containing
  * nodes as well as performing operations on them.
  */
 UCLASS()
-class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
+class GAMEFLOWEDITOR_API UGameFlowGraph final : public UEdGraph
 {
 	GENERATED_BODY()
 
@@ -29,8 +30,10 @@ public:
 	
 	UGameFlowGraph();
 
-	/** Initialize the game flow graph. */
-	virtual void InitGraph();
+	// ------------- GRAPH INIT ------------------------------------
+	
+	void InitGraph();
+	void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
 	
 	/** Compile the current graph data to an asset.
 	 * @param Asset The asset compiled by the graph.
@@ -38,6 +41,8 @@ public:
 	 *         otherwise.
 	 */
 	void CompileGraph(UGameFlowAsset* Asset);
+
+	void SaveGraph();
 
 	/**
 	 * @brief Starting from a input node, compile all it's connections onto a tree.
@@ -52,4 +57,5 @@ public:
 	
 	virtual void NotifyGraphChanged() override;
 };
+
 

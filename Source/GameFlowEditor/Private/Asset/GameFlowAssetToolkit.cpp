@@ -1,11 +1,11 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
-
 #include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Kismet2/DebuggerCommands.h"
+#include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/GameFlowEditorUtils.h"
 #include "Utils/GameFlowFactory.h"
 #include "Widget/SGameFlowGraph.h"
@@ -23,18 +23,33 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 {
 	// The asset being edited.
 	Asset = CastChecked<UGameFlowAsset>(InObjects[0]);
+
+	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
+	// Mark this editor as an active by registering it inside GameFlow editor subsystem.
+	EditorSubsystem->RegisterActiveEditor(this);
 	
 	// Create the graph.
 	Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
 	
 	// Initialize all different components of the Game Flow editor.
-	TSharedRef<FTabManager::FLayout> Layout = CreateEditorLayout();
+	EditorLayout = CreateEditorLayout();
 	InitAssetEditor(EToolkitMode::Standalone, {}, "GameFlowAssetEditor",
-				   Layout, true, true, InObjects);
+				   EditorLayout->AsShared(), true, true, InObjects);
 	ConfigureInputs();
 	CreateAssetMenu();
 	CreateAssetToolbar();
-}                                           
+}
+
+bool GameFlowAssetToolkit::OnRequestClose()
+{
+	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
+	// Mark this editor as an inactive by unregistering it from GameFlow editor subsystem.
+	EditorSubsystem->UnregisterActiveEditor(this);
+
+	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
+	
+	return true;
+}
 
 TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorLayout()
 {
@@ -101,7 +116,7 @@ void GameFlowAssetToolkit::ConfigureInputs()
 
 	// Compiling input action.
 	ToolkitCommands->MapAction(GameFlowCommands.CompileAsset,
-		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::OnCompile),
+		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::TryCompiling),
 		                       FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile));
 }
 
@@ -147,11 +162,24 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 	}
 }
 
-void GameFlowAssetToolkit::OnCompile()
+void GameFlowAssetToolkit::SaveAsset_Execute()
 {
-	checkf(Graph, TEXT("Asset could not be compiled! Graph is nullptr"));
-	// Begins asset compilation.
-	Graph->CompileGraph(Asset);
+	FAssetEditorToolkit::SaveAsset_Execute();
+
+	// If there's at least one listener, broadcast save asset event.
+	if(OnAssetSavedCallback.IsBound())
+	{
+		OnAssetSavedCallback.Broadcast();
+	}
+}
+
+void GameFlowAssetToolkit::TryCompiling()
+{
+	// If there's at least one listener, broadcast asset compilation event.
+	if(OnAssetCompileCallback.IsBound())
+	{
+		OnAssetCompileCallback.Broadcast(Asset);
+	}
 }
 
 void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -231,17 +259,6 @@ void GameFlowAssetToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	FGameFlowEditorCommands::Unregister();
 }
 
-void GameFlowAssetToolkit::SaveAsset_Execute()
-{
-	FAssetEditorToolkit::SaveAsset_Execute();
-	for(const auto Node : Graph->Nodes)
-	{
-		const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
-		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
-		NodeAsset->GraphPosition.X = GraphNode->NodePosX;
-		NodeAsset->GraphPosition.Y = GraphNode->NodePosY;
-	}
-}
 
 
 

@@ -1,7 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraph.h"
+
+#include "GameFlowEditor.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+#include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/UGameFlowNodeFactory.h"
 
 class UGameFlowNode;
@@ -14,6 +17,11 @@ void UGameFlowGraph::InitGraph()
 {
 	const UEdGraphSchema* GraphSchema = GetSchema();
 
+	const UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
+	GameFlowAssetToolkit* ParentEditor = EditorSubsystem->GetActiveEditorByAssetName(GameFlowAsset->GetFName());
+	// Register to Game Flow editor commands.
+	SubscribeToEditorCallbacks(ParentEditor);
+	
 	// Create default nodes only on first-time asset editor opening.
 	if(!GameFlowAsset->bHasAlreadyBeenOpened)
     {
@@ -27,17 +35,31 @@ void UGameFlowGraph::InitGraph()
 	}
 }
 
+void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
+{
+	if(Editor != nullptr)
+	{
+		FOnAssetCompile& CompileCallback = Editor->GetAssetCompileCallback();
+		CompileCallback.AddUObject(this, &UGameFlowGraph::CompileGraph);
+    
+		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
+		SaveCallback.AddUObject(this, &UGameFlowGraph::SaveGraph);
+	}
+	else
+	{
+		UE_LOG(LogGameFlow, Warning, TEXT("Warning: %s Asset Editor could not be found! This may prevent graph from reacting to editor events/commands"),
+			*GameFlowAsset->GetName())
+	}
+}
+
 void UGameFlowGraph::CompileGraph(UGameFlowAsset* Asset)
 {
-	// Compile graph starting from each input node.
-	for(UGameFlowGraphNode* Root : RootNodes)
-	{
-		CompileInputNode(Root);
-	}
+	UE_LOG(LogGameFlow, Warning, TEXT("%s: Compilation has not yet been implemented!"), *StaticClass()->GetName());
+}
 
-	// Make sure compilation has been completed without any error.
-	// In case there was an error, try to fix it.
-	Asset->ValidateAsset();
+void UGameFlowGraph::SaveGraph()
+{
+	UE_LOG(LogGameFlow, Warning, TEXT("%s: Saving has not yet been implemented!"), *StaticClass()->GetName());
 }
 
 void UGameFlowGraph::CompileInputNode(UGameFlowGraphNode* InputNode)
