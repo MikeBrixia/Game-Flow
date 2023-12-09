@@ -34,6 +34,11 @@ FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	return NodeAsset->GetClass()->GetDisplayNameText();
 }
 
+void UGameFlowGraphNode::OnSelected()
+{
+	
+}
+
 void UGameFlowGraphNode::InitNode()
 {
 	// Vital assertions.
@@ -57,14 +62,14 @@ void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const
 UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
 {
 	const FEdGraphPinType PinType = GetGraphPinType();
-
+	
 	// When name is 'None', use a generated one.
 	if(PinName.IsEqual(EName::None))
 	{
 		// Generated pin name structure will be following. '{Prefix}_{CurrentPinsNumber};
-		// For example it could be: "Exec_2", for the second input pin.
+		// For example the second input pin could be: "Exec_2".
 		const FString PinPrefix = PinDirection == EGPD_Input? "Exec_" : "Out_";
-		FString PinNameString = FString::Printf(TEXT("%s %d"), *PinPrefix, Pins.Num());
+		FString PinNameString = FString::Printf(TEXT("%s%d"), *PinPrefix, Pins.Num());
 		PinName = FName(PinNameString);
 	}
 	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
@@ -78,8 +83,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 	     // Add input pin to node asset.
 	case EGPD_Input:
 		{
-			TArray<FName> InputPins = NodeAsset->GetInputPins();
-			InputPins.Add(PinName);
+			NodeAsset->AddInput(PinName);
 			break;
 		}
 		// Add input pin to node asset.	

@@ -7,6 +7,7 @@
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "KismetPins/SGraphPinExec.h"
+#include "Widget/Nodes/SGameFlowNodePin.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -79,12 +80,9 @@ void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
 	// Create the node pin widget. by default GameFlow will create an
 	// exec pin for the node.
-	const TSharedRef<SGraphPin> PinWidget = SNew(SGraphPinExec, Pin);
-	
-	// Make the pin image white.
-	SImage* PinImage = static_cast<SImage*>(PinWidget->GetPinImageWidget().Get());
-	PinImage->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-	
+	const TSharedRef<SGraphPin> PinWidget = SNew(SGameFlowNodePin, Pin)
+	                                         .ExecPinColor(FLinearColor::White)
+	                                         .PinDiffColor(FLinearColor::White);
 	// Add the pin to this node.
 	this->AddPin(PinWidget);
 }
@@ -104,7 +102,7 @@ FReply SGameFlowNode::OnAddOutputPin()
 void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 {
 	PinToAdd->SetOwner(SharedThis(this));
-
+	
 	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
 	const bool bAdvancedParameter = (PinObj != nullptr) && PinObj->bAdvancedView;
 	if (bAdvancedParameter)

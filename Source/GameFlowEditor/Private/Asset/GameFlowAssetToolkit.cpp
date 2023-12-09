@@ -6,7 +6,6 @@
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Utils/GameFlowEditorSubsystem.h"
-#include "Utils/GameFlowEditorUtils.h"
 #include "Utils/GameFlowFactory.h"
 #include "Widget/SGameFlowGraph.h"
 
@@ -92,7 +91,7 @@ TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorLayout()
 	return Layout;
 }
 
-TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetDetailsTab()
+TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetDetails()
 {
 	// Create and initialize details tab.
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
@@ -103,6 +102,28 @@ TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetDetailsTab()
 	// Set the object to be inspected by the details tab.
 	DetailsView->SetObjects(TArray<UObject*>{ Asset });
 
+	return DetailsView;
+}
+
+TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetNodeDetails()
+{
+	// Create and initialize details tab.
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	FDetailsViewArgs DetailsViewArgs;
+	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	const TSharedRef<IDetailsView> DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+
+	TArray<UEdGraphNode*> SelectedNodes = Graph->Nodes.FilterByPredicate([](const UEdGraphNode* Node)
+	{
+		return Node->IsSelected();
+	});
+    
+	if(SelectedNodes.Num() == 1)
+	{
+		// Set the object to be inspected by the details tab.
+		DetailsView->SetObjects(TArray<UObject*>{ SelectedNodes[0] });
+	}
+	
 	return DetailsView;
 }
 
@@ -210,6 +231,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
 		[
 			SNew(SGameFlowGraph, SharedThis(this))
+			.GraphToEdit(Graph)
 		];
 		return Tab;
 	}));
@@ -222,21 +244,21 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		{
 			TSharedRef<SDockTab> Tab = SNew(SDockTab)
 			[
-				CreateAssetDetailsTab()
+				CreateAssetDetails()
 		    ];    
 			return Tab;
 		}));	
 	DetailsTab.SetDisplayName(INVTEXT("Details"));
 	DetailsTab.SetGroup(WorkspaceMenuCategory.ToSharedRef());
 
+	NodesDetailsView = CreateAssetNodeDetails();
 	// Create palette tab, responsible for displaying all available GameFlow nodes.
 	FTabSpawnerEntry& NodeDetailsTab = InTabManager->RegisterTabSpawner(NodeDetailsTabName,
 		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
 		[
-			SNew(STextBlock)
-			.Text(INVTEXT("Node Details..."))
+			NodesDetailsView->AsShared()
 		];
 		return Tab;
 	}));

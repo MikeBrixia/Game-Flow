@@ -18,10 +18,12 @@ FConnectionDrawingPolicy* FGameFlowGraphConnectionDrawingPolicyFactory::CreateCo
 }
 
 FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID,
-	                                                               float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
+                                                                   float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
                                                                    : FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 {
-	
+	// Do not draw ending connection arrow.
+	this->ArrowImage = nullptr;
+	this->ArrowRadius = FVector2D::ZeroVector;
 }
 
 

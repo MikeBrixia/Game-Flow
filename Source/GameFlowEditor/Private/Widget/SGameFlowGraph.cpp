@@ -12,11 +12,15 @@ void SGameFlowGraph::Construct(const FArguments& InArgs, const TSharedPtr<GameFl
 {
 	// SGraphEditor init arguments.
 	SGraphEditor::FArguments Arguments;
-    Arguments._GraphToEdit = AssetEditor->GetGraph();
+    Arguments._GraphToEdit = InArgs._GraphToEdit;
 	Arguments._Appearance = GetGraphAppearanceInfo();
 	Arguments._GraphEvents = InArgs._GraphEvents;
 	Arguments._AutoExpandActionMenu = true;
 	Arguments._ShowGraphStateOverlay = true;
+
+	// Initialize Graph editor callbacks.
+	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SGameFlowGraph::OnSelectionChange);
+	
 	// Create base SGraphEditor widget.
 	SGraphEditor::Construct(Arguments);
 }
@@ -24,11 +28,12 @@ void SGameFlowGraph::Construct(const FArguments& InArgs, const TSharedPtr<GameFl
 void SGameFlowGraph::OnGraphChanged(const FEdGraphEditAction& InAction)
 {
 	SGraphEditor::OnGraphChanged(InAction);
-	bool bDirty = InAction.Graph->MarkPackageDirty();
-	if(bDirty)
-	{
-		UE_LOG(LogGameFlow, Display, TEXT("Graph package has been marked as dirty successfully"))
-	}
+}
+
+void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
+{
+	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GetCurrentGraph());
+	Graph->OnSelectionChanged(Selection);
 }
 
 FGraphAppearanceInfo SGameFlowGraph::GetGraphAppearanceInfo()

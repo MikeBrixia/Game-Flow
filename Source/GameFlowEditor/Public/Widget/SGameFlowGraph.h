@@ -12,12 +12,13 @@
 class GAMEFLOWEDITOR_API SGameFlowGraph : public SGraphEditor
 {
 public:
-
+	
 	SLATE_BEGIN_ARGS(SGameFlowGraph)
 		{
 		   
 		}
 	   SLATE_ARGUMENT(FGraphEditorEvents, GraphEvents)
+	   SLATE_ARGUMENT(UGameFlowGraph*, GraphToEdit)
 	SLATE_END_ARGS()
     
 	/** Constructs this widget with InArgs */
@@ -25,9 +26,10 @@ public:
 
 protected:
 	virtual void OnGraphChanged(const FEdGraphEditAction& InAction) override;
+    virtual void OnSelectionChange(const TSet<UObject*>& Selection);
 
 private:
 	/* Get the appearance of the Game Flow graph. */
-	FGraphAppearanceInfo GetGraphAppearanceInfo();
+	virtual FGraphAppearanceInfo GetGraphAppearanceInfo();
 };
 

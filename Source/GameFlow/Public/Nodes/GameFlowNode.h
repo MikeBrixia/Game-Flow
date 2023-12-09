@@ -26,19 +26,19 @@ public:
 	FName TypeName;
 	
 protected:
-	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+	UPROPERTY(EditAnywhere, EditFixedSize, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
 	
 	/* All the possible output pins for this node. */
-	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+	UPROPERTY(EditAnywhere, EditFixedSize, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
 
 	/* True if user should be able to add more input pins than defaults by clicking on a '+' icon. */
-    UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+    UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     bool bCanAddInputPin;
 
 	/* True if user should be able to add more output pins than defaults by clicking on a '+' icon. */
-	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
 
 #endif
@@ -50,7 +50,7 @@ private:
 	TMap<FName, UGameFlowNode*> Outputs;
 
 public:
-
+	
 	UGameFlowNode();
 	
 	/* Execute GameFlow blueprint. */
@@ -65,8 +65,8 @@ public:
 	//-------- Functions with return types cannot be declared PURE_VIRTUAL(),
     //-------- for this reason we need to create empty return type functions.
 	
-	FORCEINLINE virtual TArray<FName> GetInputPins() const { return InputPins; }
-	FORCEINLINE virtual TArray<FName> GetOutputPins() const { return OutputPins; }
+	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
+	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
 	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
     FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
@@ -74,18 +74,21 @@ public:
 	//--------
 	
 #if WITH_EDITORONLY_DATA
+
+	void AddInput(const FName PinName);
+	void RemoveInputPin(const FName PinName);
 	/**
 	 * @brief Connect this node to another graph node.
 	 * @param PinName The name of the output pin which connects this node, to the next.
 	 * @param Output The node to connect to.
 	 */
-	virtual void AddOutput(const FName& PinName, UGameFlowNode* Output);
+	void AddOutput(const FName& PinName, UGameFlowNode* Output);
 
 	/**
 	 * @brief Disconnect this node from the other node connected through the supplied pin.
 	 * @param PinName The name of the pin which holds the connection.
 	 */
-	virtual void RemoveOutput(const FName& PinName);
+	void RemoveOutput(const FName& PinName);
 
 	/**
 	 * @brief Get all the registered Game Flow node types

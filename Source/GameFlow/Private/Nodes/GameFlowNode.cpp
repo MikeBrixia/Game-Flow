@@ -16,15 +16,36 @@ void UGameFlowNode::OnFinishExecute_Implementation()
 }
 
 #if WITH_EDITORONLY_DATA
+void UGameFlowNode::AddInput(const FName PinName)
+{
+	// Do we have the permission to add new input pins to this node?
+	if(CanAddInputPin() && !PinName.IsEqual(EName::None))
+	{
+		InputPins.Add(PinName);
+	}
+}
+
+void UGameFlowNode::RemoveInputPin(const FName PinName)
+{
+	InputPins.Remove(PinName);
+}
+
 void UGameFlowNode::AddOutput(const FName& PinName, UGameFlowNode* Output)
 {
-	UE_LOG(LogTemp, Warning, TEXT("The node of type: %s cannot have any output nodes, skipping instruction."), *StaticClass()->GetName());
+	// Do we have the permission to add output pins to this node?
+	if(CanAddOutputPin() && !PinName.IsEqual("None"))
+	{
+		OutputPins.Add(PinName);
+		Outputs.Add(PinName);
+	}
 }
 
 void UGameFlowNode::RemoveOutput(const FName& PinName)
 {
-	UE_LOG(LogTemp, Warning, TEXT("The node of type: %s cannot have any output nodes, skipping instruction."), *StaticClass()->GetName());
+	OutputPins.Remove(PinName);
+	Outputs.Remove(PinName);
 }
+
 #endif
 
 void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)

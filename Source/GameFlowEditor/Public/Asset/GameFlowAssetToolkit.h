@@ -20,6 +20,7 @@ public:
 	/* Asset inspected by this editor. */
 	TObjectPtr<UGameFlowAsset> Asset;
 	TObjectPtr<UGameFlowGraph> Graph;
+	TSharedPtr<IDetailsView> NodesDetailsView;
 	
 	FORCEINLINE UObject* GetAsset() const { return Asset; }
 	FORCEINLINE UGameFlowGraph* GetGraph() const { return Graph; }
@@ -61,8 +62,9 @@ protected:
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager) override;
 	virtual TSharedRef<FTabManager::FLayout> CreateEditorLayout();
-	TSharedRef<IDetailsView> CreateAssetDetailsTab();
-
+	TSharedRef<IDetailsView> CreateAssetDetails();
+    TSharedRef<IDetailsView> CreateAssetNodeDetails();
+	
 public:
 	FORCEINLINE virtual FString GetWorldCentricTabPrefix() const override { return "Game Flow Asset"; }
 	FORCEINLINE virtual FLinearColor GetWorldCentricTabColorScale() const override { return FLinearColor::Yellow; }

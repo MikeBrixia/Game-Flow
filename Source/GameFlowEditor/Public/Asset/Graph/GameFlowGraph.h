@@ -6,21 +6,27 @@
 #include "GameFlowAsset.h"
 #include "Nodes/GameFlowGraphNode.h"
 #include "UObject/Object.h"
+#include "Utils/GameFlowEditorSubsystem.h"
 #include "GameFlowGraph.generated.h"
 
 class GameFlowAssetToolkit;
+
 /**
  * Class representing a Game Flow graph.
  * The graph is responsible for managing and containing
  * nodes as well as performing operations on them.
  */
 UCLASS()
-class GAMEFLOWEDITOR_API UGameFlowGraph final : public UEdGraph
+class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
 {
 	GENERATED_BODY()
 
 public:
-
+	
+	UGameFlowGraph();
+	
+	// -------------- GRAPH METADATA --------------------------------------------
+	
 	/* Asset currently edited by this graph. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowAsset> GameFlowAsset;
@@ -28,34 +34,52 @@ public:
 	UPROPERTY()
 	TArray<UGameFlowGraphNode*> RootNodes;
 	
-	UGameFlowGraph();
-
-	// ------------- GRAPH INIT ------------------------------------
+private:
+	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 	
+	// ------------- GRAPH INIT -----------------------------------------------
+
+public:
 	void InitGraph();
-	void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
-	
-	/** Compile the current graph data to an asset.
-	 * @param Asset The asset compiled by the graph.
-	 * @return True if asset was compiled successfully, false
-	 *         otherwise.
-	 */
-	void CompileGraph(UGameFlowAsset* Asset);
+	virtual void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
 
-	void SaveGraph();
+	// -------------- GRAPH EVENTS ---------------------------------------------
+	
+	/**
+	 * Compile Game Flow graph.
+	 * @param Asset The asset compiled by the graph.
+	 */
+	void OnGraphCompile(UGameFlowAsset* Asset);
 
 	/**
-	 * @brief Starting from a input node, compile all it's connections onto a tree.
-	 * @param InputNode The node from which the compilation will start.
+	 * @brief Save all changes applied to the graph.
 	 */
-	void CompileInputNode(UGameFlowGraphNode* InputNode);
-
+	void OnSaveGraph();
+    
+	virtual void NotifyGraphChanged() override;
+	virtual void OnSelectionChanged(const TSet<UObject*>& Selection);
+	
+	// -------------- GRAPH BUILDER  ---------------------------------------------------
+private:
+	
+	/**
+	 * @brief Compile graph starting from all inputs
+	 * @return True if the entire graph was compiled, false otherwise.
+	 */
+	bool CompileGraph();
+	
+	/**
+	 * @brief Start compiling graph from a specified input node
+	 * @param InputNode Input which represents a root of the network.
+	 */
+	void CompileGraphFromInputNode(UGameFlowGraphNode* InputNode);
+    
 	/**
 	 * @brief Rebuild graph using GameFlow asset data.
 	 */
 	void RebuildGraphFromAsset();
-	
-	virtual void NotifyGraphChanged() override;
+
+	// ----------------------------------------------------------------------------------
 };
 
 

@@ -34,6 +34,7 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+	virtual void OnSelected();
 	
 	/* Get the asset contained inside this graph node. */
 	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }

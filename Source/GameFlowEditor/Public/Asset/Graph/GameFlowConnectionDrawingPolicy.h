@@ -26,7 +26,6 @@ public:
 class FGameFlowConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 public:
-
 	FGameFlowConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor,
 	                                 const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements);
 };

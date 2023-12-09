@@ -16,11 +16,11 @@ UGameFlowGraph::UGameFlowGraph()
 void UGameFlowGraph::InitGraph()
 {
 	const UEdGraphSchema* GraphSchema = GetSchema();
-
-	const UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
-	GameFlowAssetToolkit* ParentEditor = EditorSubsystem->GetActiveEditorByAssetName(GameFlowAsset->GetFName());
+	
+	const UGameFlowEditorSubsystem* GameFlowEditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
+	GameFlowEditor = GameFlowEditorSubsystem->GetActiveEditorByAssetName(GameFlowAsset->GetFName());
 	// Register to Game Flow editor commands.
-	SubscribeToEditorCallbacks(ParentEditor);
+	SubscribeToEditorCallbacks(GameFlowEditor);
 	
 	// Create default nodes only on first-time asset editor opening.
 	if(!GameFlowAsset->bHasAlreadyBeenOpened)
@@ -40,10 +40,10 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 	if(Editor != nullptr)
 	{
 		FOnAssetCompile& CompileCallback = Editor->GetAssetCompileCallback();
-		CompileCallback.AddUObject(this, &UGameFlowGraph::CompileGraph);
+		CompileCallback.AddUObject(this, &UGameFlowGraph::OnGraphCompile);
     
 		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
-		SaveCallback.AddUObject(this, &UGameFlowGraph::SaveGraph);
+		SaveCallback.AddUObject(this, &UGameFlowGraph::OnSaveGraph);
 	}
 	else
 	{
@@ -52,17 +52,22 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 	}
 }
 
-void UGameFlowGraph::CompileGraph(UGameFlowAsset* Asset)
+void UGameFlowGraph::OnGraphCompile(UGameFlowAsset* Asset)
 {
 	UE_LOG(LogGameFlow, Warning, TEXT("%s: Compilation has not yet been implemented!"), *StaticClass()->GetName());
 }
 
-void UGameFlowGraph::SaveGraph()
+void UGameFlowGraph::OnSaveGraph()
 {
 	UE_LOG(LogGameFlow, Warning, TEXT("%s: Saving has not yet been implemented!"), *StaticClass()->GetName());
 }
 
-void UGameFlowGraph::CompileInputNode(UGameFlowGraphNode* InputNode)
+bool UGameFlowGraph::CompileGraph()
+{
+	return true;
+}
+
+void UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
 {
 	// Start compiling from a graph input node.
 	TQueue<UGameFlowGraphNode*> ToCompile;
@@ -111,4 +116,22 @@ void UGameFlowGraph::NotifyGraphChanged()
 {
 	Super::NotifyGraphChanged();
 }
+
+void UGameFlowGraph::OnSelectionChanged(const TSet<UObject*>& Selection)
+{
+	// Array of GameFlow assets contained inside the selected graph nodes.
+	TArray<UObject*> SelectedNodes;
+
+	// Notify Graph nodes that they have been selected.
+	for(UObject* SelectedObject : Selection)
+	{
+		UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(SelectedObject);
+		GraphNode->OnSelected();
+		SelectedNodes.Add(GraphNode->GetNodeAsset());
+	}
+
+	// Inspect selected nodes inside editor nodes details view.
+	GameFlowEditor->NodesDetailsView->SetObjects(SelectedNodes);
+}
+
 
