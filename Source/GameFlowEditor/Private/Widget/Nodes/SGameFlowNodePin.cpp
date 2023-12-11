@@ -3,6 +3,7 @@
 
 #include "Widget/Nodes/SGameFlowNodePin.h"
 
+#include "GameFlowEditor.h"
 #include "SlateOptMacros.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -22,8 +23,7 @@ void SGameFlowNodePin::Construct(const FArguments& InArgs, UEdGraphPin* Pin)
 	
 	FString PinName = Pin->PinName.ToString();
 	// Initialize pin text.
-	PinName = PinName.Contains("Exec") || PinName.Contains("Out")? "" : PinName;
-	SetToolTipText(FText::FromString(PinName));
+	this->bShowLabel = !(PinName.Contains("Exec") || PinName.Contains("Out"));
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

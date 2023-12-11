@@ -26,7 +26,7 @@ ULogicalGameFlowNode_AND::ULogicalGameFlowNode_AND()
 void ULogicalGameFlowNode_AND::Execute_Implementation(const FName& PinName)
 {
 	Super::Execute_Implementation(PinName);
-
+	
 	bool bCanPass = false;
 	// Check if all pins have been activated.
 	for(const bool& ActivePort : ConditionsPorts)
