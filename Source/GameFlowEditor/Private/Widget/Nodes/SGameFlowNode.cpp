@@ -110,9 +110,11 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 		PinToAdd->SetVisibility( TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced) );
 	}
 
+	int LastPinBoxSlotIndex;
 	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
 	{
-		LeftNodeBox->InsertSlot(LeftNodeBox->NumSlots() - 1)
+		LastPinBoxSlotIndex = LeftNodeBox->NumSlots();
+		LeftNodeBox->InsertSlot(LastPinBoxSlotIndex)
 			.AutoHeight()
 			.HAlign(HAlign_Left)
 			.VAlign(VAlign_Center)
@@ -124,7 +126,8 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	}
 	else // Direction == EEdGraphPinDirection::EGPD_Output
 		{
-		RightNodeBox->InsertSlot(RightNodeBox->NumSlots() - 1)
+		LastPinBoxSlotIndex = RightNodeBox->NumSlots();
+		RightNodeBox->InsertSlot(LastPinBoxSlotIndex)
 			.AutoHeight()
 			.HAlign(HAlign_Right)
 			.VAlign(VAlign_Center)
