@@ -17,7 +17,7 @@ void SGameFlowGraph::Construct(const FArguments& InArgs, const TSharedPtr<GameFl
 	Arguments._GraphEvents = InArgs._GraphEvents;
 	Arguments._AutoExpandActionMenu = true;
 	Arguments._ShowGraphStateOverlay = true;
-
+	
 	// Initialize Graph editor callbacks.
 	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SGameFlowGraph::OnSelectionChange);
 	

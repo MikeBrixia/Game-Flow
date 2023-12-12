@@ -22,7 +22,7 @@ void SGameFlowNodePin::Construct(const FArguments& InArgs, UEdGraphPin* Pin)
 	PinImageCasted->SetColorAndOpacity(InArgs._ExecPinColor);
 	
 	FString PinName = Pin->PinName.ToString();
-	// Initialize pin text.
+	// Show only labels who do not contain the 'Exec' or 'out' Words.
 	this->bShowLabel = !(PinName.Contains("Exec") || PinName.Contains("Out"));
 }
 

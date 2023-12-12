@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+#include "KismetPins/SGraphPinExec.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widgets/SCompoundWidget.h"
 
@@ -37,20 +38,30 @@ protected:
 	TSharedPtr<SBorder> TitleAreaWidget;
 	
 	// -------------------- Widget pins --------------------------------
-
+	
 	TSharedPtr<SButton> AddInputPinButton;
 	TSharedPtr<SButton> AddOutputPinButton;
 	
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
-	
-	virtual FReply OnAddInputPin();
-	virtual FReply OnAddOutputPin();
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	
+	/**
+	 * @brief Called when an input pin gets created using the InputSideAddButton
+	 * @return Event handler.
+	 */
+	virtual FReply OnAddInputPin();
+
+	/**
+	 * @brief Called when an output pin gets created using the InputSideAddButton
+	 * @return Event handler.
+	 */
+	
+	virtual FReply OnAddOutputPin();
+	
 private:
-	void CreateGameFlowWidgetPin(EEdGraphPinDirection PinDirection);
+	void AddButton_CreatePin(EEdGraphPinDirection PinDirection);
 	
 	// ----------------- Widget styling ----------------------------------
 
@@ -72,4 +83,6 @@ private:
 
 	// ---------------------------------------------------
 };
+
+
 

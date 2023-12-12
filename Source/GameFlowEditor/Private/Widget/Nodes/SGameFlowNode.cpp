@@ -17,7 +17,7 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Initialize node widget arguments.
 	this->GraphNode = InArgs._Node;
 	this->TitleText = InArgs._TitleText;
-   
+     
 	// Use UCLASS display name attribute value as node title.
 	if(InlineEditableText != nullptr)
 	{
@@ -87,14 +87,24 @@ void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 
 FReply SGameFlowNode::OnAddInputPin()
 {
-	CreateGameFlowWidgetPin(EGPD_Input);
+	AddButton_CreatePin(EGPD_Input);
 	return FReply::Handled();
 }
 
 FReply SGameFlowNode::OnAddOutputPin()
 {
-	CreateGameFlowWidgetPin(EGPD_Output);
+	AddButton_CreatePin(EGPD_Output);
 	return FReply::Handled();
+}
+
+void SGameFlowNode::AddButton_CreatePin(EEdGraphPinDirection PinDirection)
+{
+	// Create new pin for this node.
+	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
+	UEdGraphPin* NewPin = GameFlowGraphNode->CreateNodePin(PinDirection);
+	
+	// Create new pin widget.
+	CreateStandardPinWidget(NewPin);
 }
 
 void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
@@ -107,11 +117,13 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	{
 		PinToAdd->SetVisibility( TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced) );
 	}
-
+	
 	int LastPinBoxSlotIndex;
-	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
+	const EEdGraphPinDirection PinDirection = PinToAdd->GetDirection();
+	
+	if (PinDirection == EGPD_Input)
 	{
-		LastPinBoxSlotIndex = LeftNodeBox->NumSlots();
+		LastPinBoxSlotIndex = InputPins.Num();
 		LeftNodeBox->InsertSlot(LastPinBoxSlotIndex)
 			.AutoHeight()
 			.HAlign(HAlign_Left)
@@ -122,9 +134,9 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 		];
 		InputPins.Add(PinToAdd);
 	}
-	else // Direction == EEdGraphPinDirection::EGPD_Output
-		{
-		LastPinBoxSlotIndex = RightNodeBox->NumSlots();
+	else if(PinDirection == EGPD_Output)
+	{
+		LastPinBoxSlotIndex = OutputPins.Num();
 		RightNodeBox->InsertSlot(LastPinBoxSlotIndex)
 			.AutoHeight()
 			.HAlign(HAlign_Right)
@@ -134,14 +146,7 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 			PinToAdd
 		];
 		OutputPins.Add(PinToAdd);
-		}
-}
-
-void SGameFlowNode::CreateGameFlowWidgetPin(EEdGraphPinDirection PinDirection)
-{
-	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
-	UEdGraphPin* NewPin = GameFlowGraphNode->CreateNodePin(PinDirection);
-	CreateStandardPinWidget(NewPin);
+	}
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

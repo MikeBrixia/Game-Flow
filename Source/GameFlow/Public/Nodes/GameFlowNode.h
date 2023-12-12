@@ -61,6 +61,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void OnFinishExecute();
 	virtual void OnFinishExecute_Implementation();
+
 	
 	//-------- Functions with return types cannot be declared PURE_VIRTUAL(),
     //-------- for this reason we need to create empty return type functions.
@@ -72,11 +73,39 @@ public:
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
 	
 	//--------
-	
+
+protected:
+	/**
+	 * @brief Call this function to trigger an output and execute the next node.
+	 * @param OutputPin Name of the pin to which the next node has been mapped.
+	 * @param bFinish If true, this node will be the only output and node will be unloaded.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Game Flow")
+	void FinishExecute(FName OutputPin, bool bFinish);
+
 #if WITH_EDITORONLY_DATA
 
+public:
+	
+	/**
+	 * @brief Generate a brand new and node-unique name for a node pin added with an AddPinButton.
+	 * @return The generated FName.
+	 */
+	UFUNCTION(BlueprintNativeEvent)
+	virtual FName GenerateAddPinName(int PinDirection);
+	
+	/**
+	 * @brief Add a new output pin to this node.
+	 * @param PinName The nome of the pin to create.
+	 */
 	void AddInput(const FName PinName);
+
+	/**
+	 * @brief Remove an input pin from this node.
+	 * @param PinName The name of the pin to remove.
+	 */
 	void RemoveInputPin(const FName PinName);
+	
 	/**
 	 * @brief Connect this node to another graph node.
 	 * @param PinName The name of the output pin which connects this node, to the next.
@@ -97,15 +126,5 @@ public:
 	UFUNCTION(CallInEditor)
     FORCEINLINE TArray<FName> GetNodeTypeOptions() const { return UGameFlowSettings::Get()->Options; }
 #endif
-	
-protected:
-	
-	/**
-	 * @brief Call this function to trigger an output and execute the next node.
-	 * @param OutputPin Name of the pin to which the next node has been mapped.
-	 * @param bFinish If true, this node will be the only output and node will be unloaded.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void FinishExecute(FName OutputPin, bool bFinish);
 };
 

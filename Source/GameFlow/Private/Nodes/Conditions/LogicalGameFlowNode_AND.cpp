@@ -52,3 +52,22 @@ void ULogicalGameFlowNode_AND::OnFinishExecute_Implementation()
 		ConditionsPorts[i] = false;
 	}
 }
+
+FName ULogicalGameFlowNode_AND::GenerateAddPinName(EEdGraphPinDirection PinDirection)
+{
+	FString Name;
+	switch(PinDirection)
+	{
+	default: break;
+
+	case EGPD_Input:
+		Name = FString::FromInt(InputPins.Num() + 1);
+		break;
+
+	case EGPD_Output:
+		Name = FString::FromInt(OutputPins.Num() + 1);
+		break;
+	}
+
+	return FName(Name);
+}

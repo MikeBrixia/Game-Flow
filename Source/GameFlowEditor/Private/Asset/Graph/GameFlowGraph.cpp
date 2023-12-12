@@ -54,7 +54,7 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 
 void UGameFlowGraph::OnGraphCompile(UGameFlowAsset* Asset)
 {
-	UE_LOG(LogGameFlow, Warning, TEXT("%s: Compilation has not yet been implemented!"), *StaticClass()->GetName());
+	CompileGraph();
 }
 
 void UGameFlowGraph::OnSaveGraph()
@@ -64,11 +64,18 @@ void UGameFlowGraph::OnSaveGraph()
 
 bool UGameFlowGraph::CompileGraph()
 {
+	for(UGameFlowGraphNode* Node : RootNodes)
+	{
+		UE_LOG(LogGameFlow, Display, TEXT("Compiling root: %s"), *Node->GetName())
+		CompileGraphFromInputNode(Node);
+	}
 	return true;
 }
 
-void UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
+bool UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
 {
+	bool bIsCompilationSuccessful = true;
+	
 	// Start compiling from a graph input node.
 	TQueue<UGameFlowGraphNode*> ToCompile;
 	ToCompile.Enqueue(InputNode);
@@ -82,6 +89,9 @@ void UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
 		
 		for(const UEdGraphPin* Pin : CurrentNode->Pins)
 		{
+			// If this pin does not have any connection, ignore it.
+			if(!Pin->HasAnyConnections()) continue;
+			
 			// Check the links for all output pins.
 			if(Pin->Direction == EGPD_Output)
 			{
@@ -91,13 +101,13 @@ void UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
 				// Update node asset with graph connections.
 				auto Outputs = SourceNode->GetOutputPins();
 				SourceNode->AddOutput(Pin->PinName, DestinationNode->GetNodeAsset());
-				
 				// Put the destination node inside the queue, it's the next
 				// we're going to compile.
 				ToCompile.Enqueue(DestinationNode);
 			}
 		}
 	}
+	return bIsCompilationSuccessful;
 }
 
 void UGameFlowGraph::RebuildGraphFromAsset()
@@ -108,6 +118,11 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 		if(Pair.Value != nullptr)
 		{
 			UGameFlowGraphNode* GraphNode = UGameFlowNodeFactory::CreateGraphNode(Node, this);
+			if(Node->IsA(UGameFlowNode_Input::StaticClass()))
+			{
+				UE_LOG(LogGameFlow, Display, TEXT("%s is a Input node"), *Node->GetName())
+				RootNodes.Add(GraphNode);
+			}
 		}
 	}
 }

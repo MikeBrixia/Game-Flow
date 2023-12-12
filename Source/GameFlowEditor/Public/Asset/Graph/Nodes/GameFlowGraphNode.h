@@ -34,6 +34,8 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+	virtual bool CanUserDeleteNode() const override;
+	
 	virtual void OnSelected();
 	
 	/* Get the asset contained inside this graph node. */
@@ -58,7 +60,6 @@ public:
 	 * @param PinNames An array containing all the pin names.
 	 */
 	void CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames);
-
 	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None);
 protected:
 	

@@ -8,7 +8,7 @@
 #include "LogicalGameFlowNode_AND.generated.h"
 
 /**
- * Logical AND boolean operator node.
+ * Game Flow logical AND boolean operator.
  */
 UCLASS(DisplayName="AND")
 class GAMEFLOW_API ULogicalGameFlowNode_AND : public UGameFlowNode
@@ -20,7 +20,7 @@ public:
 	
 	virtual void Execute_Implementation(const FName& PinName) override;
 	virtual void OnFinishExecute_Implementation() override;
-	
+	virtual FName GenerateAddPinName(EEdGraphPinDirection PinDirection) override;
 private:
 	
 	/* All the ports which should evaluate to true for the AND operator to execute it's output. */

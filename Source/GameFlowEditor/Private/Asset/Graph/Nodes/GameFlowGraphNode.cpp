@@ -50,8 +50,15 @@ void UGameFlowGraphNode::InitNode()
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 }
 
+bool UGameFlowGraphNode::CanUserDeleteNode() const
+{
+	const FText NodeDisplayName = NodeAsset->GetClass()->GetDisplayNameText();
+	// User will be able to delete all types of nodes except 'Start' and 'Finish'
+	return !(NodeDisplayName.EqualTo(INVTEXT("Start")) || NodeDisplayName.EqualTo(INVTEXT("Finish")));
+}
+
 void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection,
-	const TArray<FName> PinNames)
+                                        const TArray<FName> PinNames)
 {
 	// Create all input pins.
 	for(const FName& Pin : PinNames)
@@ -68,11 +75,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 	// When name is 'None', use a generated one.
 	if(PinName.IsEqual(EName::None))
 	{
-		// Generated pin name structure will be following. '{Prefix}_{CurrentPinsNumber};
-		// For example the second input pin could be: "Exec_2".
-		const FString PinPrefix = PinDirection == EGPD_Input? "Exec_" : "Out_";
-		FString PinNameString = FString::Printf(TEXT("%s%d"), *PinPrefix, Pins.Num());
-		PinName = FName(PinNameString);
+		PinName = NodeAsset->GenerateAddPinName(PinDirection);
 	}
 	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
 

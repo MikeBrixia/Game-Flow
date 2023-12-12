@@ -72,7 +72,7 @@ private:
 	 * @brief Start compiling graph from a specified input node
 	 * @param InputNode Input which represents a root of the network.
 	 */
-	void CompileGraphFromInputNode(UGameFlowGraphNode* InputNode);
+	bool CompileGraphFromInputNode(UGameFlowGraphNode* InputNode);
     
 	/**
 	 * @brief Rebuild graph using GameFlow asset data.
