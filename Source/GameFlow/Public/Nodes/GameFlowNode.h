@@ -7,6 +7,13 @@
 #include "UObject/Interface.h"
 #include "GameFlowNode.generated.h"
 
+#if WITH_EDITORONLY_DATA
+
+DECLARE_MULTICAST_DELEGATE(FOnNodePinNameChange)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNodeTypeChange, const FName&)
+
+#endif
+
 /* Base interface for all GameFlow nodes. */
 UCLASS(Abstract, NotBlueprintable)
 class GAMEFLOW_API UGameFlowNode : public UObject
@@ -16,6 +23,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	GENERATED_BODY()
 
 #if WITH_EDITORONLY_DATA
+	
 public:
 	/* The last tracked position of the node inside the graph.*/
 	UPROPERTY()
@@ -24,6 +32,11 @@ public:
 	/* The type of this node(Latent, Event ecc.)*/
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
+
+	/* Callback for when one of this node pins name gets changed. */
+	FOnNodePinNameChange OnNodePinNameChange;
+	/* Callback for when the node type gets changed. */
+	FOnNodeTypeChange OnNodeTypeChange;
 	
 protected:
 	UPROPERTY(EditAnywhere, EditFixedSize, Category="Game Flow|I/O")
@@ -57,24 +70,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void Execute(const FName& PinName);
 	virtual void Execute_Implementation(const FName& PinName);
-
+	
+protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void OnFinishExecute();
 	virtual void OnFinishExecute_Implementation();
-
 	
-	//-------- Functions with return types cannot be declared PURE_VIRTUAL(),
-    //-------- for this reason we need to create empty return type functions.
-	
-	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
-	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
-	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
-    FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
-	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
-	
-	//--------
-
-protected:
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
 	 * @param OutputPin Name of the pin to which the next node has been mapped.
@@ -82,18 +83,33 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
 	void FinishExecute(FName OutputPin, bool bFinish);
-
-#if WITH_EDITORONLY_DATA
-
+	
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
 public:
 	
+	// ------------------------- PINS ---------------------------------------------------------
+	
+#if WITH_EDITOR
+	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
+	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
+	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
+	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
+#endif
+	
+	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
+	
+	//-------------------------------------------------------------------------------------------
+
+#if WITH_EDITOR
 	/**
 	 * @brief Generate a brand new and node-unique name for a node pin added with an AddPinButton.
+	 * @param PinDirection an integer representing pin direction: 0 is input, 1 is output and 2 is max;
+	 *                     values greater then 3 are undefined and can be used to implement custom pin directions.
 	 * @return The generated FName.
 	 */
-	UFUNCTION(BlueprintNativeEvent)
-	virtual FName GenerateAddPinName(int PinDirection);
-	
+	virtual FName GenerateAddPinName(uint8 PinDirection);
+
 	/**
 	 * @brief Add a new output pin to this node.
 	 * @param PinName The nome of the pin to create.
@@ -127,4 +143,5 @@ public:
     FORCEINLINE TArray<FName> GetNodeTypeOptions() const { return UGameFlowSettings::Get()->Options; }
 #endif
 };
+
 

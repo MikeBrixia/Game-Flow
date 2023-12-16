@@ -34,7 +34,7 @@ void ULogicalGameFlowNode_AND::Execute_Implementation(const FName& PinName)
 		bCanPass = ActivePort;
 		if (!ActivePort) break;
 	}
-
+	
 	// If all pins have been activated, finish execution
 	// and trigger next node.
 	if(bCanPass)
@@ -53,21 +53,26 @@ void ULogicalGameFlowNode_AND::OnFinishExecute_Implementation()
 	}
 }
 
-FName ULogicalGameFlowNode_AND::GenerateAddPinName(EEdGraphPinDirection PinDirection)
+#if WITH_EDITOR
+
+FName ULogicalGameFlowNode_AND::GenerateAddPinName(uint8 PinDirection)
 {
 	FString Name;
 	switch(PinDirection)
 	{
 	default: break;
 
-	case EGPD_Input:
+		// Input case
+	case 0:
 		Name = FString::FromInt(InputPins.Num() + 1);
 		break;
-
-	case EGPD_Output:
+		// Output case
+	case 1:
 		Name = FString::FromInt(OutputPins.Num() + 1);
 		break;
 	}
 
 	return FName(Name);
 }
+
+#endif

@@ -3,6 +3,7 @@
 #include "Asset/Graph/GameFlowGraph.h"
 
 #include "GameFlowEditor.h"
+#include "GraphEditAction.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/UGameFlowNodeFactory.h"
@@ -60,6 +61,45 @@ void UGameFlowGraph::OnGraphCompile(UGameFlowAsset* Asset)
 void UGameFlowGraph::OnSaveGraph()
 {
 	UE_LOG(LogGameFlow, Warning, TEXT("%s: Saving has not yet been implemented!"), *StaticClass()->GetName());
+}
+
+void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
+{
+	Super::NotifyGraphChanged(Action);
+	
+	switch(Action.Action)
+	{
+		case GRAPHACTION_SelectNode:
+			{
+				// Array of selected nodes assets.
+				TArray<UObject*> SelectedNodes;
+
+				// Build selected nodes assets array.
+				for(const UObject* SelectedObject : Action.Nodes)
+				{
+					const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(SelectedObject);
+					SelectedNodes.Add(GraphNode->GetNodeAsset());
+				}
+		        
+				// Inspect selected nodes inside editor nodes details view.
+				GameFlowEditor->NodesDetailsView->SetObjects(SelectedNodes);
+				break;
+			}
+            
+		case GRAPHACTION_RemoveNode:
+			{
+				const TSet<const UGameFlowGraphNode*> RemovedNodes = reinterpret_cast<const TSet<const UGameFlowGraphNode*>&>(Action.Nodes);
+				for(const UGameFlowGraphNode* RemovedNode : RemovedNodes)
+				{
+					const UGameFlowNode* NodeAsset = RemovedNode->GetNodeAsset();
+					GameFlowAsset->Nodes.Remove(NodeAsset->GetUniqueID());
+				}
+				break;
+			}
+             
+		default: break;
+	}
+
 }
 
 bool UGameFlowGraph::CompileGraph()
@@ -127,26 +167,6 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	}
 }
 
-void UGameFlowGraph::NotifyGraphChanged()
-{
-	Super::NotifyGraphChanged();
-}
 
-void UGameFlowGraph::OnSelectionChanged(const TSet<UObject*>& Selection)
-{
-	// Array of GameFlow assets contained inside the selected graph nodes.
-	TArray<UObject*> SelectedNodes;
-
-	// Notify Graph nodes that they have been selected.
-	for(UObject* SelectedObject : Selection)
-	{
-		UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(SelectedObject);
-		GraphNode->OnSelected();
-		SelectedNodes.Add(GraphNode->GetNodeAsset());
-	}
-
-	// Inspect selected nodes inside editor nodes details view.
-	GameFlowEditor->NodesDetailsView->SetObjects(SelectedNodes);
-}
 
 

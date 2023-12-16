@@ -17,7 +17,14 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Initialize node widget arguments.
 	this->GraphNode = InArgs._Node;
 	this->TitleText = InArgs._TitleText;
-     
+	
+	UGameFlowNode* NodeAsset = CastChecked<UGameFlowGraphNode>(GraphNode)->GetNodeAsset();
+	NodeAsset->OnNodePinNameChange.AddLambda([=]()
+	{
+		GraphNode->ReconstructNode();
+		Construct(InArgs);
+	});
+	
 	// Use UCLASS display name attribute value as node title.
 	if(InlineEditableText != nullptr)
 	{

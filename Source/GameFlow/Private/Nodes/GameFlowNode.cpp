@@ -5,6 +5,7 @@
 
 UGameFlowNode::UGameFlowNode()
 {
+	TypeName = "Event";
 }
 
 void UGameFlowNode::Execute_Implementation(const FName& PinName)
@@ -13,6 +14,25 @@ void UGameFlowNode::Execute_Implementation(const FName& PinName)
 
 void UGameFlowNode::OnFinishExecute_Implementation()
 {
+}
+
+void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	UObject::PostEditChangeProperty(PropertyChangedEvent);
+	
+	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+	
+	const bool bIsPinContainerProperty = PropertyName.IsEqual("InputPins") || PropertyName.IsEqual("OutputPins");
+	// If we've modified an input pin, broadcast pin name changed event.
+	if(OnNodePinNameChange.IsBound() && bIsPinContainerProperty)
+	{
+		OnNodePinNameChange.Broadcast();
+	}
+	// If typename has been modified, broadcast node typename changed event.
+	else if(OnNodeTypeChange.IsBound() && PropertyName.IsEqual("TypeName"))
+	{
+		OnNodeTypeChange.Broadcast(TypeName);
+	}
 }
 
 void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
@@ -33,20 +53,21 @@ void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
 	NextNode->Execute(OutputPin);
 }
 
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 
-FName UGameFlowNode::GenerateAddPinName_Implementation(int PinDirection)
+FName UGameFlowNode::GenerateAddPinName(uint8 PinDirection)
 {
 	FString PinName;
 	switch(PinDirection)
 	{
 	default: break;
 
-	case EGPD_Input:
+		// Input case
+	case 0:
 		PinName = FString::Printf(TEXT("NewPin_%d"), InputPins.Num() + 1);
 		break;
-
-	case EGPD_Output:
+		// Output case
+	case 1:
 		PinName = FString::Printf(TEXT("NewPin_%d"), OutputPins.Num() + 1);
 		break;
 	}

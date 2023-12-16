@@ -36,14 +36,10 @@ public:
 	
 private:
 	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
-	
-	// ------------- GRAPH INIT -----------------------------------------------
 
 public:
 	void InitGraph();
 	virtual void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
-
-	// -------------- GRAPH EVENTS ---------------------------------------------
 	
 	/**
 	 * Compile Game Flow graph.
@@ -55,11 +51,10 @@ public:
 	 * @brief Save all changes applied to the graph.
 	 */
 	void OnSaveGraph();
-    
-	virtual void NotifyGraphChanged() override;
-	virtual void OnSelectionChanged(const TSet<UObject*>& Selection);
+
+protected:
+	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	
-	// -------------- GRAPH BUILDER  ---------------------------------------------------
 private:
 	
 	/**
@@ -78,8 +73,7 @@ private:
 	 * @brief Rebuild graph using GameFlow asset data.
 	 */
 	void RebuildGraphFromAsset();
-
-	// ----------------------------------------------------------------------------------
+	
 };
 
 

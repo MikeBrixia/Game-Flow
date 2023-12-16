@@ -25,11 +25,14 @@ public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<GameFlowAssetToolkit> AssetEditor);
 
 protected:
-	virtual void OnGraphChanged(const FEdGraphEditAction& InAction) override;
     virtual void OnSelectionChange(const TSet<UObject*>& Selection);
-
-private:
+    virtual void OnDeleteNodes();
+	virtual void RegisterGraphCommands();
+	
 	/* Get the appearance of the Game Flow graph. */
 	virtual FGraphAppearanceInfo GetGraphAppearanceInfo();
+	
+private:
+	TSharedPtr<FUICommandList> CommandList;
 };
 

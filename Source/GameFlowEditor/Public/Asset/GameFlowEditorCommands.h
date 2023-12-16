@@ -7,9 +7,11 @@ public:
 	
 	FGameFlowEditorCommands();
 
-	/** Game Flow asset compile input command info. */
+	
 	TSharedPtr<FUICommandInfo> CompileAsset;
 
+	// -------------------------- Pin commands ------------------------------
+	
 	/** Register Game Flow editor input commands. */
 	virtual void RegisterCommands() override;
 };

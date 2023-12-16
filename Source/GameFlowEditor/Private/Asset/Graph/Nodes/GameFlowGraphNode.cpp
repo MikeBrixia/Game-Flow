@@ -1,8 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-
-#include "GameFlowEditor.h"
+#include "GameFlowAsset.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Widget/Nodes/SGameFlowNode.h"
@@ -36,11 +35,6 @@ FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	return NodeAsset->GetClass()->GetDisplayNameText();
 }
 
-void UGameFlowGraphNode::OnSelected()
-{
-	
-}
-
 void UGameFlowGraphNode::InitNode()
 {
 	// Vital assertions.
@@ -48,6 +42,15 @@ void UGameFlowGraphNode::InitNode()
 
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	
+	// Each time a node pin name or type gets modified, reconstruct the node to keep it updated.
+	//NodeAsset->OnNodePinNameChange.AddUObject(this, &UGameFlowGraphNode::ReconstructNode);
+	NodeAsset->OnNodeTypeChange.AddLambda([=](const FName& NewTypeName)
+	{
+		// Update node info from settings using the new typename, then reconstruct the node.
+	    Info = Settings->NodesTypes.FindChecked(NewTypeName);
+		ReconstructNode();
+	});
 }
 
 bool UGameFlowGraphNode::CanUserDeleteNode() const
@@ -57,14 +60,24 @@ bool UGameFlowGraphNode::CanUserDeleteNode() const
 	return !(NodeDisplayName.EqualTo(INVTEXT("Start")) || NodeDisplayName.EqualTo(INVTEXT("Finish")));
 }
 
+void UGameFlowGraphNode::ReconstructNode()
+{
+	Super::ReconstructNode();
+	
+	// Reallocate all node pins.
+	Pins.Empty();
+	AllocateDefaultPins();
+}
+
 void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection,
                                         const TArray<FName> PinNames)
 {
 	// Create all input pins.
-	for(const FName& Pin : PinNames)
+	for(const FName& PinName : PinNames)
 	{
 		// Create logical pin and add it to the node pins list.
-		CreatePin(PinDirection, PinCategory, Pin);
+		UEdGraphPin* NewPin = CreatePin(PinDirection, PinCategory, PinName);
+		NewPin->PinFriendlyName = FText::FromName(PinName);
 	}
 }
 
@@ -78,13 +91,12 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 		PinName = NodeAsset->GenerateAddPinName(PinDirection);
 	}
 	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
-
+	
 	// Update Node asset depending on the new pin direction.
 	switch(PinDirection)
 	{
 		// Direction is not valid, do nothing.
-	default:
-		break;
+	default: break;
 	     // Add input pin to node asset.
 	case EGPD_Input:
 		{
@@ -98,8 +110,6 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 			break;
 		}
 	}
-	
 	return Pin;
 }
-
 

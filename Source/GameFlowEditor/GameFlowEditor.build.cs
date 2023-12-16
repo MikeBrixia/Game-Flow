@@ -27,7 +27,7 @@ public class GameFlowEditor : ModuleRules
 			{
 				"Core", "GameFlow", "UnrealEd", "AssetTools", "AssetRegistry", "UMGEditor",
 				"UMG", "GraphEditor", "BlueprintGraph", "Projects", "EditorSubsystem", "ToolMenus",
-				"DeveloperSettings"
+				"DeveloperSettings", "InputCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);

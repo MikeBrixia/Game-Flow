@@ -35,8 +35,7 @@ public:
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual bool CanUserDeleteNode() const override;
-	
-	virtual void OnSelected();
+	virtual void ReconstructNode() override;
 	
 	/* Get the asset contained inside this graph node. */
 	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }
@@ -61,8 +60,9 @@ public:
 	 */
 	void CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames);
 	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None);
+
 protected:
-	
 	/* Initialize this node properties. */
 	virtual void InitNode();
 };
+

@@ -32,7 +32,7 @@ protected:
 public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
-	
+
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
