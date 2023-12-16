@@ -22,9 +22,9 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	/* All asset nodes mapped by their corresponding guid.*/
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|Defaults")
+	UPROPERTY()
 	TMap<uint32, UGameFlowNode*> Nodes;
-
+	
 	/* True if this asset has already been opened inside a GameFlow editor, false otherwise. */
 	UPROPERTY()
 	bool bHasAlreadyBeenOpened;

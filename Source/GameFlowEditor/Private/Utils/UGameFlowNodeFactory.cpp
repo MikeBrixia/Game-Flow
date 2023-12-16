@@ -16,7 +16,7 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(UGameFlowNode* NodeAss
 	// Create the node
 	FGraphNodeCreator<UGameFlowGraphNode> Factory {*Graph};
 	UGameFlowGraphNode* Node = Factory.CreateNode(false);
-
+    
 	// Initialize the node.
 	Node->NodeAsset = NodeAsset;
 	Node->NodePosX = NodeAsset->GraphPosition.X;

@@ -16,6 +16,29 @@ void UGameFlowNode::OnFinishExecute_Implementation()
 {
 }
 
+void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
+{
+	// Find and mark as active the next node.
+	const auto Pair = GetNextNode(OutputPin);
+	UGameFlowNode* NextNode = Pair.Value;
+	const FName ConnectionPinName = Pair.Key;
+	
+	UGameFlowAsset* OwnerAsset = Cast<UGameFlowAsset>(GetOuter());
+	
+	// If node has finished executing, remove it from asset active nodes.
+	if(bFinish && OwnerAsset != nullptr)
+	{
+		OwnerAsset->RemoveActiveNode(this);
+		OnFinishExecute();
+	}
+	
+	// Execute the next node.
+	OwnerAsset->AddActiveNode(NextNode);
+	NextNode->Execute(ConnectionPinName);
+}
+
+#if WITH_EDITOR
+
 void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);
@@ -34,26 +57,6 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 		OnNodeTypeChange.Broadcast(TypeName);
 	}
 }
-
-void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
-{
-	// Find and mark as active the next node.
-	UGameFlowNode* NextNode = GetNextNode(OutputPin);
-	UGameFlowAsset* OwnerAsset = Cast<UGameFlowAsset>(GetOuter());
-	
-	// If node has finished executing, remove it from asset active nodes.
-	if(bFinish && OwnerAsset != nullptr)
-	{
-		OwnerAsset->RemoveActiveNode(this);
-		OnFinishExecute();
-	}
-	
-	// Execute the next node.
-	OwnerAsset->AddActiveNode(NextNode);
-	NextNode->Execute(OutputPin);
-}
-
-#if WITH_EDITOR
 
 FName UGameFlowNode::GenerateAddPinName(uint8 PinDirection)
 {
@@ -79,7 +82,7 @@ void UGameFlowNode::AddInput(const FName PinName)
 	// Do we have the permission to add new input pins to this node?
 	if(CanAddInputPin() && !PinName.IsEqual(EName::None))
 	{
-		InputPins.Add(PinName);
+		InputPins.AddUnique(PinName);
 	}
 }
 
@@ -88,17 +91,17 @@ void UGameFlowNode::RemoveInputPin(const FName PinName)
 	InputPins.Remove(PinName);
 }
 
-void UGameFlowNode::AddOutput(const FName& PinName, UGameFlowNode* Output)
+void UGameFlowNode::AddOutput(const FName PinName, const TPair<FName, UGameFlowNode*> Output)
 {
 	// Do we have the permission to add output pins to this node?
-	if(Output != nullptr)
+	if(Output.Value != nullptr && !Output.Key.IsNone())
 	{
-		OutputPins.Add(PinName);
+		OutputPins.AddUnique(PinName);
 		Outputs.Add(PinName, Output);
 	}
 }
 
-void UGameFlowNode::RemoveOutput(const FName& PinName)
+void UGameFlowNode::RemoveOutput(const FName PinName)
 {
 	OutputPins.Remove(PinName);
 	Outputs.Remove(PinName);

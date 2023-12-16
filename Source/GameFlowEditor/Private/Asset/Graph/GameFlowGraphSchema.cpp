@@ -48,7 +48,7 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 		UGameFlowNode_Output* StandardOutputNode = GameFlowAsset->CreateDefaultFinishNode();
 		UGameFlowGraphNode* OutputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardOutputNode, GameFlowGraph);
 		OutputGraphNode->NodePosX += 300.f;
-
+		
 		// Mark the asset as already been opened at least one time.
 		// Doing this will avoid creating duplicate default pins.
 		GameFlowAsset->bHasAlreadyBeenOpened = true;
@@ -82,8 +82,9 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 		// 2. Should not be an input or output node classes, we already have actions for these.
 		if(bIsChildClass && !bIsInputOrOutputNodeClass)
 		{
-			TSharedRef<FGameFlowNodeSchemaAction_NewNode> NewNodeAction(new FGameFlowNodeSchemaAction_NewNode(ChildClass, INVTEXT("Node"), FText::FromString(ChildClass->GetDescription()),
-																										  FText::FromString(ChildClass->GetName()), 0));
+			TSharedRef<FGameFlowNodeSchemaAction_NewNode> NewNodeAction(new FGameFlowNodeSchemaAction_NewNode(ChildClass, INVTEXT("Node"),
+			                                                                                          FText::FromString(ChildClass->GetDescription()),
+			                                                                                          FText::FromString(ChildClass->GetName()), 0));
 			ContextMenuBuilder.AddAction(NewNodeAction);
 		}
 	}

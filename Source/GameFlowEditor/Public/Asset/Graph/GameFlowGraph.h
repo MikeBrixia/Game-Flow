@@ -22,11 +22,6 @@ class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
 	GENERATED_BODY()
 
 public:
-	
-	UGameFlowGraph();
-	
-	// -------------- GRAPH METADATA --------------------------------------------
-	
 	/* Asset currently edited by this graph. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowAsset> GameFlowAsset;
@@ -37,7 +32,11 @@ public:
 private:
 	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 
+	UPROPERTY()
+	TMap<uint8, UGameFlowGraphNode*> GraphNodes;
+	
 public:
+	UGameFlowGraph();
 	void InitGraph();
 	virtual void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
 	
@@ -56,7 +55,6 @@ protected:
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	
 private:
-	
 	/**
 	 * @brief Compile graph starting from all inputs
 	 * @return True if the entire graph was compiled, false otherwise.
@@ -73,7 +71,7 @@ private:
 	 * @brief Rebuild graph using GameFlow asset data.
 	 */
 	void RebuildGraphFromAsset();
-	
+	void RecreateGraphConnectionsFromNodeAsset(UGameFlowNode* NodeAsset);
 };
 
 

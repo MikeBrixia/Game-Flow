@@ -7,9 +7,7 @@
 #include "GameFlowGraphSchema.generated.h"
 
 /**
- * The schema used by the GameFlow graph.
- * Schemas are used to manage and handle graph
- * startup node creation, Link breaks and much more.
+ * Schema used by the GameFlow graph.
  */
 UCLASS()
 class GAMEFLOWEDITOR_API UGameFlowGraphSchema : public UEdGraphSchema
@@ -23,14 +21,7 @@ public:
 	                                                                const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
 	                                                                UEdGraph* InGraphObj) const override;
 	
-
-	/** Can we create a connection between these two pins? */
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
-	
-	/** Create the default nodes which will be already placed in the graph after
-	 *  it's creation.
-	 */
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
-
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
 };

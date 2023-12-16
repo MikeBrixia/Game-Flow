@@ -2,6 +2,7 @@
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "GameFlowAsset.h"
+#include "GameFlowEditor.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Widget/Nodes/SGameFlowNode.h"
@@ -12,11 +13,9 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
-	const FEdGraphPinType OutputPinInfo = GetGraphPinType();
-	
 	// Create pins for graph node.
-	CreateNodePins(OutputPinInfo, EGPD_Input, NodeAsset->GetInputPins());
-	CreateNodePins(OutputPinInfo, EGPD_Output, NodeAsset->GetOutputPins());
+	CreateNodePins(EGPD_Input, NodeAsset->GetInputPins());
+	CreateNodePins(EGPD_Output, NodeAsset->GetOutputPins());
 }
 
 TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
@@ -69,28 +68,27 @@ void UGameFlowGraphNode::ReconstructNode()
 	AllocateDefaultPins();
 }
 
-void UGameFlowGraphNode::CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection,
-                                        const TArray<FName> PinNames)
+void UGameFlowGraphNode::CreateNodePins(const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames)
 {
 	// Create all input pins.
 	for(const FName& PinName : PinNames)
 	{
 		// Create logical pin and add it to the node pins list.
-		UEdGraphPin* NewPin = CreatePin(PinDirection, PinCategory, PinName);
-		NewPin->PinFriendlyName = FText::FromName(PinName);
+		CreateNodePin(PinDirection, PinName);
 	}
 }
 
 UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
 {
 	const FEdGraphPinType PinType = GetGraphPinType();
-	
+	UE_LOG(LogGameFlow, Display, TEXT("Creating node pin for: %s"), *NodeAsset->GetName());
 	// When name is 'None', use a generated one.
 	if(PinName.IsEqual(EName::None))
 	{
 		PinName = NodeAsset->GenerateAddPinName(PinDirection);
 	}
 	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
+	Pin->PinFriendlyName = FText::FromName(PinName);
 	
 	// Update Node asset depending on the new pin direction.
 	switch(PinDirection)
@@ -103,10 +101,10 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 			NodeAsset->AddInput(PinName);
 			break;
 		}
-		// Add input pin to node asset.	
+		// Add output pin to node asset.	
 	case EGPD_Output:
 		{
-			NodeAsset->AddOutput(PinName, nullptr);
+			NodeAsset->AddOutput(PinName, {EName::None, nullptr});
 			break;
 		}
 	}

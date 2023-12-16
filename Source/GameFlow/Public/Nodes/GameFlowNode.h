@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Config/GameFlowSettings.h"
-#include "UObject/Interface.h"
 #include "GameFlowNode.generated.h"
 
 #if WITH_EDITORONLY_DATA
@@ -33,6 +32,8 @@ public:
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
 
+	/* All the possible outputs of this node. */
+	TMap<FName, TPair<FName, UGameFlowNode*>> Outputs;
 	/* Callback for when one of this node pins name gets changed. */
 	FOnNodePinNameChange OnNodePinNameChange;
 	/* Callback for when the node type gets changed. */
@@ -56,12 +57,6 @@ protected:
 
 #endif
 
-private:
-
-	/* All the possible outputs of this node. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
-	TMap<FName, UGameFlowNode*> Outputs;
-
 public:
 	
 	UGameFlowNode();
@@ -83,25 +78,29 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
 	void FinishExecute(FName OutputPin, bool bFinish);
-	
+
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 	
 public:
 	
-	// ------------------------- PINS ---------------------------------------------------------
+	FORCEINLINE virtual TPair<FName, UGameFlowNode*> GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
 	
+	FORCEINLINE virtual TArray<TPair<FName, UGameFlowNode*>> GetChildren() const
+	{
+		TArray<TPair<FName, UGameFlowNode*>> Children;
+		Outputs.GenerateValueArray(Children);
+		return Children;
+	}
+
 #if WITH_EDITOR
+
 	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
 	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
 	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
-#endif
 	
-	FORCEINLINE virtual UGameFlowNode* GetNextNode(FName PinName) const { return nullptr; }
-	
-	//-------------------------------------------------------------------------------------------
-
-#if WITH_EDITOR
 	/**
 	 * @brief Generate a brand new and node-unique name for a node pin added with an AddPinButton.
 	 * @param PinDirection an integer representing pin direction: 0 is input, 1 is output and 2 is max;
@@ -125,15 +124,15 @@ public:
 	/**
 	 * @brief Connect this node to another graph node.
 	 * @param PinName The name of the output pin which connects this node, to the next.
-	 * @param Output The node to connect to.
+	 * @param Output The node and pins we want to connect to.
 	 */
-	void AddOutput(const FName& PinName, UGameFlowNode* Output);
+	void AddOutput(const FName PinName, const TPair<FName, UGameFlowNode*> Output);
 
 	/**
 	 * @brief Disconnect this node from the other node connected through the supplied pin.
 	 * @param PinName The name of the pin which holds the connection.
 	 */
-	void RemoveOutput(const FName& PinName);
+	void RemoveOutput(const FName PinName);
 
 	/**
 	 * @brief Get all the registered Game Flow node types

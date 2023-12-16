@@ -106,7 +106,6 @@ bool UGameFlowGraph::CompileGraph()
 {
 	for(UGameFlowGraphNode* Node : RootNodes)
 	{
-		UE_LOG(LogGameFlow, Display, TEXT("Compiling root: %s"), *Node->GetName())
 		CompileGraphFromInputNode(Node);
 	}
 	return true;
@@ -126,21 +125,21 @@ bool UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
 		// Pick a new node to compile
 		UGameFlowGraphNode* CurrentNode = nullptr;
 		ToCompile.Dequeue(CurrentNode);
+        
+		UGameFlowNode* SourceNode = CurrentNode->GetNodeAsset();
+		SourceNode->Outputs.Empty();
 		
 		for(const UEdGraphPin* Pin : CurrentNode->Pins)
 		{
-			// If this pin does not have any connection, ignore it.
-			if(!Pin->HasAnyConnections()) continue;
-			
 			// Check the links for all output pins.
-			if(Pin->Direction == EGPD_Output)
+			if(Pin->HasAnyConnections() && Pin->Direction == EGPD_Output)
 			{
-				UGameFlowNode* SourceNode = CurrentNode->GetNodeAsset();
 				UGameFlowGraphNode* DestinationNode = CastChecked<UGameFlowGraphNode>(Pin->LinkedTo[0]->GetOwningNode());
+				UEdGraphPin* DestinationPin = Pin->LinkedTo[0];
 				
+				const TPair<FName, UGameFlowNode*> DestinationPinNameAndNode(DestinationPin->PinName, DestinationNode->GetNodeAsset());
 				// Update node asset with graph connections.
-				auto Outputs = SourceNode->GetOutputPins();
-				SourceNode->AddOutput(Pin->PinName, DestinationNode->GetNodeAsset());
+				SourceNode->AddOutput(Pin->PinName, DestinationPinNameAndNode);
 				// Put the destination node inside the queue, it's the next
 				// we're going to compile.
 				ToCompile.Enqueue(DestinationNode);
@@ -152,20 +151,64 @@ bool UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
 
 void UGameFlowGraph::RebuildGraphFromAsset()
 {
-	for(const auto Pair : GameFlowAsset->Nodes)
+	// Recreate node connections starting from each root.
+	for(const auto PinNameNodePair : GameFlowAsset->CustomInputs)
 	{
-		UGameFlowNode* Node = Pair.Value;
-		if(Pair.Value != nullptr)
+		RecreateGraphConnectionsFromNodeAsset(PinNameNodePair.Value);
+	}
+}
+
+void UGameFlowGraph::RecreateGraphConnectionsFromNodeAsset(UGameFlowNode* NodeAsset)
+{
+	TQueue<UGameFlowGraphNode*> ToRebuild;
+	UGameFlowGraphNode* CurrentNode = nullptr;
+
+	UGameFlowGraphNode* Node = UGameFlowNodeFactory::CreateGraphNode(NodeAsset, this);
+	// Start rebuilding graph from an input node.
+	ToRebuild.Enqueue(Node);
+	
+	// As long as there are nodes to build, keep iterating.
+	while(!ToRebuild.IsEmpty())
+	{
+		// Pick the next node to rebuild.
+		ToRebuild.Dequeue(CurrentNode);
+			
+		TArray<UGameFlowGraphNode*> CreatedGraphNodes;
+		UGameFlowNode* CurrentNodeAsset = CurrentNode->GetNodeAsset();
+		for(const FName& OutPinName : CurrentNodeAsset->GetOutputPins())
 		{
-			UGameFlowGraphNode* GraphNode = UGameFlowNodeFactory::CreateGraphNode(Node, this);
-			if(Node->IsA(UGameFlowNode_Input::StaticClass()))
+			// Find the node and pin to which the current node is connected to.
+			auto Pair = CurrentNodeAsset->GetNextNode(OutPinName);
+			const FName& InPinName = Pair.Key;
+			UGameFlowNode* NextNode = Pair.Value;
+			
+			// If next node is invalid or input pin name is None, skip the iteration.
+			if(NextNode == nullptr || InPinName.IsEqual(EName::None)) continue;
+			
+			// Create the graph node for the connected node.
+			UGameFlowGraphNode* GraphNode = UGameFlowNodeFactory::CreateGraphNode(NextNode, this);
+            
+			// if current node asset is an input node, add it's graph node representation to the root
+			// nodes array list for this graph.
+			if(CurrentNodeAsset->IsA(UGameFlowNode_Input::StaticClass()))
 			{
-				UE_LOG(LogGameFlow, Display, TEXT("%s is a Input node"), *Node->GetName())
 				RootNodes.Add(GraphNode);
 			}
+			
+			UEdGraphPin* InPin = GraphNode->FindPin(InPinName);
+			UEdGraphPin* OutPin = CurrentNode->FindPin(OutPinName);
+			// After finding the current node output pin and the next node input pin,
+			// create a connection between the two.
+			GetSchema()->TryCreateConnection(OutPin, InPin);
+
+			UE_LOG(LogGameFlow, Display, TEXT("%s in %s has been connected to %s in %s"), *OutPinName.ToString(), *CurrentNodeAsset->GetName(),
+				                                                                          *InPinName.ToString(), *NextNode->GetName());
+			// Enqueue next node, we'll need to rebuild it.
+			ToRebuild.Enqueue(GraphNode);
 		}
 	}
 }
+
 
 
 

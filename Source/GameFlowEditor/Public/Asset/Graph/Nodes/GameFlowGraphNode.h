@@ -54,11 +54,10 @@ public:
 
 	/**
 	 * @brief Read GameFlow node asset and create graph node pins.
-	 * @param PinCategory Properties used to identify and create pins.
 	 * @param PinDirection Whether you want to create a input or output pins.
 	 * @param PinNames An array containing all the pin names.
 	 */
-	void CreateNodePins(const FEdGraphPinType PinCategory, const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames);
+	void CreateNodePins(const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames);
 	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None);
 
 protected:
