@@ -80,13 +80,12 @@ void UGameFlowGraphNode::CreateNodePins(const EEdGraphPinDirection PinDirection,
 
 UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
 {
-	const FEdGraphPinType PinType = GetGraphPinType();
-	UE_LOG(LogGameFlow, Display, TEXT("Creating node pin for: %s"), *NodeAsset->GetName());
 	// When name is 'None', use a generated one.
 	if(PinName.IsEqual(EName::None))
 	{
 		PinName = NodeAsset->GenerateAddPinName(PinDirection);
 	}
+	const FEdGraphPinType PinType = GetGraphPinType();
 	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
 	Pin->PinFriendlyName = FText::FromName(PinName);
 	

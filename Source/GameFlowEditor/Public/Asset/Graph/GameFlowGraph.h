@@ -33,7 +33,7 @@ private:
 	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 
 	UPROPERTY()
-	TMap<uint8, UGameFlowGraphNode*> GraphNodes;
+	TMap<uint32, UGameFlowGraphNode*> GraphNodes;
 	
 public:
 	UGameFlowGraph();
@@ -71,7 +71,7 @@ private:
 	 * @brief Rebuild graph using GameFlow asset data.
 	 */
 	void RebuildGraphFromAsset();
-	void RecreateGraphConnectionsFromNodeAsset(UGameFlowNode* NodeAsset);
+	void RecreateGraphConnectionsFromNodeAsset(const UGameFlowNode* NodeAsset);
 };
 
 

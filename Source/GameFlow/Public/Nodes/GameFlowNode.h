@@ -17,6 +17,8 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnNodeTypeChange, const FName&)
 UCLASS(Abstract, NotBlueprintable)
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
+	friend class UGameFlowGraph;
+	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	
 	GENERATED_BODY()
@@ -31,9 +33,7 @@ public:
 	/* The type of this node(Latent, Event ecc.)*/
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
-
-	/* All the possible outputs of this node. */
-	TMap<FName, TPair<FName, UGameFlowNode*>> Outputs;
+	
 	/* Callback for when one of this node pins name gets changed. */
 	FOnNodePinNameChange OnNodePinNameChange;
 	/* Callback for when the node type gets changed. */
@@ -54,9 +54,12 @@ protected:
 	/* True if user should be able to add more output pins than defaults by clicking on a '+' icon. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
-
 #endif
-
+	
+private:
+	/* All the possible outputs of this node. */
+	TMap<FName, TPair<FName, UGameFlowNode*>> Outputs;
+	
 public:
 	
 	UGameFlowNode();
@@ -95,7 +98,6 @@ public:
 	}
 
 #if WITH_EDITOR
-
 	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
 	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
 	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
