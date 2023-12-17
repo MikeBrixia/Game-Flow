@@ -2,7 +2,6 @@
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "GameFlowAsset.h"
-#include "GameFlowEditor.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Widget/Nodes/SGameFlowNode.h"
@@ -103,7 +102,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 		// Add output pin to node asset.	
 	case EGPD_Output:
 		{
-			NodeAsset->AddOutput(PinName, {EName::None, nullptr});
+			NodeAsset->AddOutput(PinName, {});
 			break;
 		}
 	}

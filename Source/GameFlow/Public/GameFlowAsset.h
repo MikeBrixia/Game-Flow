@@ -22,7 +22,7 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	/* All asset nodes mapped by their corresponding guid.*/
-	UPROPERTY()
+	UPROPERTY(VisibleDefaultsOnly)
 	TMap<uint32, UGameFlowNode*> Nodes;
 	
 	/* True if this asset has already been opened inside a GameFlow editor, false otherwise. */
@@ -84,17 +84,4 @@ public:
 	 * the execution of this GameFlow object.
 	 */
 	void TerminateExecution();
-
-#if WITH_EDITOR
-	
-	/**
-	 * @brief Check if the asset has been corrupted, and in case
-	 * adjust it.
-	 */
-	void ValidateAsset();
-
-    UGameFlowNode_Input* CreateDefaultStartNode();
-    UGameFlowNode_Output* CreateDefaultFinishNode();
-
-#endif
 };

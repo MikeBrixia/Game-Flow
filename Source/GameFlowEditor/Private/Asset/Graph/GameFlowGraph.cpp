@@ -4,6 +4,7 @@
 
 #include "GameFlowEditor.h"
 #include "GraphEditAction.h"
+#include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/UGameFlowNodeFactory.h"
@@ -49,18 +50,38 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 	else
 	{
 		UE_LOG(LogGameFlow, Warning, TEXT("Warning: %s Asset Editor could not be found! This may prevent graph from reacting to editor events/commands"),
-			*GameFlowAsset->GetName())
+			*GameFlowAsset->GetName());
 	}
 }
 
 void UGameFlowGraph::OnGraphCompile(UGameFlowAsset* Asset)
 {
-	CompileGraph();
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	checkf(GraphSchema != nullptr, TEXT("Game Flow Graph Schema is invalid! Please assign a valid schema to this graph"));
+
+	const bool bCompilationSuccessful = GraphSchema->CompileGraph(*this, Asset);
+	const FString AssetName = Asset->GetName();
+	
+	// Log the result of the graph compilation to the Unreal engine output log and
+	// also the GameFlow log console.
+	if(bCompilationSuccessful)
+	{
+		UE_LOG(LogGameFlow, Display, TEXT("Game Flow Asset: %s, was compiled successfully"), *AssetName);
+	}
+	else
+	{
+		UE_LOG(LogGameFlow, Error, TEXT("Game Flow Asset: %s, could not be compiled"), *AssetName);
+	}
 }
 
 void UGameFlowGraph::OnSaveGraph()
 {
-	UE_LOG(LogGameFlow, Warning, TEXT("%s: Saving has not yet been implemented!"), *StaticClass()->GetName());
+	for(const UGameFlowGraphNode* GraphNode : reinterpret_cast<TArray<TObjectPtr<UGameFlowGraphNode>>&>(Nodes))
+	{
+		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+		// Save node position inside the graph, will be used when graph rebuild happens.
+		NodeAsset->GraphPosition = FVector2D(GraphNode->NodePosX, GraphNode->NodePosY);
+	}
 }
 
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
@@ -99,56 +120,6 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
              
 		default: break;
 	}
-
-}
-
-bool UGameFlowGraph::CompileGraph()
-{
-	for(UGameFlowGraphNode* Node : RootNodes)
-	{
-		UE_LOG(LogGameFlow, Display, TEXT("Compiling from root: %s"), *Node->GetNodeAsset()->GetName());
-		CompileGraphFromInputNode(Node);
-	}
-	return true;
-}
-
-bool UGameFlowGraph::CompileGraphFromInputNode(UGameFlowGraphNode* InputNode)
-{
-	bool bIsCompilationSuccessful = true;
-	
-	// Start compiling from a graph input node.
-	TQueue<UGameFlowGraphNode*> ToCompile;
-	ToCompile.Enqueue(InputNode);
-
-	// Keep going until we've compiled all graph nodes.
-	while(!ToCompile.IsEmpty())
-	{
-		// Pick a new node to compile
-		UGameFlowGraphNode* CurrentNode = nullptr;
-		ToCompile.Dequeue(CurrentNode);
-        
-		UGameFlowNode* SourceNode = CurrentNode->GetNodeAsset();
-		SourceNode->Outputs.Empty();
-		
-		for(const UEdGraphPin* Pin : CurrentNode->Pins)
-		{
-			// Check the links for all output pins.
-			if(Pin->HasAnyConnections() && Pin->Direction == EGPD_Output)
-			{
-				UGameFlowGraphNode* DestinationNode = CastChecked<UGameFlowGraphNode>(Pin->LinkedTo[0]->GetOwningNode());
-				UEdGraphPin* DestinationPin = Pin->LinkedTo[0];
-				
-				const TPair<FName, UGameFlowNode*> DestinationPinNameAndNode(DestinationPin->PinName, DestinationNode->GetNodeAsset());
-				// Update node asset with graph connections.
-				SourceNode->AddOutput(Pin->PinName, DestinationPinNameAndNode);
-				
-				// Put the destination node inside the queue, it's the next
-				// we're going to compile.
-				ToCompile.Enqueue(DestinationNode);
-			}
-		}
-	}
-	return bIsCompilationSuccessful;
 }
 
 void UGameFlowGraph::RebuildGraphFromAsset()
@@ -169,50 +140,12 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 			RootNodes.Add(GraphNode);
 		}
 	}
-	
+
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	// Recreate node connections starting from each root.
 	for(const auto PinNameNodePair : GameFlowAsset->CustomInputs)
 	{
-		RecreateGraphConnectionsFromNodeAsset(PinNameNodePair.Value);
-	}
-}
-
-void UGameFlowGraph::RecreateGraphConnectionsFromNodeAsset(const UGameFlowNode* NodeAsset)
-{
-	TQueue<UGameFlowGraphNode*> ToRebuild;
-	UGameFlowGraphNode* CurrentNode = GraphNodes.FindRef(NodeAsset->GetUniqueID());
-	// Start rebuilding graph from an input node.
-	ToRebuild.Enqueue(CurrentNode);
-	
-	// As long as there are nodes to build, keep iterating.
-	while(!ToRebuild.IsEmpty())
-	{
-		// Pick the next node to rebuild.
-		ToRebuild.Dequeue(CurrentNode);
-		UGameFlowNode* CurrentNodeAsset = CurrentNode->GetNodeAsset();
-		
-		for(const FName& OutPinName : CurrentNodeAsset->GetOutputPins())
-		{
-			// Find the node and pin to which the current node is connected to.
-			auto Pair = CurrentNodeAsset->GetNextNode(OutPinName);
-			const FName& InPinName = Pair.Key;
-			const UGameFlowNode* NextNode = Pair.Value;
-			
-			// If next node is invalid or input pin name is None, skip the iteration.
-			if(NextNode == nullptr || InPinName.IsEqual(EName::None)) continue;
-			
-			// Create the graph node for the connected node.
-			UGameFlowGraphNode* GraphNode = GraphNodes.FindRef(NextNode->GetUniqueID());
-			
-			UEdGraphPin* InPin = GraphNode->FindPin(InPinName);
-			UEdGraphPin* OutPin = CurrentNode->FindPin(OutPinName);
-			// After finding the current node output pin and the next node input pin,
-			// create a connection between the two.
-			GetSchema()->TryCreateConnection(OutPin, InPin);
-			
-			// Enqueue next node, we'll need to rebuild it.
-			ToRebuild.Enqueue(GraphNode);
-		}
+		GraphSchema->RecreateBranchConnections(*this, PinNameNodePair.Value);
 	}
 }
 

@@ -28,12 +28,12 @@ public:
 
 	UPROPERTY()
 	TArray<UGameFlowGraphNode*> RootNodes;
-	
-private:
-	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 
 	UPROPERTY()
 	TMap<uint32, UGameFlowGraphNode*> GraphNodes;
+	
+private:
+	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 	
 public:
 	UGameFlowGraph();
@@ -55,23 +55,11 @@ protected:
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	
 private:
-	/**
-	 * @brief Compile graph starting from all inputs
-	 * @return True if the entire graph was compiled, false otherwise.
-	 */
-	bool CompileGraph();
 	
-	/**
-	 * @brief Start compiling graph from a specified input node
-	 * @param InputNode Input which represents a root of the network.
-	 */
-	bool CompileGraphFromInputNode(UGameFlowGraphNode* InputNode);
-    
 	/**
 	 * @brief Rebuild graph using GameFlow asset data.
 	 */
 	void RebuildGraphFromAsset();
-	void RecreateGraphConnectionsFromNodeAsset(const UGameFlowNode* NodeAsset);
 };
 
 

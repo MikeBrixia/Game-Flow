@@ -13,11 +13,29 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnNodeTypeChange, const FName&)
 
 #endif
 
+/**
+ * Serializable alternative to TPair for storing
+ * Input pins name and nodes in Game Flow.
+ */
+USTRUCT()
+struct GAMEFLOW_API FGameFlowPinNodePair
+{
+	GENERATED_BODY()
+	
+	FGameFlowPinNodePair();
+	FGameFlowPinNodePair(const FName& InputPinName, UGameFlowNode* Node);
+
+	UPROPERTY(EditAnywhere)
+	FName InputPinName;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UGameFlowNode> Node;
+};
+
 /* Base interface for all GameFlow nodes. */
 UCLASS(Abstract, NotBlueprintable)
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
-	friend class UGameFlowGraph;
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	
@@ -54,11 +72,17 @@ protected:
 	/* True if user should be able to add more output pins than defaults by clicking on a '+' icon. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
+
+	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
+    FGameFlowPinNodePair Test;
+
+	/* All the possible outputs of this node. */
+	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
+	TMap<FName, FGameFlowPinNodePair> Outputs;
+
 #endif
 	
 private:
-	/* All the possible outputs of this node. */
-	TMap<FName, TPair<FName, UGameFlowNode*>> Outputs;
 	
 public:
 	
@@ -88,11 +112,11 @@ protected:
 	
 public:
 	
-	FORCEINLINE virtual TPair<FName, UGameFlowNode*> GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
+	FORCEINLINE virtual FGameFlowPinNodePair GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
 	
-	FORCEINLINE virtual TArray<TPair<FName, UGameFlowNode*>> GetChildren() const
+	FORCEINLINE virtual TArray<FGameFlowPinNodePair> GetChildren() const
 	{
-		TArray<TPair<FName, UGameFlowNode*>> Children;
+		TArray<FGameFlowPinNodePair> Children;
 		Outputs.GenerateValueArray(Children);
 		return Children;
 	}
@@ -128,7 +152,7 @@ public:
 	 * @param PinName The name of the output pin which connects this node, to the next.
 	 * @param Output The node and pins we want to connect to.
 	 */
-	void AddOutput(const FName PinName, const TPair<FName, UGameFlowNode*> Output);
+	void AddOutput(const FName PinName, const FGameFlowPinNodePair Output);
 
 	/**
 	 * @brief Disconnect this node from the other node connected through the supplied pin.
