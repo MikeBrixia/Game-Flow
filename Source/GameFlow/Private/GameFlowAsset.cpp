@@ -6,6 +6,8 @@
 UGameFlowAsset::UGameFlowAsset()
 {
 	this->bHasAlreadyBeenOpened = false;
+	this->bCompileOnSave = true;
+	this->bLiveCompile = true;
 }
 
 void UGameFlowAsset::Execute(FName EntryPointName)

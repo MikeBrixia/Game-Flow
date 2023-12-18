@@ -17,6 +17,7 @@ UCLASS(Blueprintable, BlueprintType)
 class GAMEFLOW_API UGameFlowAsset : public UObject
 {
 	friend class UGameFlowGraphSchema;
+	friend class GameFlowAssetToolkit;
 	
 	GENERATED_BODY()
 
@@ -50,6 +51,15 @@ private:
 	/* Nodes which are not connected to any parent. */
     UPROPERTY(VisibleDefaultsOnly)
     TArray<UGameFlowNode*> OrphanNodes;
+
+	/* If true, asset will first be compiled and then saved. */
+	UPROPERTY()
+	bool bCompileOnSave;
+
+	/* If true, asset will be compiled each time the users creates or breaks a connection. */
+	UPROPERTY()
+	bool bLiveCompile;
+
 #endif
 	
 public:
@@ -62,7 +72,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
 	void Execute(FName EntryPointName);
-
+	
 	/**
 	 * @brief Get the nodes which are currently being executed
 	 *        by the Game Flow asset.

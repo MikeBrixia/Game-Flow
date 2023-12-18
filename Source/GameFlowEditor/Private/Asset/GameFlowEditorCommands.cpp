@@ -12,11 +12,14 @@ FGameFlowEditorCommands::FGameFlowEditorCommands() : TCommands<FGameFlowEditorCo
 
 void FGameFlowEditorCommands::RegisterCommands()
 {
-	//UI_COMMAND(CompileAsset, "Compile", "Compile this Game Flow asset for use in game.", EUserInterfaceActionType::Button, FInputChord());
 	FUICommandInfo::MakeCommandInfo(SharedThis(this), CompileAsset, "Compile", INVTEXT("Compile"),
 		                         INVTEXT("Compile this Game Flow asset for use in game."),
 		                          FSlateIcon(GetStyleSetName(), "GameFlow.Editor.CompileIcon"),
 		                          EUserInterfaceActionType::Button, FInputChord());
+
+	FUICommandInfo::MakeCommandInfo(SharedThis(this), CompileOnSave, "CompileOnSave", INVTEXT("Compile on save"),
+		                            INVTEXT("On each save, asset will be compiled"), FSlateIcon(), EUserInterfaceActionType::ToggleButton,
+		                            FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE

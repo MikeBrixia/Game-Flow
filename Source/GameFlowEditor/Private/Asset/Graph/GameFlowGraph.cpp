@@ -94,7 +94,7 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 			{
 				// Array of selected nodes assets.
 				TArray<UObject*> SelectedNodes;
-
+                
 				// Build selected nodes assets array.
 				for(const UObject* SelectedObject : Action.Nodes)
 				{

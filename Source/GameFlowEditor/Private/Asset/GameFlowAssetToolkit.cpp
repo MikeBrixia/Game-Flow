@@ -139,6 +139,11 @@ void GameFlowAssetToolkit::ConfigureInputs()
 	ToolkitCommands->MapAction(GameFlowCommands.CompileAsset,
 		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::TryCompiling),
 		                       FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile));
+	
+	ToolkitCommands->MapAction(GameFlowCommands.CompileOnSave,
+		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CompileOnSaveToogle),
+		                        FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile),
+		                        FIsActionChecked::CreateRaw(this, &GameFlowAssetToolkit::CanCompileOnSave));
 }
 
 void GameFlowAssetToolkit::CreateAssetMenu()
@@ -157,6 +162,7 @@ void GameFlowAssetToolkit::CreateAssetMenu()
 		Section.Label = INVTEXT("Game Flow");
 		// Add compile command to Asset tool menu, inside 'Game Flow' section.
 		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileAsset, CommandList);
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileOnSave, CommandList);
 	}
 }
 
@@ -187,6 +193,11 @@ void GameFlowAssetToolkit::SaveAsset_Execute()
 {
 	FAssetEditorToolkit::SaveAsset_Execute();
 
+	if(CanCompileOnSave())
+	{
+		TryCompiling();
+	}
+	
 	// If there's at least one listener, broadcast save asset event.
 	if(OnAssetSavedCallback.IsBound())
 	{
@@ -201,6 +212,12 @@ void GameFlowAssetToolkit::TryCompiling()
 	{
 		OnAssetCompileCallback.Broadcast(Asset);
 	}
+}
+
+void GameFlowAssetToolkit::CompileOnSaveToogle()
+{
+	const bool CurrentValue = Asset->bCompileOnSave;
+	Asset->bCompileOnSave = !CurrentValue;
 }
 
 void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)

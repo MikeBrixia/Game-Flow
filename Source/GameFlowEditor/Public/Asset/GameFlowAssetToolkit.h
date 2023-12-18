@@ -16,10 +16,13 @@ public:
 	GameFlowAssetToolkit();
 
 	// -------------------- GAME FLOW EDITOR METADATA ----------------------------------------------
-	
+private:
+
 	/* Asset inspected by this editor. */
 	TObjectPtr<UGameFlowAsset> Asset;
 	TObjectPtr<UGameFlowGraph> Graph;
+
+public:
 	TSharedPtr<IDetailsView> NodesDetailsView;
 	
 	FORCEINLINE UObject* GetAsset() const { return Asset; }
@@ -45,10 +48,12 @@ protected:
 	FOnAssetCompile OnAssetCompileCallback;
 	
 	virtual void SaveAsset_Execute() override;
-	
 	virtual void TryCompiling();
+	void CompileOnSaveToogle();
+	
 	FORCEINLINE virtual bool CanCompile() { return true; }
-
+	FORCEINLINE bool CanCompileOnSave() const { return Asset->bCompileOnSave; }
+	
 public:
 	FORCEINLINE FOnAssetSaved& GetAssetSavedCallback() { return OnAssetSavedCallback; };
 	FORCEINLINE FOnAssetCompile& GetAssetCompileCallback() { return OnAssetCompileCallback; }

@@ -6,11 +6,9 @@ class FGameFlowEditorCommands : public TCommands<FGameFlowEditorCommands>
 public:
 	
 	FGameFlowEditorCommands();
-
 	
 	TSharedPtr<FUICommandInfo> CompileAsset;
-
-	// -------------------------- Pin commands ------------------------------
+    TSharedPtr<FUICommandInfo> CompileOnSave;
 	
 	/** Register Game Flow editor input commands. */
 	virtual void RegisterCommands() override;
