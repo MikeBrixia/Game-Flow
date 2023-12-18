@@ -40,25 +40,13 @@ public:
 	void InitGraph();
 	virtual void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
 	
-	/**
-	 * Compile Game Flow graph.
-	 * @param Asset The asset compiled by the graph.
-	 */
 	void OnGraphCompile(UGameFlowAsset* Asset);
-
-	/**
-	 * @brief Save all changes applied to the graph.
-	 */
 	void OnSaveGraph();
 
 protected:
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	
 private:
-	
-	/**
-	 * @brief Rebuild graph using GameFlow asset data.
-	 */
 	void RebuildGraphFromAsset();
 };
 

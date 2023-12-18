@@ -17,10 +17,10 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnNodeTypeChange, const FName&)
  * Serializable alternative to TPair for storing
  * Input pins name and nodes in Game Flow.
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct GAMEFLOW_API FGameFlowPinNodePair
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 	
 	FGameFlowPinNodePair();
 	FGameFlowPinNodePair(const FName& InputPinName, UGameFlowNode* Node);
@@ -36,6 +36,7 @@ struct GAMEFLOW_API FGameFlowPinNodePair
 UCLASS(Abstract, NotBlueprintable)
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
+	friend class UGameFlowGraph;
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	
@@ -72,18 +73,12 @@ protected:
 	/* True if user should be able to add more output pins than defaults by clicking on a '+' icon. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
-
-	UPROPERTY(EditAnywhere, Category="Game Flow|I/O")
-    FGameFlowPinNodePair Test;
-
-	/* All the possible outputs of this node. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
-	TMap<FName, FGameFlowPinNodePair> Outputs;
-
 #endif
 	
 private:
-	
+	/* All the possible outputs of this node. */
+	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
+	TMap<FName, FGameFlowPinNodePair> Outputs;
 public:
 	
 	UGameFlowNode();

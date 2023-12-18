@@ -132,7 +132,7 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 		UGameFlowNode* Node = Pair.Value;
 		UGameFlowGraphNode* GraphNode = UGameFlowNodeFactory::CreateGraphNode(Node, this);
 		GraphNodes.Add(Node->GetUniqueID(), GraphNode);
-
+		
 		// if  node asset is an input node, add it's graph node representation to the root
 		// nodes array list for this graph.
 		if(Node->IsA(UGameFlowNode_Input::StaticClass()))

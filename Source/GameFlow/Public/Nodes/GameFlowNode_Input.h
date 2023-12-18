@@ -17,12 +17,6 @@ class GAMEFLOW_API UGameFlowNode_Input final : public UGameFlowNode
 {
 	GENERATED_BODY()
 
-protected:
-
-	/* The child of the input node. */
-	UPROPERTY()
-	TObjectPtr<UGameFlowNode> OutputNode;
-
 public:
 
 	UGameFlowNode_Input();
