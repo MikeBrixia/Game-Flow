@@ -142,11 +142,8 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	}
 
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	// Recreate node connections starting from each root.
-	for(const auto PinNameNodePair : GameFlowAsset->CustomInputs)
-	{
-		GraphSchema->RecreateBranchConnections(*this, PinNameNodePair.Value);
-	}
+	// Recreate all graph node connections.
+	GraphSchema->RecreateGraphNodesConnections(*this, GameFlowAsset);
 }
 
 

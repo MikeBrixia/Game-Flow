@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFlowAsset.h"
+#include "GameFlowGraph.h"
 #include "Nodes/GameFlowNode_Input.h"
 #include "Nodes/GameFlowNode_Output.h"
 #include "UObject/Object.h"
@@ -34,7 +35,7 @@ public:
 	 * @param GameFlowAsset The asset being edited by the graph editor.
 	 * @return True if compilation was successful, false otherwise.
 	 */
-	bool CompileGraph(UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const;
+	bool CompileGraph(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const;
 
 	/**
 	 * @brief Compile a single branch inside the Game Flow graph. A branch must be compiled from
@@ -46,11 +47,25 @@ public:
 	bool CompileGraphBranch(UGameFlowGraphNode* RootNode, UGameFlowAsset* GameFlowAsset) const;
 
 	/**
+	 * @brief Recreate all logical and visual connections between all the graph nodes.
+	 * @param Graph The graph in which the operation takes place.
+	 * @param GameFlowAsset The asset from which will be reading the necessary data to rebuild the graph.
+	 */
+	void RecreateGraphNodesConnections(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const;
+	
+	/**
 	 * @brief Recreate nodes connections starting from a given node.
-	 * @param Graph The graph used to edit the Game Flow asset.
+	 * @param Graph The graph in which the operation takes place.
 	 * @param RootNodeAsset The root of a Game Flow branch. In this case the root could be any selected node. 
 	 */
 	void RecreateBranchConnections(const UGameFlowGraph& Graph, const UGameFlowNode* RootNodeAsset) const;
+
+	/**
+	 * @brief Find all nodes inside the graph which do not have any connected input pin.
+	 * @param Graph The graph in which the operation takes place.
+	 * @return An array of all the graph orphan nodes.
+	 */
+	TArray<UGameFlowGraphNode*> GetGraphOrphanNodes(const UGameFlowGraph& Graph) const;
 	
 private:
     
