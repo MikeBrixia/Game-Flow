@@ -105,8 +105,10 @@ void UGameFlowNode::RemoveInputPin(const FName PinName)
 
 void UGameFlowNode::AddOutput(const FName PinName, const FGameFlowPinNodePair Output)
 {
-	// Do we have the permission to add output pins to this node?
-	if(Output.Node != nullptr && !Output.InputPinName.IsNone())
+	const bool bValidOutput = Output.Node != nullptr && !Output.InputPinName.IsNone();
+	const bool bRecursiveOutput = Output.Node == this;
+	// Add only valid and non-recursive nodes
+	if(bValidOutput && !bRecursiveOutput)
 	{
 		OutputPins.AddUnique(PinName);
 		Outputs.Add(PinName, Output);

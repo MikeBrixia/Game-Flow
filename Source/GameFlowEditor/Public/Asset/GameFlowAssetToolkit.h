@@ -50,10 +50,11 @@ protected:
 	virtual void SaveAsset_Execute() override;
 	virtual void TryCompiling();
 	void CompileOnSaveToogle();
+	void LiveCompileToogle();
 	
 	FORCEINLINE virtual bool CanCompile() { return true; }
 	FORCEINLINE bool CanCompileOnSave() const { return Asset->bCompileOnSave; }
-	
+	FORCEINLINE bool CanLiveCompile() const { return Asset->bLiveCompile; }
 public:
 	FORCEINLINE FOnAssetSaved& GetAssetSavedCallback() { return OnAssetSavedCallback; };
 	FORCEINLINE FOnAssetCompile& GetAssetCompileCallback() { return OnAssetCompileCallback; }

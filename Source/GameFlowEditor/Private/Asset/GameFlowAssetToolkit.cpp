@@ -144,6 +144,11 @@ void GameFlowAssetToolkit::ConfigureInputs()
 		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CompileOnSaveToogle),
 		                        FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile),
 		                        FIsActionChecked::CreateRaw(this, &GameFlowAssetToolkit::CanCompileOnSave));
+
+	ToolkitCommands->MapAction(GameFlowCommands.LiveCompile,
+		                      FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::LiveCompileToogle),
+		                      FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile),
+		                      FIsActionChecked::CreateRaw(this, &GameFlowAssetToolkit::CanLiveCompile));
 }
 
 void GameFlowAssetToolkit::CreateAssetMenu()
@@ -160,9 +165,11 @@ void GameFlowAssetToolkit::CreateAssetMenu()
 		// If true, Create a new Game Flow section inside the Asset tool menu.
 		FToolMenuSection& Section = AssetMenu->FindOrAddSection("AssetFlow");
 		Section.Label = INVTEXT("Game Flow");
+		
 		// Add compile command to Asset tool menu, inside 'Game Flow' section.
 		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileAsset, CommandList);
 		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileOnSave, CommandList);
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.LiveCompile, CommandList);
 	}
 }
 
@@ -191,8 +198,6 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 
 void GameFlowAssetToolkit::SaveAsset_Execute()
 {
-	FAssetEditorToolkit::SaveAsset_Execute();
-
 	if(CanCompileOnSave())
 	{
 		TryCompiling();
@@ -203,6 +208,8 @@ void GameFlowAssetToolkit::SaveAsset_Execute()
 	{
 		OnAssetSavedCallback.Broadcast();
 	}
+
+	FAssetEditorToolkit::SaveAsset_Execute();
 }
 
 void GameFlowAssetToolkit::TryCompiling()
@@ -218,6 +225,12 @@ void GameFlowAssetToolkit::CompileOnSaveToogle()
 {
 	const bool CurrentValue = Asset->bCompileOnSave;
 	Asset->bCompileOnSave = !CurrentValue;
+}
+
+void GameFlowAssetToolkit::LiveCompileToogle()
+{
+	const bool CurrentValue = Asset->bLiveCompile;
+	Asset->bLiveCompile = !CurrentValue;
 }
 
 void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)

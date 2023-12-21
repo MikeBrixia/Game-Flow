@@ -10,9 +10,6 @@
 #include "UObject/Object.h"
 #include "GameFlowGraphSchema.generated.h"
 
-/**
- * Schema used by the GameFlow graph.
- */
 UCLASS()
 class GAMEFLOWEDITOR_API UGameFlowGraphSchema : public UEdGraphSchema
 {
@@ -26,9 +23,13 @@ public:
 	                                                                UEdGraph* InGraphObj) const override;
 	
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
+	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
+    virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
+	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
+	
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
-    
+	
 	/**
 	 * @brief Compile the asset edited by the given graph.
 	 * @param Graph The graph to compile
@@ -59,14 +60,14 @@ public:
 	 * @param RootNodeAsset The root of a Game Flow branch. In this case the root could be any selected node. 
 	 */
 	void RecreateBranchConnections(const UGameFlowGraph& Graph, const UGameFlowNode* RootNodeAsset) const;
-
+	
 	/**
 	 * @brief Find all nodes inside the graph which do not have any connected input pin.
 	 * @param Graph The graph in which the operation takes place.
 	 * @return An array of all the graph orphan nodes.
 	 */
 	TArray<UGameFlowGraphNode*> GetGraphOrphanNodes(const UGameFlowGraph& Graph) const;
-	
+
 private:
     
 	virtual UGameFlowNode_Input* CreateDefaultInputs(UGameFlowGraph& Graph) const;

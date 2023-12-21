@@ -9,6 +9,7 @@ public:
 	
 	TSharedPtr<FUICommandInfo> CompileAsset;
     TSharedPtr<FUICommandInfo> CompileOnSave;
+	TSharedPtr<FUICommandInfo> LiveCompile;
 	
 	/** Register Game Flow editor input commands. */
 	virtual void RegisterCommands() override;

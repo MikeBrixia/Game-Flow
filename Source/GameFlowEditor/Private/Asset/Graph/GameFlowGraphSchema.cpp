@@ -17,44 +17,131 @@ FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(in
 const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
 {
 	FPinConnectionResponse ConnectionResponse;
-    
-	const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
-	const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
-	// Allow only connections between one output and input pins.
-	if(bFromInputToOutput || bFromOutputToInput)
+
+	// True if both pins are valid and requested connection is not recursive, false otherwise.
+	const bool bValidAndNotRecursive = A != nullptr && B != nullptr && A->GetOwningNode() != B->GetOwningNode();
+	if(bValidAndNotRecursive)
 	{
-		ConnectionResponse.Response = CONNECT_RESPONSE_MAKE;
-		ConnectionResponse.Message = INVTEXT("Node connection allowed");
+		const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
+		const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
+		// Allow only connections between one output and input pins.
+		if (bFromInputToOutput || bFromOutputToInput)
+		{
+			ConnectionResponse.Response = CONNECT_RESPONSE_MAKE;
+			ConnectionResponse.Message = INVTEXT("Node connection allowed");
+		}
+		else
+		{
+			ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
+			ConnectionResponse.Message = INVTEXT("Node connection is not allowed");
+		}
 	}
+	// Otherwise, just reject it.
 	else
 	{
 		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
-		ConnectionResponse.Message = INVTEXT("Node connection is not allowed");
+		ConnectionResponse.Message = INVTEXT("Connections refused: one or both pins are invalid(nullptr)");
 	}
+	
 	return ConnectionResponse;
+}
+
+bool UGameFlowGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
+{
+	const bool bConnectionCreated = Super::TryCreateConnection(A, B);
+	
+	if(bConnectionCreated)
+	{
+		const UGameFlowGraphNode* A_Node = CastChecked<UGameFlowGraphNode>(A->GetOwningNode());
+		const UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(A_Node->GetGraph());
+		if(Graph->GameFlowAsset->bLiveCompile)
+		{
+			UGameFlowNode* A_NodeAsset = A_Node->GetNodeAsset();
+			UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(B->GetOwningNode())->GetNodeAsset();
+			
+			switch(A->Direction)
+			{
+			default: break;
+
+			case EGPD_Input:
+				{
+					const FGameFlowPinNodePair Pair(A->PinName, B_NodeAsset);
+					B_NodeAsset->AddOutput(B->PinName, Pair);
+					break;
+				}
+			
+			case EGPD_Output:
+				{
+					const FGameFlowPinNodePair Pair(B->PinName, B_NodeAsset);
+					A_NodeAsset->AddOutput(A->PinName, Pair);
+					break;
+				}
+			}
+		}
+	}
+	
+	return bConnectionCreated;
+}
+
+void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
+{
+	Super::BreakSinglePinLink(SourcePin, TargetPin);
+	
+	const UGameFlowGraphNode* A_Node = CastChecked<UGameFlowGraphNode>(SourcePin->GetOwningNode());
+	const UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(A_Node->GetGraph());
+	if (Graph->GameFlowAsset->bLiveCompile)
+	{
+		UGameFlowNode* A_NodeAsset = A_Node->GetNodeAsset();
+		UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(TargetPin->GetOwningNode())->GetNodeAsset();
+		switch (SourcePin->Direction)
+		{
+		default: break;
+
+		case EGPD_Input:
+			{
+				B_NodeAsset->RemoveOutput(TargetPin->PinName);
+				break;
+			}
+
+		case EGPD_Output:
+			{
+				A_NodeAsset->RemoveOutput(SourcePin->PinName);
+				break;
+			}
+		}
+	}
+	
+}
+
+void UGameFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
+{
+	// Break all target pin connections.
+	for(UEdGraphPin* LinkedPin : TargetPin.LinkedTo)
+	{
+		BreakSinglePinLink(&TargetPin, LinkedPin);
+	}
+
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
 }
 
 void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
 	UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(&Graph);
-	if(GameFlowGraph != nullptr)
-	{
-		UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
-		
-		// Create standard input node.
-		UGameFlowNode_Input* StandardInputNode = CreateDefaultInputs(*GameFlowGraph);
-		UGameFlowGraphNode* InputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardInputNode, GameFlowGraph);
-        GameFlowGraph->RootNodes.Add(InputGraphNode);
-		
-		// Create standard output node.
-		UGameFlowNode_Output* StandardOutputNode = CreateDefaultOutputs(*GameFlowGraph);
-		UGameFlowGraphNode* OutputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardOutputNode, GameFlowGraph);
-		OutputGraphNode->NodePosX += 300.f;
-		
-		// Mark the asset as already been opened at least one time.
-		// Doing this will avoid creating duplicate default pins.
-		GameFlowAsset->bHasAlreadyBeenOpened = true;
-	}
+	UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
+
+	// Create standard input node.
+	UGameFlowNode_Input* StandardInputNode = CreateDefaultInputs(*GameFlowGraph);
+	UGameFlowGraphNode* InputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardInputNode, GameFlowGraph);
+	GameFlowGraph->RootNodes.Add(InputGraphNode);
+
+	// Create standard output node.
+	UGameFlowNode_Output* StandardOutputNode = CreateDefaultOutputs(*GameFlowGraph);
+	UGameFlowGraphNode* OutputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardOutputNode, GameFlowGraph);
+	OutputGraphNode->NodePosX += 300.f;
+
+	// Mark the asset as already been opened at least one time.
+	// Doing this will avoid creating duplicate default pins.
+	GameFlowAsset->bHasAlreadyBeenOpened = true;
 }
 
 UGameFlowNode_Input* UGameFlowGraphSchema::CreateDefaultInputs(UGameFlowGraph& Graph) const
