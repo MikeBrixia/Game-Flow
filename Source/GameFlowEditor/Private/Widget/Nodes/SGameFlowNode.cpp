@@ -5,6 +5,7 @@
 #include "GraphEditorSettings.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
+#include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Widget/Nodes/SGameFlowNodePin.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
@@ -17,13 +18,10 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Initialize node widget arguments.
 	this->GraphNode = InArgs._Node;
 	this->TitleText = InArgs._TitleText;
-	
-	UGameFlowNode* NodeAsset = CastChecked<UGameFlowGraphNode>(GraphNode)->GetNodeAsset();
-	NodeAsset->OnNodePinNameChange.AddLambda([=]()
-	{
-		GraphNode->ReconstructNode();
-		Construct(InArgs);
-	});
+
+	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
+	// Each a time the encapsulated node asset gets changed, refresh the node widget.
+    GameFlowGraphNode->OnNodeAssetChanged.AddSP(this, &SGameFlowNode::UpdateGraphNode);
 	
 	// Use UCLASS display name attribute value as node title.
 	if(InlineEditableText != nullptr)
@@ -31,7 +29,7 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 		InlineEditableText->SetText(TitleText);
 	}
 	
-	// Update the node(will be drawn if non-existing).
+	// Construct node by reading GraphNode data.
 	UpdateGraphNode();
 }
 

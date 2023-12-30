@@ -8,6 +8,8 @@
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnNodeAssetChanged)
+
 /**
  * A node used inside Game Flow graphs.
  */
@@ -18,6 +20,9 @@ class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 	
 	GENERATED_BODY()
 
+public:
+	/* Called when the node asset encapsulated inside this graph node gets changed. */
+	FOnNodeAssetChanged OnNodeAssetChanged;
 private:
 	
 	/* The game flow node asset encapsulated inside this graph node. */
@@ -32,14 +37,19 @@ public:
 	UGameFlowGraphNode();
 	
 	virtual void AllocateDefaultPins() override;
+	virtual FName CreateUniquePinName(FName SourcePinName) const override;
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual bool CanUserDeleteNode() const override;
 	virtual void ReconstructNode() override;
+	void OnAssetEdited();
 	
 	/* Get the asset contained inside this graph node. */
 	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }
+    void SetNodeAsset(UGameFlowNode* Node);
 
+	FORCEINLINE FGameFlowNodeInfo& GetNodeInfo() { return Info; }
+	FORCEINLINE void SetNodeInfo(FGameFlowNodeInfo NewInfo) { this->Info = NewInfo; }
 	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override
 	{
 		return Info.TitleBarColor;

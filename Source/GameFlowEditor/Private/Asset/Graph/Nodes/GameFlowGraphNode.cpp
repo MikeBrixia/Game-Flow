@@ -1,7 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+#include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
+#include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Widget/Nodes/SGameFlowNode.h"
@@ -10,11 +12,42 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 {
 }
 
+void UGameFlowGraphNode::InitNode()
+{
+	// Vital assertions.
+	checkf(NodeAsset != nullptr, TEXT("Node asset is invalid(nullptr)"));
+
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	
+	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
+}
+
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
+	Pins.Empty();
+	
 	// Create pins for graph node.
 	CreateNodePins(EGPD_Input, NodeAsset->GetInputPins());
 	CreateNodePins(EGPD_Output, NodeAsset->GetOutputPins());
+}
+
+FName UGameFlowGraphNode::CreateUniquePinName(FName SourcePinName) const
+{
+	FString GeneratedName = SourcePinName.ToString();
+	int Number;
+	if(GeneratedName.IsNumeric())
+	{
+		Number = FCString::Atoi(*GeneratedName);
+		GeneratedName = FString::FromInt(Number + 1);
+	}
+	else
+	{
+		Number = GetNum(GeneratedName);
+		GeneratedName = FString::Printf(TEXT("NewPin_%d"), Number + 1);
+	}
+
+	return FName(GeneratedName);
 }
 
 TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
@@ -33,24 +66,6 @@ FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	return NodeAsset->GetClass()->GetDisplayNameText();
 }
 
-void UGameFlowGraphNode::InitNode()
-{
-	// Vital assertions.
-	checkf(NodeAsset != nullptr, TEXT("Node asset is invalid(nullptr)"));
-
-	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
-	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-	
-	// Each time a node pin name or type gets modified, reconstruct the node to keep it updated.
-	//NodeAsset->OnNodePinNameChange.AddUObject(this, &UGameFlowGraphNode::ReconstructNode);
-	NodeAsset->OnNodeTypeChange.AddLambda([=](const FName& NewTypeName)
-	{
-		// Update node info from settings using the new typename, then reconstruct the node.
-	    Info = Settings->NodesTypes.FindChecked(NewTypeName);
-		ReconstructNode();
-	});
-}
-
 bool UGameFlowGraphNode::CanUserDeleteNode() const
 {
 	const FText NodeDisplayName = NodeAsset->GetClass()->GetDisplayNameText();
@@ -60,11 +75,37 @@ bool UGameFlowGraphNode::CanUserDeleteNode() const
 
 void UGameFlowGraphNode::ReconstructNode()
 {
-	Super::ReconstructNode();
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+
+	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
+	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
 	// Reallocate all node pins.
-	Pins.Empty();
 	AllocateDefaultPins();
+	
+	UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
+	// Recreate node connections.
+	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
+}
+
+void UGameFlowGraphNode::OnAssetEdited()
+{
+	ReconstructNode();
+	OnNodeAssetChanged.Broadcast();
+}
+
+void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
+{
+	NodeAsset = Node;
+	// Read new info data from config using the new node asset type.
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	
+	// Notify listeners that the node asset has been changed.
+	if(OnNodeAssetChanged.IsBound())
+	{
+		OnNodeAssetChanged.Broadcast();
+	}
 }
 
 void UGameFlowGraphNode::CreateNodePins(const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames)
@@ -79,15 +120,7 @@ void UGameFlowGraphNode::CreateNodePins(const EEdGraphPinDirection PinDirection,
 
 UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
 {
-	// When name is 'None', use a generated one.
-	if(PinName.IsEqual(EName::None))
-	{
-		PinName = NodeAsset->GenerateAddPinName(PinDirection);
-	}
-	const FEdGraphPinType PinType = GetGraphPinType();
-	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
-	Pin->PinFriendlyName = FText::FromName(PinName);
-	
+	const bool bIsPinNameInvalid = PinName.IsEqual(EName::None);
 	// Update Node asset depending on the new pin direction.
 	switch(PinDirection)
 	{
@@ -96,16 +129,35 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 	     // Add input pin to node asset.
 	case EGPD_Input:
 		{
-			NodeAsset->AddInput(PinName);
+			// Generated unique pin name following previous pin pattern.
+			if(bIsPinNameInvalid)
+			{
+				TArray<FName> InputPins = NodeAsset->GetInputPins();
+				const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
+				PinName = CreateUniquePinName(PreviousName);
+			}
+			NodeAsset->AddInput(PinName, {});
 			break;
 		}
 		// Add output pin to node asset.	
 	case EGPD_Output:
 		{
+			// Generated unique pin name following previous pin pattern.
+			if(bIsPinNameInvalid)
+			{
+				TArray<FName> OutputPins = NodeAsset->GetOutputPins();
+				const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
+				PinName = CreateUniquePinName(PreviousName);
+			}
 			NodeAsset->AddOutput(PinName, {});
 			break;
 		}
 	}
+	
+	const FEdGraphPinType PinType = GetGraphPinType();
+	// Create the pin object.
+	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
+	Pin->PinFriendlyName = FText::FromName(PinName);
 	return Pin;
 }
 

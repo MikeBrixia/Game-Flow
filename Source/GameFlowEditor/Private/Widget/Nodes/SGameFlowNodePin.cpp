@@ -33,4 +33,9 @@ void SGameFlowNodePin::Construct(const FArguments& InArgs, UEdGraphPin* Pin)
 	this->bShowLabel = !(PinName.Contains("Exec") || PinName.Contains("Out"));
 }
 
+void SGameFlowNodePin::SetPinDisplayName(const FName& PinName)
+{
+	GraphPinObj->PinFriendlyName = FText::FromName(PinName);
+}
+
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

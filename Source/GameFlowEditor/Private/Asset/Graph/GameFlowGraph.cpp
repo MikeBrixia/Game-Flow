@@ -53,13 +53,13 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 	}
 }
 
-void UGameFlowGraph::OnGraphCompile(UGameFlowAsset* Asset)
+void UGameFlowGraph::OnGraphCompile()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	checkf(GraphSchema != nullptr, TEXT("Game Flow Graph Schema is invalid! Please assign a valid schema to this graph"));
 
-	const bool bCompilationSuccessful = GraphSchema->CompileGraph(*this, Asset);
-	const FString AssetName = Asset->GetName();
+	const bool bCompilationSuccessful = GraphSchema->CompileGraph(*this, GameFlowAsset);
+	const FString AssetName = GameFlowAsset->GetName();
 	
 	// Log the result of the graph compilation to the Unreal engine output log and
 	// also the GameFlow log console.
@@ -142,7 +142,7 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	// Recreate all graph node connections.
-	GraphSchema->RecreateGraphNodesConnections(*this, GameFlowAsset);
+	GraphSchema->RecreateGraphNodesConnections(*this);
 }
 
 

@@ -217,7 +217,7 @@ void GameFlowAssetToolkit::TryCompiling()
 	// If there's at least one listener, broadcast asset compilation event.
 	if(OnAssetCompileCallback.IsBound())
 	{
-		OnAssetCompileCallback.Broadcast(Asset);
+		OnAssetCompileCallback.Broadcast();
 	}
 }
 

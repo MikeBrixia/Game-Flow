@@ -10,6 +10,15 @@
 #include "UObject/Object.h"
 #include "GameFlowGraphSchema.generated.h"
 
+/* All the possible flags returned by GameFlow node validator. */
+UENUM()
+enum ENodeValidationResult
+{
+	Success,
+	Warning,
+	Error
+};
+
 UCLASS()
 class GAMEFLOWEDITOR_API UGameFlowGraphSchema : public UEdGraphSchema
 {
@@ -29,7 +38,8 @@ public:
 	
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
-	
+
+	virtual UEdGraphNode* CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph, FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const override;
 	/**
 	 * @brief Compile the asset edited by the given graph.
 	 * @param Graph The graph to compile
@@ -42,24 +52,38 @@ public:
 	 * @brief Compile a single branch inside the Game Flow graph. A branch must be compiled from
 	 *        a root node, which is also known as a Game Flow input.
 	 * @param RootNode The root of a Game Flow branch. Root nodes are also known as input nodes. 
-	 * @param GameFlowAsset The game flow asset to compile.
 	 * @return True if branch compilation was successful, false otherwise.
 	 */
-	bool CompileGraphBranch(UGameFlowGraphNode* RootNode, UGameFlowAsset* GameFlowAsset) const;
+	bool CompileGraphBranch(UGameFlowGraphNode* RootNode) const;
 
+	/**
+	 * @brief Compile a single node inside the graph.
+	 * @param GraphNode The node to compile
+	 * @param Directions Specify in which directions you want to compile the pins.
+	 * @return True if node was compiled successfully, false otherwise.
+	 */
+	bool CompileGraphNode(UGameFlowGraphNode* GraphNode, const TArray<EEdGraphPinDirection> Directions) const;
+	
 	/**
 	 * @brief Recreate all logical and visual connections between all the graph nodes.
 	 * @param Graph The graph in which the operation takes place.
-	 * @param GameFlowAsset The asset from which will be reading the necessary data to rebuild the graph.
 	 */
-	void RecreateGraphNodesConnections(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const;
+	void RecreateGraphNodesConnections(const UGameFlowGraph& Graph) const;
 	
 	/**
 	 * @brief Recreate nodes connections starting from a given node.
 	 * @param Graph The graph in which the operation takes place.
-	 * @param RootNodeAsset The root of a Game Flow branch. In this case the root could be any selected node. 
+	 * @param RootNode The root of a Game Flow branch. In this case the root could be any selected node. 
 	 */
-	void RecreateBranchConnections(const UGameFlowGraph& Graph, const UGameFlowNode* RootNodeAsset) const;
+	void RecreateBranchConnections(const UGameFlowGraph& Graph, UGameFlowGraphNode* RootNode) const;
+
+	/**
+	 * @brief Recreate connections for the specified node.
+	 * @param Graph The graph in which the operation takes place.
+	 * @param GraphNode The node to recreate connections for
+	 * @param Directions Specify in which directions you want to recreate connections.
+	 */
+	void RecreateNodeConnections(const UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode, const TArray<EEdGraphPinDirection> Directions) const;
 	
 	/**
 	 * @brief Find all nodes inside the graph which do not have any connected input pin.
@@ -68,8 +92,23 @@ public:
 	 */
 	TArray<UGameFlowGraphNode*> GetGraphOrphanNodes(const UGameFlowGraph& Graph) const;
 
-private:
+	/**
+	 * @brief Ensure that the supplied asset does not contain any corrupted data.
+	 * @param Graph The graph in which the operation takes place.
+	 */
+	ENodeValidationResult ValidateAsset(UGameFlowGraph& Graph) const;
+
+	/**
+	 * @brief Ensure that the supplied node asset does not contain any corrupted data.
+	 * @param Graph Graph The graph in which the operation takes place.
+	 * @param GraphNode The Node to validate.
+	 */
+	ENodeValidationResult ValidateNodeAsset(UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode) const;
+
+protected:
     
 	virtual UGameFlowNode_Input* CreateDefaultInputs(UGameFlowGraph& Graph) const;
 	virtual UGameFlowNode_Output* CreateDefaultOutputs(UGameFlowGraph& Graph) const;
+	
+	void ConnectNodes(UGameFlowNode* NodeAsset_A, const FName& PinNameA, UGameFlowNode* NodeAsset_B, const FName& PinNameB) const;
 };

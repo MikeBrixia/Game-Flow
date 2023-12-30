@@ -37,17 +37,16 @@ private:
 	
 public:
 	UGameFlowGraph();
+	
 	void InitGraph();
 	virtual void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
 	
-	void OnGraphCompile(UGameFlowAsset* Asset);
+	void OnGraphCompile();
 	void OnSaveGraph();
 
-protected:
-	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
-	
-private:
 	void RebuildGraphFromAsset();
+
+	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 };
 
 

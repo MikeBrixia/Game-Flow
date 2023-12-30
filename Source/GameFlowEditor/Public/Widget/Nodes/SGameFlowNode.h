@@ -57,7 +57,6 @@ protected:
 	 * @brief Called when an output pin gets created using the InputSideAddButton
 	 * @return Event handler.
 	 */
-	
 	virtual FReply OnAddOutputPin();
 	
 private:
@@ -83,6 +82,7 @@ private:
 
 	// ---------------------------------------------------
 };
+
 
 
 

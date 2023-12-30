@@ -37,7 +37,7 @@ public:
 	 * @param NodeClass The class of the node which will be encapsulated inside the graph node
 	 * @param ParentAsset The GameFlow asset who owns the encapsulated node.
 	 * @param Graph The graph who owns the new graph node.
-	 * @return 
+	 * @return The created graph node.
 	 */
 	static UGameFlowGraphNode* CreateGraphNode(const TSubclassOf<UGameFlowNode> NodeClass, UGameFlowAsset* ParentAsset, UGameFlowGraph* Graph);
 };

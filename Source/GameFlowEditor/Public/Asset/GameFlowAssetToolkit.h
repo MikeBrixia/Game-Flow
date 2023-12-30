@@ -5,7 +5,7 @@
 #include "Toolkits/AssetEditorToolkit.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetSaved)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnAssetCompile, UGameFlowAsset*)
+DECLARE_MULTICAST_DELEGATE(FOnAssetCompile)
 
 /** The editor of a Game Flow asset. */
 class GameFlowAssetToolkit : public FAssetEditorToolkit

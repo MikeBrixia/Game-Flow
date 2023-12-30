@@ -102,4 +102,8 @@ public:
 	 * the execution of this GameFlow object.
 	 */
 	void TerminateExecution();
+
+#if WITH_EDITOR
+    void ValidateAsset();
+#endif
 };

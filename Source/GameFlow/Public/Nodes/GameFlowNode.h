@@ -8,8 +8,7 @@
 
 #if WITH_EDITORONLY_DATA
 
-DECLARE_MULTICAST_DELEGATE(FOnNodePinNameChange)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNodeTypeChange, const FName&)
+DECLARE_MULTICAST_DELEGATE(FOnEditAsset)
 
 #endif
 
@@ -53,10 +52,16 @@ public:
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
 	
-	/* Callback for when one of this node pins name gets changed. */
-	FOnNodePinNameChange OnNodePinNameChange;
-	/* Callback for when the node type gets changed. */
-	FOnNodeTypeChange OnNodeTypeChange;
+	/* Callback for when the asset gets edited in the details panel. */
+	FOnEditAsset OnEditAsset;
+	
+	/* Called when the validation operation requires a deprecated node replacement. */
+	//FOnReplaceAbstractNode OnReplaceAbstractNode;
+	// Called when the validation operation wants to notify the users about currently
+	// in use deprecated nodes.
+	//FOnRequestNodeDeprecation OnRequestNodeDeprecation;
+	/* Called when the editor wants to check if there are any recursive node connections*/
+	//FOnBreakRecursiveConnectionsRequest OnBreakRecursiveConnectionsRequest;
 	
 protected:
 	UPROPERTY(EditAnywhere, EditFixedSize, Category="Game Flow|I/O")
@@ -76,39 +81,24 @@ protected:
 #endif
 	
 private:
+
+#if WITH_EDITORONLY_DATA
+    UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
+    TMap<FName, FGameFlowPinNodePair> Inputs;
+#endif
+	
 	/* All the possible outputs of this node. */
 	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
 	TMap<FName, FGameFlowPinNodePair> Outputs;
 public:
-	
 	UGameFlowNode();
 	
 	/* Execute GameFlow blueprint. */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void Execute(const FName& PinName);
 	virtual void Execute_Implementation(const FName& PinName);
-	
-protected:
-	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	void OnFinishExecute();
-	virtual void OnFinishExecute_Implementation();
-	
-	/**
-	 * @brief Call this function to trigger an output and execute the next node.
-	 * @param OutputPin Name of the pin to which the next node has been mapped.
-	 * @param bFinish If true, this node will be the only output and node will be unloaded.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void FinishExecute(FName OutputPin, bool bFinish);
 
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-	
-public:
-	
 	FORCEINLINE virtual FGameFlowPinNodePair GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
-	
 	FORCEINLINE virtual TArray<FGameFlowPinNodePair> GetChildren() const
 	{
 		TArray<FGameFlowPinNodePair> Children;
@@ -133,8 +123,9 @@ public:
 	/**
 	 * @brief Add a new output pin to this node.
 	 * @param PinName The nome of the pin to create.
+	 * @param Input The node and pin we want to connect to.
 	 */
-	void AddInput(const FName PinName);
+	void AddInput(const FName PinName, const FGameFlowPinNodePair Input);
 
 	/**
 	 * @brief Remove an input pin from this node.
@@ -145,7 +136,7 @@ public:
 	/**
 	 * @brief Connect this node to another graph node.
 	 * @param PinName The name of the output pin which connects this node, to the next.
-	 * @param Output The node and pins we want to connect to.
+	 * @param Output The node and pin we want to connect to.
 	 */
 	void AddOutput(const FName PinName, const FGameFlowPinNodePair Output);
 
@@ -161,6 +152,26 @@ public:
 	 */
 	UFUNCTION(CallInEditor)
     FORCEINLINE TArray<FName> GetNodeTypeOptions() const { return UGameFlowSettings::Get()->Options; }
+#endif
+	
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
+	void OnFinishExecute();
+	virtual void OnFinishExecute_Implementation();
+	
+	/**
+	 * @brief Call this function to trigger an output and execute the next node.
+	 * @param OutputPin Name of the pin to which the next node has been mapped.
+	 * @param bFinish If true, this node will be the only output and node will be unloaded.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Game Flow")
+	void FinishExecute(FName OutputPin, bool bFinish);
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
+private:
+    TArray<FName> FindPinsDiff(const TArray<FName>& Array0, const TArray<FName>& Array1) const;
 #endif
 };
 
