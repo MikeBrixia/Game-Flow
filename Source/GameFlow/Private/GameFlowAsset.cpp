@@ -40,14 +40,3 @@ void UGameFlowAsset::TerminateExecution()
 	ActiveNodes.Empty();
 }
 
-#if WITH_EDITOR
-
-void UGameFlowAsset::ValidateAsset()
-{
-	for(const auto& Pair : Nodes)
-	{
-		UGameFlowNode* Node = Pair.Value;
-	}
-}
-
-#endif

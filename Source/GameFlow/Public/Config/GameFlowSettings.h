@@ -6,12 +6,15 @@
 #include "UObject/Object.h"
 #include "GameFlowSettings.generated.h"
 
+class UGameFlowNode;
+
 /**
  * Singleton configuration class for Game Flow.
  */
 UCLASS(Config=EditorPerProjectUserSettings, DefaultConfig, meta=(DisplayName="Game Flow"))
 class GAMEFLOW_API UGameFlowSettings : public UDeveloperSettings
 {
+	
 	GENERATED_BODY()
 
 public:

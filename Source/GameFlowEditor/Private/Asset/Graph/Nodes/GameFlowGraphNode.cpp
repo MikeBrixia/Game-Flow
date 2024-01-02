@@ -1,11 +1,19 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+
+#include "ClassViewerFilter.h"
+#include "ClassViewerModule.h"
+#include "EditorAssetLibrary.h"
+#include "EditorAssetLibrary.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
+#include "ObjectTools.h"
+#include "PropertyCustomizationHelpers.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Utils/UGameFlowNodeFactory.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
 UGameFlowGraphNode::UGameFlowGraphNode()
@@ -21,6 +29,11 @@ void UGameFlowGraphNode::InitNode()
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 	
 	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
+}
+
+void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
+{
+	
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()
@@ -54,11 +67,14 @@ TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 {
 	// Use UCLASS display name attribute value as node title.
 	const FText TitleText = GetNodeTitle(ENodeTitleType::EditableTitle);
-	
+
+	TSharedRef<SGameFlowNode> NodeWidget = SNew(SGameFlowNode)
+		                                   .Node(this)
+		                                   .TitleText(TitleText);
+    // Validate node asset.
+	CastChecked<UGameFlowGraphSchema>(GetSchema())->ValidateNodeAsset(this);
 	// Create and initialize node widget.
-	return SNew(SGameFlowNode)
-	       .Node(this)
-	       .TitleText(TitleText);
+	return NodeWidget;
 }
 
 FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
@@ -76,7 +92,7 @@ bool UGameFlowGraphNode::CanUserDeleteNode() const
 void UGameFlowGraphNode::ReconstructNode()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-
+	
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
@@ -92,6 +108,29 @@ void UGameFlowGraphNode::OnAssetEdited()
 {
 	ReconstructNode();
 	OnNodeAssetChanged.Broadcast();
+}
+
+void UGameFlowGraphNode::OnReplacementClassPicked(UClass* Class)
+{
+	if(Class != nullptr)
+	    UE_LOG(LogGameFlow, Display, TEXT("Class name is %s"), *Class->GetName())
+}
+
+void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
+{
+	//const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	//UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+	//GraphSchema->ReplaceDummyNodes(*GameFlowGraph, ClassToReplace);
+}
+
+void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity)
+{
+	bHasCompilerMessage = MessageSeverity == EMessageSeverity::Error ||
+		    MessageSeverity == EMessageSeverity::Warning ||
+		    MessageSeverity == EMessageSeverity::Info ||
+			MessageSeverity == EMessageSeverity::PerformanceWarning;
+	ErrorType = MessageSeverity;
+	OnValidationResult.Broadcast();
 }
 
 void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)

@@ -27,7 +27,7 @@ public class GameFlowEditor : ModuleRules
 			{
 				"Core", "GameFlow", "UnrealEd", "AssetTools", "AssetRegistry", "UMGEditor",
 				"UMG", "GraphEditor", "BlueprintGraph", "Projects", "EditorSubsystem", "ToolMenus",
-				"DeveloperSettings", "InputCore"
+				"DeveloperSettings", "InputCore", "EditorScriptingUtilities", "PropertyEditor"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -39,7 +39,7 @@ public class GameFlowEditor : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", 
+				"SlateCore", "EditorScriptingUtilities", "EditorScriptingUtilities", 
 				// .. add private dependencies that you statically link with here ...	
 			}
 		);

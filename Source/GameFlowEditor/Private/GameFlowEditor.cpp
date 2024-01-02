@@ -4,10 +4,12 @@
 #include "ISettingsModule.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowEditorModule"
+
 DEFINE_LOG_CATEGORY(LogGameFlow)
 
 EAssetTypeCategories::Type FGameFlowEditorModule::GameFlowCategory = EAssetTypeCategories::None;
@@ -26,7 +28,7 @@ void FGameFlowEditorModule::StartupModule()
 		// Register Game Flow assets.
 		GameFlowAsset = MakeShared<FGameFlowAssetTypeAction>();
 		AssetToolModule.Get().RegisterAssetTypeActions(GameFlowAsset.ToSharedRef());
-
+        
 		// Register game flow stylesheets.
 		const FFlowNodeStyle& GameFlowNodeStyle = FFlowNodeStyle::GetDefault();
 		FSlateStyleRegistry::RegisterSlateStyle(GameFlowNodeStyle.GetStyle());
@@ -65,6 +67,10 @@ void FGameFlowEditorModule::ShutdownModule()
 	{
 		SettingsModule->UnregisterSettings("Project", "Plugins", "Game Flow");
 	}
+}
+
+void FGameFlowEditorModule::OnGameFlowAssetsRemoved(TArray<UClass*>& AssetsRemoved)
+{
 }
 
 #undef LOCTEXT_NAMESPACE

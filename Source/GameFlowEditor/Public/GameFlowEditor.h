@@ -21,4 +21,7 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	/* Called each time the user deletes an asset from the editor. */
+	void OnGameFlowAssetsRemoved(TArray<UClass*>& AssetsRemoved);
 };

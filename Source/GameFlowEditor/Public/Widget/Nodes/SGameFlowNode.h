@@ -28,6 +28,10 @@ public:
 protected:
 	/* The text displayed inside the node titlebar. */
 	FText TitleText;
+
+private:
+    /* The class which will be used as a replacement for the current one. */
+	UClass* NodeReplacementClass = nullptr;
 	
 public:
 	/** Constructs this widget with InArgs */
@@ -36,6 +40,9 @@ public:
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
+
+	void OnRequestDummyReplacement(UClass* ClassToReplace);
+	virtual TSharedRef<SWindow> CreateNodeReplacementDialog();
 	
 	// -------------------- Widget pins --------------------------------
 	
@@ -82,6 +89,7 @@ private:
 
 	// ---------------------------------------------------
 };
+
 
 
 

@@ -95,7 +95,9 @@ TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetDetails()
 {
 	// Create and initialize details tab.
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	
 	FDetailsViewArgs DetailsViewArgs;
+	// Initialize details view settings.
 	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
 	const TSharedRef<IDetailsView> DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
 
@@ -109,8 +111,10 @@ TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetNodeDetails()
 {
 	// Create and initialize details tab.
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	// Initialize details view settings.
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 	const TSharedRef<IDetailsView> DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
 
 	TArray<UEdGraphNode*> SelectedNodes = Graph->Nodes.FilterByPredicate([](const UEdGraphNode* Node)

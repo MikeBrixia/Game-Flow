@@ -137,12 +137,14 @@ FName UGameFlowNode::GenerateAddPinName(uint8 PinDirection)
 
 void UGameFlowNode::AddInput(const FName PinName, const FGameFlowPinNodePair Input)
 {
+	// Add input pin if not already present.
+	InputPins.AddUnique(PinName);
+	
 	const bool bValidOutput = Input.Node != nullptr && !Input.InputPinName.IsNone();
 	const bool bRecursiveOutput = Input.Node == this;
-	// Do we have the permission to add new input pins to this node?
+	// Map pins only if the input is valid and non-recursive, otherwise ignore mapping.
 	if(bValidOutput && !bRecursiveOutput)
 	{
-		InputPins.AddUnique(PinName);
 		Inputs.Add(PinName, Input);
 	}
 }
@@ -155,12 +157,14 @@ void UGameFlowNode::RemoveInputPin(const FName PinName)
 
 void UGameFlowNode::AddOutput(const FName PinName, const FGameFlowPinNodePair Output)
 {
+	// Add output pin if not already present.
+	OutputPins.AddUnique(PinName);
+	
 	const bool bValidOutput = Output.Node != nullptr && !Output.InputPinName.IsNone();
 	const bool bRecursiveOutput = Output.Node == this;
-	// Add only valid and non-recursive nodes
+	// Map pins only if the output is valid and non-recursive, otherwise ignore mapping.
 	if(bValidOutput && !bRecursiveOutput)
 	{
-		OutputPins.AddUnique(PinName);
 		Outputs.Add(PinName, Output);
 	}
 }

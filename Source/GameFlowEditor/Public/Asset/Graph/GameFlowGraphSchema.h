@@ -5,19 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFlowAsset.h"
 #include "GameFlowGraph.h"
+#include "Nodes/GameFlowNode_Dummy.h"
 #include "Nodes/GameFlowNode_Input.h"
 #include "Nodes/GameFlowNode_Output.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphSchema.generated.h"
-
-/* All the possible flags returned by GameFlow node validator. */
-UENUM()
-enum ENodeValidationResult
-{
-	Success,
-	Warning,
-	Error
-};
 
 UCLASS()
 class GAMEFLOWEDITOR_API UGameFlowGraphSchema : public UEdGraphSchema
@@ -93,18 +85,31 @@ public:
 	TArray<UGameFlowGraphNode*> GetGraphOrphanNodes(const UGameFlowGraph& Graph) const;
 
 	/**
-	 * @brief Ensure that the supplied asset does not contain any corrupted data.
+	 * @brief Ensure that the supplied asset does not contain any corrupted data or errors..
 	 * @param Graph The graph in which the operation takes place.
 	 */
-	ENodeValidationResult ValidateAsset(UGameFlowGraph& Graph) const;
+	void ValidateAsset(UGameFlowGraph& Graph) const;
 
 	/**
-	 * @brief Ensure that the supplied node asset does not contain any corrupted data.
-	 * @param Graph Graph The graph in which the operation takes place.
+	 * @brief Ensure that the supplied node asset does not contain any corrupted data or errors.
 	 * @param GraphNode The Node to validate.
 	 */
-	ENodeValidationResult ValidateNodeAsset(UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode) const;
+	void ValidateNodeAsset(UGameFlowGraphNode* GraphNode) const;
 
+	/**
+	 * @brief Substitute the given graph node with a replacement dummy node.
+	 * @param GraphNode The graph node you want to substitute.
+	 * @param DummyNodeClass The class of the dummy node to use as the replacement.
+	 */
+	void SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const;
+
+	/**
+	 * @brief Replace dummy node with a valid node.
+	 * @param Graph The graph in which the dummy node lives.
+	 * @param ClassToReplace The class replaced by the dummy node.
+	 */
+	void ReplaceDummyNodes(UGameFlowGraph& Graph, UClass* ClassToReplace) const;
+	
 protected:
     
 	virtual UGameFlowNode_Input* CreateDefaultInputs(UGameFlowGraph& Graph) const;

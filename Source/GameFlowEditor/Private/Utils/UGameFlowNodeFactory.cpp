@@ -2,8 +2,10 @@
 
 #include "Utils/UGameFlowNodeFactory.h"
 
+#include "Asset/Graph/GameFlowGraphSchema.h"
+
 UObject* UGameFlowNodeFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags,
-	UObject* Context, FFeedbackContext* Warn, FName CallingContext)
+                                                UObject* Context, FFeedbackContext* Warn, FName CallingContext)
 {
 	return NewObject<UGameFlowNode>(InParent, InClass, InName, Flags, Context);
 }
@@ -33,9 +35,18 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(const TSubclassOf<UGam
 	UGameFlowAsset* ParentAsset, UGameFlowGraph* Graph)
 {
 	// Create a brand new instance of node of supplied class.
-	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(ParentAsset, NodeClass);
-    ParentAsset->Nodes.Add(NewNode->GetUniqueID(), NewNode);
+	UGameFlowNode* NewNode = CreateGameFlowNode(NodeClass, ParentAsset);
 	
 	// Create and return the graph node.
 	return CreateGraphNode(NewNode, Graph);
+}
+
+UGameFlowNode* UGameFlowNodeFactory::CreateGameFlowNode(const TSubclassOf<UGameFlowNode> NodeClass,
+	UGameFlowAsset* GameFlowAsset)
+{
+	// Create a brand new instance of node of supplied class.
+	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass);
+	GameFlowAsset->Nodes.Add(NewNode->GetUniqueID(), NewNode);
+
+	return NewNode;
 }

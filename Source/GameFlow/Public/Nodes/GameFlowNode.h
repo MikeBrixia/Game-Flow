@@ -7,9 +7,7 @@
 #include "GameFlowNode.generated.h"
 
 #if WITH_EDITORONLY_DATA
-
 DECLARE_MULTICAST_DELEGATE(FOnEditAsset)
-
 #endif
 
 /**
@@ -32,10 +30,9 @@ struct GAMEFLOW_API FGameFlowPinNodePair
 };
 
 /* Base interface for all GameFlow nodes. */
-UCLASS(Abstract, NotBlueprintable)
+UCLASS(Abstract, Blueprintable, BlueprintType)
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
-	friend class UGameFlowGraph;
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	
@@ -54,28 +51,20 @@ public:
 	
 	/* Callback for when the asset gets edited in the details panel. */
 	FOnEditAsset OnEditAsset;
-	
-	/* Called when the validation operation requires a deprecated node replacement. */
-	//FOnReplaceAbstractNode OnReplaceAbstractNode;
-	// Called when the validation operation wants to notify the users about currently
-	// in use deprecated nodes.
-	//FOnRequestNodeDeprecation OnRequestNodeDeprecation;
-	/* Called when the editor wants to check if there are any recursive node connections*/
-	//FOnBreakRecursiveConnectionsRequest OnBreakRecursiveConnectionsRequest;
-	
+
 protected:
-	UPROPERTY(EditAnywhere, EditFixedSize, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
 	
 	/* All the possible output pins for this node. */
-	UPROPERTY(EditAnywhere, EditFixedSize, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
 
-	/* True if user should be able to add more input pins than defaults by clicking on a '+' icon. */
+	/* True if this node should have a variable amount of input pins */
     UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     bool bCanAddInputPin;
 
-	/* True if user should be able to add more output pins than defaults by clicking on a '+' icon. */
+	/* True if this node should have a variable amount of input pins */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
 #endif
@@ -83,12 +72,12 @@ protected:
 private:
 
 #if WITH_EDITORONLY_DATA
-    UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
+    UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
     TMap<FName, FGameFlowPinNodePair> Inputs;
 #endif
 	
 	/* All the possible outputs of this node. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow|I/O")
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
 	TMap<FName, FGameFlowPinNodePair> Outputs;
 public:
 	UGameFlowNode();
@@ -126,7 +115,7 @@ public:
 	 * @param Input The node and pin we want to connect to.
 	 */
 	void AddInput(const FName PinName, const FGameFlowPinNodePair Input);
-
+	
 	/**
 	 * @brief Remove an input pin from this node.
 	 * @param PinName The name of the pin to remove.
@@ -151,7 +140,7 @@ public:
 	 * @return An array of node types.
 	 */
 	UFUNCTION(CallInEditor)
-    FORCEINLINE TArray<FName> GetNodeTypeOptions() const { return UGameFlowSettings::Get()->Options; }
+    static FORCEINLINE TArray<FName> GetNodeTypeOptions() { return UGameFlowSettings::Get()->Options; }
 #endif
 	
 protected:
@@ -169,7 +158,6 @@ protected:
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	
 private:
     TArray<FName> FindPinsDiff(const TArray<FName>& Array0, const TArray<FName>& Array1) const;
 #endif

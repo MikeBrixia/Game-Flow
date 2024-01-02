@@ -1,11 +1,15 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraphSchema.h"
+
+#include "ClassViewerModule.h"
 #include "GameFlowEditor.h"
+#include "ObjectTools.h"
+#include "PropertyCustomizationHelpers.h"
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "Asset/Graph/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-#include "Nodes/GameFlowNode_Dummy.h"
+#include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Utils/UGameFlowNodeFactory.h"
 
 FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID,
@@ -210,10 +214,11 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 		
 		const bool bIsInputOrOutputNodeClass = ChildClass == UGameFlowNode_Input::StaticClass() || ChildClass == UGameFlowNode_Output::StaticClass();
         const bool bIsChildClass = ChildClass->IsChildOf(UGameFlowNode::StaticClass()) && ChildClass != UGameFlowNode::StaticClass();
+		const bool bIsDummyClass = ChildClass->IsChildOf(UGameFlowNode_Dummy::StaticClass()) && ChildClass != UGameFlowNode_Dummy::StaticClass();
 		// List of conditions a class needs to meet in order to appear in contextual menu:
 		// 1. Select only classes which are children of UGameFlowNode, Base class excluded.
 		// 2. Should not be an input or output node classes, we already have actions for these.
-		if(bIsChildClass && !bIsInputOrOutputNodeClass)
+		if(bIsChildClass & !bIsInputOrOutputNodeClass & !bIsDummyClass)
 		{
 			TSharedRef<FGameFlowNodeSchemaAction_NewNode> NewNodeAction(new FGameFlowNodeSchemaAction_NewNode(ChildClass, INVTEXT("Node"),
 			                                                                                          FText::FromString(ChildClass->GetDescription()),
@@ -246,49 +251,93 @@ TArray<UGameFlowGraphNode*> UGameFlowGraphSchema::GetGraphOrphanNodes(const UGam
 	return OrphanNodes;
 }
 
-ENodeValidationResult UGameFlowGraphSchema::ValidateAsset(UGameFlowGraph& Graph) const
+void UGameFlowGraphSchema::ValidateAsset(UGameFlowGraph& Graph) const
 {
-	ENodeValidationResult ValidationResult = ENodeValidationResult::Success;
 	TArray<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<TArray<TObjectPtr<UGameFlowGraphNode>>&>(Graph.Nodes);
 	// Validate all the graph nodes.
 	for(UGameFlowGraphNode* GraphNode : GraphNodes)
 	{
-		ValidationResult = ValidateNodeAsset(Graph, GraphNode);
-		if(ValidationResult == ENodeValidationResult::Error) break;
+		ValidateNodeAsset(GraphNode);
 	}
-
-	return ValidationResult;
 }
 
-ENodeValidationResult UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode) const
+void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) const
 {
-	ENodeValidationResult ValidationResult = ENodeValidationResult::Success;
-	const UClass* NodeClass = GraphNode->GetNodeAsset()->StaticClass();
+	const UClass* NodeClass = GraphNode->GetNodeAsset()->GetClass();
 	const FString ClassName = NodeClass->GetName();
+	UClass* DummyNodeClass = UGameFlowNode_Dummy::StaticClass();
 
-	const UClass* DummyNodeClass = UGameFlowNode_Dummy::StaticClass();
-	
-	// When a node is of a class which has been marked as 'Abstract', proceed
-	// by removing all associated instances of this class from the Game Flow asset.
-	// Ideally, all old abstract node instances will be replaced by a dummy node
-	// with the only purpose of keeping the asset functional.
-	if(NodeClass->HasAnyClassFlags(CLASS_Abstract))
+	GraphNode->bHasCompilerMessage = false;
+	// When node is a dummy just throw an error message
+	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
 	{
-		ValidationResult = ENodeValidationResult::Error;
-		UE_LOG(LogGameFlow, Error, TEXT("%s class is abstract! all instances of this class will be removed from Game Flow assets and replaced"
-								  "with dummy node of class: %s."), *ClassName, *DummyNodeClass->GetName());
+		GraphNode->ReportError(EMessageSeverity::Error);
+	}
+	else // Otherwise go through all the validation process.
+	{
+		// When a node is of a class which has been marked as 'Abstract', proceed
+		// by replacing all associated instances of this class from the Game Flow asset.
+		if(NodeClass->HasAnyClassFlags(CLASS_Abstract))
+		{
+			SubstituteWithDummyNode(GraphNode, DummyNodeClass);
+			UE_LOG(LogGameFlow, Error, TEXT("%s class is abstract! all instances of this class will be removed from Game Flow assets and replaced"
+									  "with dummy node of class: %s."), *ClassName, *DummyNodeClass->GetName());
+			GraphNode->ReportError(EMessageSeverity::Error);
+		}
+	
+		// When a node has been marked as deprecated, log a warning to the console
+		// and inform users they should replace or remove that node in the near future.
+		if(NodeClass->HasAnyClassFlags(CLASS_Deprecated))
+		{
+			const FString DeprecationMessage = NodeClass->GetMetaData("DeprecationMessage");
+			UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
+			GraphNode->ReportError(EMessageSeverity::Warning);
+		}
+	}
+}
+
+void UGameFlowGraphSchema::SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const
+{
+	UGameFlowAsset* GameFlowAsset = GraphNode->GetNodeAsset()->GetTypedOuter<UGameFlowAsset>();
+	UGameFlowNode_Dummy* DummyNode = CastChecked<UGameFlowNode_Dummy>(UGameFlowNodeFactory::CreateGameFlowNode(DummyNodeClass, GameFlowAsset));
+
+	GraphNode->ErrorType = EMessageSeverity::Error;
+	// The node asset to substitute.
+	const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+	DummyNode->InputPins = NodeAsset->InputPins;
+	DummyNode->OutputPins = NodeAsset->OutputPins;
+	DummyNode->ReplacedNodeClass = NodeAsset->GetClass();
+	
+	for(const auto Input : NodeAsset->Inputs)
+	{
+		ConnectNodes(Input.Value.Node, Input.Value.InputPinName, DummyNode, Input.Key);
+	}
+
+	for(const auto Output : NodeAsset->Outputs)
+	{
+		ConnectNodes(DummyNode,  Output.Key, Output.Value.Node,  Output.Value.InputPinName);
 	}
 	
-	// When a node has been marked as deprecated, log a warning to the console
-	// and inform users they should replace or remove that node in the near future.
-	if(NodeClass->HasAnyClassFlags(CLASS_Deprecated))
-	{
-		ValidationResult = ENodeValidationResult::Warning;
-		const FString DeprecationMessage = NodeClass->GetMetaData("DeprecationMessage");
-		UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
-	}
+    // Substitute encapsulated node with dummy node.
+	GameFlowAsset->Nodes.Remove(NodeAsset->GetUniqueID());
+	GameFlowAsset->Nodes.Add(DummyNode->GetUniqueID(), DummyNode);
+	GraphNode->SetNodeAsset(DummyNode);
+}
 
-	return ValidationResult;
+void UGameFlowGraphSchema::ReplaceDummyNodes(UGameFlowGraph& Graph, UClass* ClassToReplace) const
+{
+	const TArray<UGameFlowGraphNode*> Nodes = reinterpret_cast<TArray<UGameFlowGraphNode*>&>(Graph.Nodes);
+	
+	TArray<UObject*> Dummies;
+	// Find all dummy nodes substituting the ClassToReplace nodes.
+	for(const UGameFlowGraphNode* Node : Nodes)
+	{
+		UGameFlowNode_Dummy* DummyNode = Cast<UGameFlowNode_Dummy>(Node->GetNodeAsset());
+		if(DummyNode != nullptr && DummyNode->ReplacedNodeClass == ClassToReplace)
+		{
+			Dummies.Add(DummyNode);
+		}
+	}
 }
 
 bool UGameFlowGraphSchema::CompileGraph(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const

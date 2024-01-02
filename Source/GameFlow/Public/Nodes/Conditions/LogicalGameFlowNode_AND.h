@@ -10,7 +10,7 @@
 /**
  * Game Flow logical AND boolean operator.
  */
-UCLASS(DisplayName="AND")
+UCLASS(DisplayName="AND", Abstract)
 class GAMEFLOW_API ULogicalGameFlowNode_AND final : public UGameFlowNode
 {
 	GENERATED_BODY()

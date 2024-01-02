@@ -1,6 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraph.h"
+
+#include "DetailsViewObjectFilter.h"
 #include "GameFlowEditor.h"
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
@@ -16,7 +18,7 @@ UGameFlowGraph::UGameFlowGraph()
 
 void UGameFlowGraph::InitGraph()
 {
-	const UEdGraphSchema* GraphSchema = GetSchema();
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	
 	const UGameFlowEditorSubsystem* GameFlowEditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
 	GameFlowEditor = GameFlowEditorSubsystem->GetActiveEditorByAssetName(GameFlowAsset->GetFName());
@@ -100,7 +102,7 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 					const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(SelectedObject);
 					SelectedNodes.Add(GraphNode->GetNodeAsset());
 				}
-		        
+				
 				// Inspect selected nodes inside editor nodes details view.
 				GameFlowEditor->NodesDetailsView->SetObjects(SelectedNodes);
 				break;

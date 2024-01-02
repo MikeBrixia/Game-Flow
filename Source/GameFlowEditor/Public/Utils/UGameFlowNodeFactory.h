@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
@@ -40,4 +41,13 @@ public:
 	 * @return The created graph node.
 	 */
 	static UGameFlowGraphNode* CreateGraphNode(const TSubclassOf<UGameFlowNode> NodeClass, UGameFlowAsset* ParentAsset, UGameFlowGraph* Graph);
+
+	/**
+	 * @brief Create a brand new game flow node and register it inside parent GameFlowAsset.
+	 * @param NodeClass The type of the node to create
+	 * @param GameFlowAsset The parent asset in which the brand new node will be registered and stored.
+	 * @return The new and initialized game flow node.
+	 */
+	static UGameFlowNode* CreateGameFlowNode(const TSubclassOf<UGameFlowNode> NodeClass, UGameFlowAsset* GameFlowAsset);
+	
 };

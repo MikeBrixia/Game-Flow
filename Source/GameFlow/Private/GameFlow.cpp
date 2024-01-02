@@ -1,8 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GameFlow.h"
-#include "ISettingsModule.h"
-#include "Config/GameFlowSettings.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowModule"
 DEFINE_LOG_CATEGORY(LogGameFlow)

@@ -59,7 +59,6 @@ private:
 	/* If true, asset will be compiled each time the users creates or breaks a connection. */
 	UPROPERTY()
 	bool bLiveCompile;
-
 #endif
 	
 public:
@@ -102,8 +101,5 @@ public:
 	 * the execution of this GameFlow object.
 	 */
 	void TerminateExecution();
-
-#if WITH_EDITOR
-    void ValidateAsset();
-#endif
+	
 };
