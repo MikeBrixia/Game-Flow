@@ -42,7 +42,6 @@ protected:
 	TSharedPtr<SBorder> TitleAreaWidget;
 
 	void OnRequestDummyReplacement(UClass* ClassToReplace);
-	virtual TSharedRef<SWindow> CreateNodeReplacementDialog();
 	
 	// -------------------- Widget pins --------------------------------
 	

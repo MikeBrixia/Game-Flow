@@ -25,9 +25,19 @@ public class GameFlowEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "GameFlow", "UnrealEd", "AssetTools", "AssetRegistry", "UMGEditor",
-				"UMG", "GraphEditor", "BlueprintGraph", "Projects", "EditorSubsystem", "ToolMenus",
-				"DeveloperSettings", "InputCore", "EditorScriptingUtilities", "PropertyEditor"
+				"Core", 
+				"GameFlow", 
+				"UnrealEd", 
+				"AssetTools", 
+				"AssetRegistry",
+				"GraphEditor", 
+				"BlueprintGraph", 
+				"Projects", 
+				"EditorSubsystem", 
+				"ToolMenus",
+				"DeveloperSettings", 
+				"PropertyEditor", 
+				"EditorFramework"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -39,7 +49,12 @@ public class GameFlowEditor : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", "EditorScriptingUtilities", "EditorScriptingUtilities", 
+				"SlateCore", 
+				"EditorScriptingUtilities",
+				"UMG",
+				"UMGEditor",
+				"ToolWidgets",
+				"InputCore"
 				// .. add private dependencies that you statically link with here ...	
 			}
 		);

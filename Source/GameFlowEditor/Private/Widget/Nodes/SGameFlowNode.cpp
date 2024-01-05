@@ -1,17 +1,16 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SGameFlowNode.h"
-
-#include "ClassViewerModule.h"
-#include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorSettings.h"
-#include "ObjectTools.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNodePin.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+
+#define LOCTEXT_NAMESPACE "FGameFlowReplaceNodeWindow"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -48,69 +47,8 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 
 void SGameFlowNode::OnRequestDummyReplacement(UClass* ClassToReplace)
 {
-	if(GEditor != nullptr)
-	{
-		GEditor->ClearPreviewComponents();
-		const TSharedRef<SWindow> ClassReplacementDialog = CreateNodeReplacementDialog();
-		/** Show the package dialog window as a modal window */
-		GEditor->EditorAddModalWindow(ClassReplacementDialog);
-	}
-}
-
-TSharedRef<SWindow> SGameFlowNode::CreateNodeReplacementDialog()
-{
-	FClassViewerModule& ClassViewerModule = FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer");
-	FClassViewerInitializationOptions Options;
-	Options.Mode = EClassViewerMode::ClassPicker;
-	Options.DisplayMode = EClassViewerDisplayMode::TreeView;
-	
-	const TSharedRef<SWidget> ClassViewerWidget = ClassViewerModule.CreateClassViewer(Options, FOnClassPicked::CreateLambda([=](UClass* PickedClass)
-	{
-		NodeReplacementClass = PickedClass;
-	}));
-
-	const FVector2D DEFAULT_WINDOW_SIZE(600, 700);
-	/** Create the window to host our package dialog widget */
-	TSharedRef<SWindow> ClassReplacementPickerWindow = SNew(SWindow)
-		.Title(FText::FromString("Choose replacement class"))
-		.ClientSize(DEFAULT_WINDOW_SIZE);
-
-	TSharedRef<SVerticalBox> VerticalBoxContainer = SNew(SVerticalBox)
-	 + SVerticalBox::Slot()
-	.FillHeight(500)
-	.MaxHeight(500)
-	[
-		ClassViewerWidget
-	]
-	+ SVerticalBox::Slot()
-	  .AutoHeight()
-	  .HAlign(HAlign_Left)
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(SCheckBox)
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(STextBlock)
-			.Text(INVTEXT("Replace all"))
-		]
-	]
-	+ SVerticalBox::Slot()
-	.AutoHeight()
-	[
-		SNew(SButton)
-		.Text(INVTEXT("Replace"))
-		.HAlign(HAlign_Right)
-		.TextFlowDirection(ETextFlowDirection::LeftToRight)
-	];
-	
-	ClassReplacementPickerWindow->SetContent(VerticalBoxContainer);
-
-	return ClassReplacementPickerWindow;
+	TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
+	ReplaceNodeDialog->ShowModal();
 }
 
 void SGameFlowNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)
@@ -235,3 +173,5 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
+#undef LOCTEXT_NAMESPACE
