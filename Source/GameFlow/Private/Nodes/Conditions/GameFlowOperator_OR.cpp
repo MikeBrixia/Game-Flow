@@ -10,7 +10,7 @@ UGameFlowOperator_OR::UGameFlowOperator_OR()
 	InputPins.Add("1");
 	InputPins.Add("2");
 
-	OutputPins.Add("Exec");
+	OutputPins.Add("Out");
 	
 	bCanAddInputPin = true;
 }

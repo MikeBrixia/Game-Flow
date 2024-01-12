@@ -54,6 +54,7 @@ TSharedRef<SVerticalBox> SGameFlowReplaceNodeDialog::CreateDialogContent()
 		.AutoWidth()
 		[
 			SNew(SCheckBox)
+			.OnCheckStateChanged(this, &SGameFlowReplaceNodeDialog::OnCheckBoxStateChange)
 		]
 		+ SHorizontalBox::Slot()
 		.AutoWidth()
@@ -65,6 +66,11 @@ TSharedRef<SVerticalBox> SGameFlowReplaceNodeDialog::CreateDialogContent()
 	];
 	
 	return ReplaceNodeWidget;
+}
+
+void SGameFlowReplaceNodeDialog::OnCheckBoxStateChange(ECheckBoxState State)
+{
+	bShouldReplaceAll = State == ECheckBoxState::Checked;
 }
 
 TSharedRef<IClassViewerFilter> SGameFlowReplaceNodeDialog::GetFilter() const

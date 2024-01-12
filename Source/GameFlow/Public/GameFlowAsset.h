@@ -25,8 +25,8 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	/* All asset nodes mapped by their corresponding guid.*/
-	UPROPERTY()
-	TMap<uint32, UGameFlowNode*> Nodes;
+	UPROPERTY(VisibleAnywhere)
+	TArray<UGameFlowNode*> Nodes;
 	
 	/* True if this asset has already been opened inside a GameFlow editor, false otherwise. */
 	UPROPERTY()

@@ -1,15 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraphSchema.h"
-
-#include "ClassViewerModule.h"
 #include "GameFlowEditor.h"
-#include "ObjectTools.h"
-#include "PropertyCustomizationHelpers.h"
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "Asset/Graph/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-#include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Utils/UGameFlowNodeFactory.h"
 
 FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID,
@@ -74,13 +69,13 @@ bool UGameFlowGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) c
 
 			case EGPD_Input:
 				{
-					ConnectNodes(B_NodeAsset, B->PinName, A_NodeAsset, A->PinName);
+					A_NodeAsset->AddInput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
 					break;
 				}
 			
 			case EGPD_Output:
 				{
-					ConnectNodes(A_NodeAsset, A->PinName, B_NodeAsset, B->PinName);
+					A_NodeAsset->AddOutput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
 					break;
 				}
 			}
@@ -117,14 +112,6 @@ void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPi
 			}
 		}
 	}
-	
-}
-
-void UGameFlowGraphSchema::ConnectNodes(UGameFlowNode* NodeAsset_A, const FName& PinNameA,
-	UGameFlowNode* NodeAsset_B, const FName& PinNameB) const
-{
-	NodeAsset_A->AddOutput(PinNameA, FGameFlowPinNodePair(PinNameB, NodeAsset_B));
-	NodeAsset_B->AddInput(PinNameB, FGameFlowPinNodePair(PinNameA, NodeAsset_A));
 }
 
 void UGameFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
@@ -145,17 +132,67 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 
 	// Create standard input node.
 	UGameFlowNode_Input* StandardInputNode = CreateDefaultInputs(*GameFlowGraph);
-	UGameFlowGraphNode* InputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardInputNode, GameFlowGraph);
-	GameFlowGraph->RootNodes.Add(InputGraphNode);
-
+	UGameFlowNodeFactory::CreateGraphNode(StandardInputNode, GameFlowGraph);
+	
 	// Create standard output node.
 	UGameFlowNode_Output* StandardOutputNode = CreateDefaultOutputs(*GameFlowGraph);
 	UGameFlowGraphNode* OutputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardOutputNode, GameFlowGraph);
 	OutputGraphNode->NodePosX += 300.f;
 
 	// Mark the asset as already been opened at least one time.
-	// Doing this will avoid creating duplicate default pins.
+	// Doing this will avoid creating duplicate default nodes.
 	GameFlowAsset->bHasAlreadyBeenOpened = true;
+}
+
+UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph,
+	FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const
+{
+	const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
+    UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GraphNode->GetGraph());
+	UGameFlowNode* SubstituteNdoAsset = CastChecked<UGameFlowNode>(InstanceGraph->GetDestinationObject(GraphNode->GetNodeAsset()));
+    
+	UGameFlowGraphNode* SubstituteNode = UGameFlowNodeFactory::CreateGraphNode(SubstituteNdoAsset, GameFlowGraph);
+	SubstituteNode->NodePosX = Node->NodePosX;
+	SubstituteNode->NodePosY = Node->NodePosY;
+	
+	// Rewire pins inside substitute node to match source node.
+	for(UEdGraphPin* Pin : Node->Pins)
+	{
+		UEdGraphPin* SubstituteNodePin = SubstituteNode->FindPin(Pin->PinName);
+		if(SubstituteNodePin == nullptr)
+		{
+			bool bShouldAddPin = false;
+			// Does this node have variable pins depending on the direction?
+			if(Pin->Direction == EGPD_Input)
+			{
+				bShouldAddPin = SubstituteNdoAsset->bCanAddInputPin;
+			}
+			else if(Pin->Direction == EGPD_Output)
+			{
+				bShouldAddPin = SubstituteNdoAsset->bCanAddOutputPin;
+			}
+
+			// 1. If substitute node does not have variable pins, just skip this iteration.
+			// 2.  substitute node have more or equal pins to the current node.
+			if(!bShouldAddPin && SubstituteNode->Pins.Num() < Node->Pins.Num()) continue;
+
+			// If it does have variable pins, then create a new one.
+			SubstituteNodePin = SubstituteNode->CreateNodePin(Pin->Direction);
+		}
+
+		// If source pin had a connection, recreate it on the substitute node.
+		if(Pin->HasAnyConnections())
+		{
+			SubstituteNodePin->DefaultObject = Pin->DefaultObject;
+			for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+			{
+				// Here we call superclass implementation because we want to
+				// avoid unnecessary live compilation features offered by game flow schema.
+				Super::TryCreateConnection(SubstituteNodePin, ConnectedPin);
+			}
+		}
+	}
+	return SubstituteNode;
 }
 
 UGameFlowNode_Input* UGameFlowGraphSchema::CreateDefaultInputs(UGameFlowGraph& Graph) const
@@ -164,10 +201,10 @@ UGameFlowNode_Input* UGameFlowGraphSchema::CreateDefaultInputs(UGameFlowGraph& G
 	// Initialize standard input.
 	const FName StandardInputName = "Start";
 	UGameFlowNode_Input* StandardInputNode = NewObject<UGameFlowNode_Input>(GameFlowAsset, "GameFlowAsset.StartNode");
-
+	
 	// Update Game Flow asset with new default input node.
 	GameFlowAsset->CustomInputs.Add(StandardInputName, StandardInputNode);
-	GameFlowAsset->Nodes.Add(StandardInputNode->GetUniqueID(), StandardInputNode);
+	GameFlowAsset->Nodes.Add(StandardInputNode);
 	
 	return StandardInputNode;
 }
@@ -181,16 +218,9 @@ UGameFlowNode_Output* UGameFlowGraphSchema::CreateDefaultOutputs(UGameFlowGraph&
 
 	// Update Game Flow asset with new default output node.
 	GameFlowAsset->CustomOutputs.Add(StandardInputName, StandardOutputNode);
-	GameFlowAsset->Nodes.Add(StandardOutputNode->GetUniqueID(), StandardOutputNode);
+	GameFlowAsset->Nodes.Add(StandardOutputNode);
 	return StandardOutputNode;
 }
-
-UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph,
-                                                         FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const
-{
-	return Super::CreateSubstituteNode(Node, Graph, InstanceGraph, InOutExtraNames);
-}
-
 
 void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
@@ -228,29 +258,6 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 	}
 }
 
-TArray<UGameFlowGraphNode*> UGameFlowGraphSchema::GetGraphOrphanNodes(const UGameFlowGraph& Graph) const
-{
-	TArray<UGameFlowGraphNode*> OrphanNodes;
-	// Find orphan nodes.
-	for(UGameFlowGraphNode* GraphNode : reinterpret_cast<const TArray<TObjectPtr<UGameFlowGraphNode>>&>(Graph.Nodes))
-	{
-		// Array of all the node input pins who have at least one connection.
-		TArray<UEdGraphPin*> ConnectedInputPins = GraphNode->Pins.FilterByPredicate([] (const UEdGraphPin* Pin)
-		{
-			return Pin->Direction == EGPD_Input && Pin->HasAnyConnections();
-		});
-
-		// If none of the node input pins have any connection,
-		// mark it as an orphan node.
-		if(ConnectedInputPins.Num() == 0)
-		{
-    		OrphanNodes.Add(GraphNode);
-		}
-	}
-
-	return OrphanNodes;
-}
-
 void UGameFlowGraphSchema::ValidateAsset(UGameFlowGraph& Graph) const
 {
 	TArray<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<TArray<TObjectPtr<UGameFlowGraphNode>>&>(Graph.Nodes);
@@ -267,6 +274,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	const FString ClassName = NodeClass->GetName();
 	UClass* DummyNodeClass = UGameFlowNode_Dummy::StaticClass();
 
+	UE_LOG(LogGameFlow, Display, TEXT("Validating %s"), *GraphNode->GetNodeAsset()->GetName())
 	GraphNode->bHasCompilerMessage = false;
 	// When node is a dummy just throw an error message
 	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
@@ -279,9 +287,9 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 		// by replacing all associated instances of this class from the Game Flow asset.
 		if(NodeClass->HasAnyClassFlags(CLASS_Abstract))
 		{
-			SubstituteWithDummyNode(GraphNode, DummyNodeClass);
 			UE_LOG(LogGameFlow, Error, TEXT("%s class is abstract! all instances of this class will be removed from Game Flow assets and replaced"
 									  "with dummy node of class: %s."), *ClassName, *DummyNodeClass->GetName());
+			SubstituteWithDummyNode(GraphNode, DummyNodeClass);
 			GraphNode->ReportError(EMessageSeverity::Error);
 		}
 	
@@ -303,41 +311,18 @@ void UGameFlowGraphSchema::SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode
 
 	GraphNode->ErrorType = EMessageSeverity::Error;
 	// The node asset to substitute.
-	const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 	DummyNode->InputPins = NodeAsset->InputPins;
 	DummyNode->OutputPins = NodeAsset->OutputPins;
 	DummyNode->ReplacedNodeClass = NodeAsset->GetClass();
 	
-	for(const auto Input : NodeAsset->Inputs)
-	{
-		ConnectNodes(Input.Value.Node, Input.Value.InputPinName, DummyNode, Input.Key);
-	}
-
-	for(const auto Output : NodeAsset->Outputs)
-	{
-		ConnectNodes(DummyNode,  Output.Key, Output.Value.Node,  Output.Value.InputPinName);
-	}
-	
-    // Substitute encapsulated node with dummy node.
-	GameFlowAsset->Nodes.Remove(NodeAsset->GetUniqueID());
-	GameFlowAsset->Nodes.Add(DummyNode->GetUniqueID(), DummyNode);
+	const int OldNodeIndex = GameFlowAsset->Nodes.Find(NodeAsset);
+	// Substitute encapsulated node with dummy node.
+	GameFlowAsset->Nodes[OldNodeIndex] = DummyNode;
 	GraphNode->SetNodeAsset(DummyNode);
-}
-
-void UGameFlowGraphSchema::ReplaceDummyNodes(UGameFlowGraph& Graph, UClass* ClassToReplace) const
-{
-	const TArray<UGameFlowGraphNode*> Nodes = reinterpret_cast<TArray<UGameFlowGraphNode*>&>(Graph.Nodes);
 	
-	TArray<UObject*> Dummies;
-	// Find all dummy nodes substituting the ClassToReplace nodes.
-	for(const UGameFlowGraphNode* Node : Nodes)
-	{
-		UGameFlowNode_Dummy* DummyNode = Cast<UGameFlowNode_Dummy>(Node->GetNodeAsset());
-		if(DummyNode != nullptr && DummyNode->ReplacedNodeClass == ClassToReplace)
-		{
-			Dummies.Add(DummyNode);
-		}
-	}
+	// And then recompile it.
+	CompileGraphNode(GraphNode, TArray { EGPD_Input, EGPD_Output });
 }
 
 bool UGameFlowGraphSchema::CompileGraph(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const
@@ -345,15 +330,16 @@ bool UGameFlowGraphSchema::CompileGraph(const UGameFlowGraph& Graph, UGameFlowAs
 	UE_LOG(LogGameFlow, Display, TEXT("Compiling Game Flow Asset: %s..."), *GameFlowAsset->GetName());
 	
 	bool bBranchCompilationSuccessful = true;
+	TArray<UGameFlowGraphNode*> RootNodes = Graph.GetNodesOfClass(UGameFlowNode_Input::StaticClass());
 	// Compile all graph branches.
-	for(UGameFlowGraphNode* Node : Graph.RootNodes)
+	for(UGameFlowGraphNode* Node : RootNodes)
 	{
 		UE_LOG(LogGameFlow, Display, TEXT("%s: Compiling from root: %s"), *GameFlowAsset->GetName(),  *Node->GetNodeAsset()->GetName());
 		bBranchCompilationSuccessful = CompileGraphBranch(Node);
 	}
 
 	// An array of nodes which does not have any parent(input pins do not hold any connection).
-	TArray<UGameFlowGraphNode*> OrphanNodes = GetGraphOrphanNodes(Graph);
+	TArray<UGameFlowGraphNode*> OrphanNodes = Graph.GetOrphanNodes();
 	bool bOrphansCompilationSuccessful = true;
 	
     // Clear all orphan nodes from game flow asset, we'll repopulate it during orphan compilation.
@@ -404,7 +390,7 @@ bool UGameFlowGraphSchema::CompileGraphBranch(UGameFlowGraphNode* RootNode) cons
 				const UEdGraphPin* DestinationPin = Pin->LinkedTo[0];
 				
 				// Connect the source and destination node.
-				ConnectNodes(SourceNodeAsset, Pin->PinName, DestinationNodeAsset, DestinationPin->PinName);
+				SourceNodeAsset->AddOutput(Pin->PinName, FGameFlowPinNodePair(DestinationPin->PinName, DestinationNodeAsset));
 				// Put the destination node inside the queue, it's the next we're going to compile.
 				ToCompile.Enqueue(DestinationNode);
 			}
@@ -425,20 +411,18 @@ bool UGameFlowGraphSchema::CompileGraphNode(UGameFlowGraphNode* GraphNode, const
 		// If current pin does not have any connections, skip to the next iteration.
 		if(!Pin->HasAnyConnections()) continue;
 		
+		UGameFlowNode* ConnectedNode = CastChecked<UGameFlowNode>(Pin->DefaultObject);
+		const UEdGraphPin* ConnectedPin = Pin->LinkedTo[0];
 		const EEdGraphPinDirection PinDirection = Pin->Direction;
+		// Compile output pin...
 		if(PinDirection == EGPD_Output && Directions.Contains(EGPD_Output))
 		{
-			UGameFlowNode* ConnectedNode = CastChecked<UGameFlowNode>(Pin->DefaultObject);
-			FName& ConnectedPinName = Pin->LinkedTo[0]->PinName;
-			ConnectNodes(NodeAsset, Pin->PinName, ConnectedNode, ConnectedPinName);
+			NodeAsset->AddOutput(Pin->PinName, FGameFlowPinNodePair(ConnectedPin->PinName, ConnectedNode));
 		}
+		// Compile input pin...
 		else if(PinDirection == EGPD_Input && Directions.Contains(EGPD_Input))
 		{
-			const UEdGraphPin* InputPin = Pin->LinkedTo[0];
-			UGameFlowNode* InputNodeAsset = CastChecked<UGameFlowGraphNode>(InputPin->GetOwningNode())->GetNodeAsset();
-			// Compile recursively all output pins on the input node. N.B. we should find a better solution, but for now
-			// it works.
-			ConnectNodes(InputNodeAsset, InputPin->PinName, NodeAsset, Pin->PinName);
+			NodeAsset->AddInput(Pin->PinName, FGameFlowPinNodePair(ConnectedPin->PinName, ConnectedNode));
 		}
 	}
 	
@@ -447,13 +431,14 @@ bool UGameFlowGraphSchema::CompileGraphNode(UGameFlowGraphNode* GraphNode, const
 
 void UGameFlowGraphSchema::RecreateGraphNodesConnections(const UGameFlowGraph& Graph) const
 {
+	TArray<UGameFlowGraphNode*> RootNodes = Graph.GetNodesOfClass(UGameFlowNode_Input::StaticClass());
 	// Recreate node connections starting from each root.
-	for(UGameFlowGraphNode* RootNode : Graph.RootNodes)
+	for(UGameFlowGraphNode* RootNode : RootNodes)
 	{
 		RecreateBranchConnections(Graph, RootNode);
 	}
 	
-	TArray<UGameFlowGraphNode*> OrphanNodes = GetGraphOrphanNodes(Graph);
+	TArray<UGameFlowGraphNode*> OrphanNodes = Graph.GetOrphanNodes();
 	// Treat all asset orphan nodes as branch roots and recreate connections.
 	for(UGameFlowGraphNode* OrphanNode : OrphanNodes)
 	{
@@ -482,11 +467,11 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 			const FName& InPinName = Pair.InputPinName;
 			const UGameFlowNode* NextNode = Pair.Node;
 			
-			// If next node is invalid or input pin name is None, skip the iteration.
+			// If next node is invalid or input pin name is None, skip this iteration.
 			if(NextNode == nullptr || InPinName.IsEqual(EName::None)) continue;
 			
 			// Create the graph node for the connected node.
-			UGameFlowGraphNode* GraphNode = Graph.GraphNodes.FindRef(NextNode->GetUniqueID());
+			UGameFlowGraphNode* GraphNode = Graph.GetGraphNodeByAsset(NextNode);
 			
 			UEdGraphPin* InPin = GraphNode->FindPin(InPinName);
 			UEdGraphPin* OutPin = CurrentNode->FindPin(OutPinName);
@@ -519,7 +504,7 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		if (ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
 
 		// Create the graph node for the connected node.
-		const UGameFlowGraphNode* ConnectedGraphNode = Graph.GraphNodes.FindRef(ConnectedNode->GetUniqueID());
+		const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
 		
 		UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
 		// After finding the current node output pin and the next node input pin,

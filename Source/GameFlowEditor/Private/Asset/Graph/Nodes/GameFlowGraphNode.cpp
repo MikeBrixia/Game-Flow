@@ -1,15 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-
-#include "ClassViewerFilter.h"
-#include "ClassViewerModule.h"
-#include "EditorAssetLibrary.h"
-#include "EditorAssetLibrary.h"
-#include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
-#include "ObjectTools.h"
-#include "PropertyCustomizationHelpers.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
@@ -25,15 +17,24 @@ void UGameFlowGraphNode::InitNode()
 	// Vital assertions.
 	checkf(NodeAsset != nullptr, TEXT("Node asset is invalid(nullptr)"));
 
-	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
-	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	// Initialize node.
+	CreateNewGuid();
+	PostPlacedNewNode();
+	if(Pins.Num() == 0)
+	{
+		AllocateDefaultPins();
+	}
 	
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	// Get node asset info from config.
+	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+
+	// Initialize callbacks.
 	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
 {
-	
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()
@@ -82,6 +83,19 @@ FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	return NodeAsset->GetClass()->GetDisplayNameText();
 }
 
+bool UGameFlowGraphNode::IsOrphan() const
+{
+	// Find all input pins which have a connection.
+	const TArray<UEdGraphPin*> ConnectedInputPins = Pins.FilterByPredicate([] (const UEdGraphPin* Pin)
+	{
+		return Pin->Direction == EGPD_Input && Pin->HasAnyConnections();
+	});
+
+	// If none of the input pins have at least
+	// one connection, this node is orphan.
+	return ConnectedInputPins.Num() == 0;
+}
+
 bool UGameFlowGraphNode::CanUserDeleteNode() const
 {
 	const FText NodeDisplayName = NodeAsset->GetClass()->GetDisplayNameText();
@@ -110,17 +124,22 @@ void UGameFlowGraphNode::OnAssetEdited()
 	OnNodeAssetChanged.Broadcast();
 }
 
-void UGameFlowGraphNode::OnReplacementClassPicked(UClass* Class)
-{
-	if(Class != nullptr)
-	    UE_LOG(LogGameFlow, Display, TEXT("Class name is %s"), *Class->GetName())
-}
-
 void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
 {
-	//const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	//UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-	//GraphSchema->ReplaceDummyNodes(*GameFlowGraph, ClassToReplace);
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	
+	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
+	UGameFlowNode* SubstituteNodeAsset = UGameFlowNodeFactory::CreateGameFlowNode(ClassToReplace, GameFlowAsset);
+	FObjectInstancingGraph ObjectInstancingGraph;
+	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
+	TSet<FName> InOutExtraNames;
+	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
+		GraphSchema->CreateSubstituteNode(this, GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
+		);
+
+	DestroyNode();
+	// Recompile substitute node; this action will update the actual game flow asset.
+	GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
 }
 
 void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity)
@@ -139,7 +158,7 @@ void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 	// Read new info data from config using the new node asset type.
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-	
+	UE_LOG(LogGameFlow, Display, TEXT("Set node asset"))
 	// Notify listeners that the node asset has been changed.
 	if(OnNodeAssetChanged.IsBound())
 	{

@@ -53,11 +53,11 @@ public:
 	FOnEditAsset OnEditAsset;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow|I/O")
+	UPROPERTY(VisibleAnywhere, EditFixedSize, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
 	
 	/* All the possible output pins for this node. */
-	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow|I/O")
+	UPROPERTY(VisibleAnywhere, EditFixedSize, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
 
 	/* True if this node should have a variable amount of input pins */

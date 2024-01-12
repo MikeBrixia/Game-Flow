@@ -6,6 +6,7 @@
 #include "Config/FGameFlowNodeInfo.h"
 #include "Nodes/GameFlowNode.h"
 #include "Nodes/GameFlowNode_Dummy.h"
+#include "Nodes/GameFlowNode_Input.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
@@ -54,10 +55,16 @@ public:
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
+	/**
+	 * @brief Check if this graph node is considered as a root node(e.g. input node) or not.
+	 * @return True if node is a root, false otherwise.
+	 */
+	FORCEINLINE bool IsRoot() const { return NodeAsset->IsA(UGameFlowNode_Input::StaticClass()); }
+	bool IsOrphan() const;
 	virtual bool CanUserDeleteNode() const override;
+	
 	virtual void ReconstructNode() override;
 	void OnAssetEdited();
-	void OnReplacementClassPicked(UClass* Class);
 	void OnDummyReplacement(UClass* ClassToReplace);
 	void ReportError(EMessageSeverity::Type MessageSeverity);
 	

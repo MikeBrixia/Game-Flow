@@ -1,6 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SGameFlowNode.h"
+
+#include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorSettings.h"
 #include "SGraphPanel.h"
@@ -47,8 +49,28 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 
 void SGameFlowNode::OnRequestDummyReplacement(UClass* ClassToReplace)
 {
-	TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
-	ReplaceNodeDialog->ShowModal();
+	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
+	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
+	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
+	// Has the user picked a replacement class and clicked the "Replace" button?
+	if(PressedButtonIndex == 0 && PickedClass != nullptr)
+	{
+		if(ReplaceNodeDialog->ShouldReplaceAll())
+		{
+			const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetNodeObj()->GetGraph());
+			TArray<UGameFlowGraphNode*> Nodes = GameFlowGraph->GetNodesOfClass(ClassToReplace);
+			for(UGameFlowGraphNode* NodeToReplace : Nodes)
+			{
+				UE_LOG(LogGameFlow, Display, TEXT("Replace all"))
+				NodeToReplace->OnDummyReplacement(PickedClass);
+			}
+		}
+		else
+		{
+			UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
+			GameFlowGraphNode->OnDummyReplacement(PickedClass);
+		}
+	}
 }
 
 void SGameFlowNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)
@@ -93,7 +115,7 @@ void SGameFlowNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox
 		
 		FOnClicked OnButtonClicked;
 		OnButtonClicked.BindRaw(this, &SGameFlowNode::OnAddOutputPin);
-		AddInputPinButton->SetOnClicked(OnButtonClicked);
+		AddOutputPinButton->SetOnClicked(OnButtonClicked);
 	}
 }
 

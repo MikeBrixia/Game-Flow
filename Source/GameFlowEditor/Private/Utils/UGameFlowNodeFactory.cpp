@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Utils/UGameFlowNodeFactory.h"
-
 #include "Asset/Graph/GameFlowGraphSchema.h"
 
 UObject* UGameFlowNodeFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags,
@@ -16,19 +15,22 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(UGameFlowNode* NodeAss
 	checkf(Graph, TEXT("Invalid parent graph! Nodes must be created inside a valid graph(not nullptr)."));
 
 	// Create the node
-	FGraphNodeCreator<UGameFlowGraphNode> Factory {*Graph};
-	UGameFlowGraphNode* Node = Factory.CreateNode(false);
-    
-	// Initialize the node.
-	Node->NodeAsset = NodeAsset;
-	Node->NodePosX = NodeAsset->GraphPosition.X;
-	Node->NodePosY = NodeAsset->GraphPosition.Y;
-	Node->InitNode();
-
-	// Call this to end node construction.
-	Factory.Finalize();
+	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(Graph, NAME_None, RF_Transactional);
+	if (Graph->HasAnyFlags(RF_Transient))
+	{
+		GraphNode->SetFlags(RF_Transient);
+	}
 	
-	return Node;
+	// Initialize the node.
+	GraphNode->NodeAsset = NodeAsset;
+	GraphNode->NodePosX = NodeAsset->GraphPosition.X;
+	GraphNode->NodePosY = NodeAsset->GraphPosition.Y;
+	GraphNode->InitNode();
+
+	// Finally, once initialization has been completed,
+	// add the new node to the graph.
+	Graph->AddNode(GraphNode, false, false);
+	return GraphNode;
 }
 
 UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(const TSubclassOf<UGameFlowNode> NodeClass,
@@ -46,7 +48,5 @@ UGameFlowNode* UGameFlowNodeFactory::CreateGameFlowNode(const TSubclassOf<UGameF
 {
 	// Create a brand new instance of node of supplied class.
 	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass);
-	GameFlowAsset->Nodes.Add(NewNode->GetUniqueID(), NewNode);
-
 	return NewNode;
 }

@@ -146,6 +146,9 @@ void UGameFlowNode::AddInput(const FName PinName, const FGameFlowPinNodePair Inp
 	if(bValidOutput && !bRecursiveOutput)
 	{
 		Inputs.Add(PinName, Input);
+		
+		UGameFlowNode* InputNode = Input.Node;
+		InputNode->Outputs.Add(Input.InputPinName, FGameFlowPinNodePair(PinName, this));
 	}
 }
 
@@ -166,6 +169,9 @@ void UGameFlowNode::AddOutput(const FName PinName, const FGameFlowPinNodePair Ou
 	if(bValidOutput && !bRecursiveOutput)
 	{
 		Outputs.Add(PinName, Output);
+
+		UGameFlowNode* InputNode = Output.Node;
+		InputNode->Inputs.Add(Output.InputPinName, FGameFlowPinNodePair(PinName, this));
 	}
 }
 

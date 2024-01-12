@@ -26,9 +26,13 @@ public:
 	SLATE_END_ARGS()
 
 private:
-	/* The class currently picked by the user. */
+	/* The class currently picked by the user, false otherwise. */
 	UClass* PickedClass = nullptr;
-
+	/* True if the user has expressed the intent of replacing multiple nodes. */
+	bool bShouldReplaceAll = false;
+	
+	void OnCheckBoxStateChange(ECheckBoxState State);
+	
 public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
@@ -36,6 +40,8 @@ public:
 	/* Get the currently picked class. */
 	FORCEINLINE UClass* GetPickedClass() const { return PickedClass; }
 
+	/* True if the user has expressed the intent of replacing multiple nodes, false otherwise. */
+	FORCEINLINE bool ShouldReplaceAll() const { return bShouldReplaceAll; }
 protected:
 	virtual TSharedRef<SVerticalBox> CreateDialogContent();
 
@@ -44,7 +50,7 @@ protected:
 
 	/* Class viewer options. */
 	virtual FClassViewerInitializationOptions GetOptions() const;
-
+    
 private:
     
 	class FGameFlowClassFilter final : public IClassViewerFilter

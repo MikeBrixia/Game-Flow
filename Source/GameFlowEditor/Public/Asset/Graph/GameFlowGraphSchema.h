@@ -11,7 +11,7 @@
 #include "UObject/Object.h"
 #include "GameFlowGraphSchema.generated.h"
 
-UCLASS()
+UCLASS(NotBlueprintable, NotBlueprintType)
 class GAMEFLOWEDITOR_API UGameFlowGraphSchema : public UEdGraphSchema
 {
 	GENERATED_BODY()
@@ -29,9 +29,9 @@ public:
 	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
 	
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
-	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
-
 	virtual UEdGraphNode* CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph, FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const override;
+	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
+	
 	/**
 	 * @brief Compile the asset edited by the given graph.
 	 * @param Graph The graph to compile
@@ -78,13 +78,6 @@ public:
 	void RecreateNodeConnections(const UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode, const TArray<EEdGraphPinDirection> Directions) const;
 	
 	/**
-	 * @brief Find all nodes inside the graph which do not have any connected input pin.
-	 * @param Graph The graph in which the operation takes place.
-	 * @return An array of all the graph orphan nodes.
-	 */
-	TArray<UGameFlowGraphNode*> GetGraphOrphanNodes(const UGameFlowGraph& Graph) const;
-
-	/**
 	 * @brief Ensure that the supplied asset does not contain any corrupted data or errors..
 	 * @param Graph The graph in which the operation takes place.
 	 */
@@ -103,17 +96,8 @@ public:
 	 */
 	void SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const;
 
-	/**
-	 * @brief Replace dummy node with a valid node.
-	 * @param Graph The graph in which the dummy node lives.
-	 * @param ClassToReplace The class replaced by the dummy node.
-	 */
-	void ReplaceDummyNodes(UGameFlowGraph& Graph, UClass* ClassToReplace) const;
-	
 protected:
     
 	virtual UGameFlowNode_Input* CreateDefaultInputs(UGameFlowGraph& Graph) const;
 	virtual UGameFlowNode_Output* CreateDefaultOutputs(UGameFlowGraph& Graph) const;
-	
-	void ConnectNodes(UGameFlowNode* NodeAsset_A, const FName& PinNameA, UGameFlowNode* NodeAsset_B, const FName& PinNameB) const;
 };
