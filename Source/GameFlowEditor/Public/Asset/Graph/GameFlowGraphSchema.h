@@ -22,14 +22,44 @@ public:
 	                                                                float InZoomFactor,
 	                                                                const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
 	                                                                UEdGraph* InGraphObj) const override;
-	
+
+	/**
+	 * @brief Is the connection between the two pins allowed?
+	 * @return True if connection was allowed, false otherwise.
+	 */
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
+
+	/**
+	 * @brief Connect pin A to pin B. Game Flow schema override supports
+	 *        live compilation features for game flow assets.
+	 * @return True if connection was successful, false otherwise.
+	 */
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
-    virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
+
+	/**
+	* @brief Break a single connection between two pins. Game Flow schema
+	*        override supports live compilation features for game flow assets.
+	 */
+	virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
+
+	/**
+	* @brief Break all connections of a target pin. Game Flow schema
+	*        override supports live compilation features for game flow assets.
+	 * @param TargetPin The target pin that will break all it's connections
+	 */
 	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
-	
+
+	/**
+	 * @brief Populate target graph with Game Flow default nodes.
+	 * @param Graph The graph in which the operation takes place.
+	 */
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
-	virtual UEdGraphNode* CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph, FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const override;
+
+	/**
+	 * @brief Get/Create the game flow graph contextual menu with all available
+	 *        nodes displayed, ordered and ready to be created.
+	 * @param ContextMenuBuilder The object used to expand/build the menu.
+	 */
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
 	
 	/**
@@ -96,6 +126,20 @@ public:
 	 */
 	void SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const;
 
+	/**
+	 * @brief Substitute a graph node with a substitute node. Substitute node will encapsulate
+	 *        target node asset(UGameFlowNode) passed with InstanceGraph.
+	 * @param Node The node you want to substitute.
+	 * @param Graph The graph in which the operation takes place. Can be nullptr, it's here
+	 *              only because of the override.
+	 * @param InstanceGraph The mapping between the node asset substitute and the node asset
+	 *                      to replace. To be clear, inside this structure you need to pass
+	 *                      the Node assets(UGameFlowNode)
+	 * @param InOutExtraNames You can pass an empty set, it's here only because of the override.
+	 * @return The substituted graph node.
+	 */
+	virtual UEdGraphNode* CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph, FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const override;
+	
 protected:
     
 	virtual UGameFlowNode_Input* CreateDefaultInputs(UGameFlowGraph& Graph) const;
