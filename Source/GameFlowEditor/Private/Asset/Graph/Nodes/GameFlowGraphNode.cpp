@@ -136,9 +136,8 @@ void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
 	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
 		GraphSchema->CreateSubstituteNode(this, GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
 		);
-
-	DestroyNode();
-	// Recompile substitute node; this action will update the actual game flow asset.
+	
+	DestroyNode();	// Recompile substitute node; this action will update the actual game flow asset.
 	GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
 }
 

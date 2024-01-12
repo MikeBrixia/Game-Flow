@@ -149,9 +149,9 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 {
 	const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
     UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GraphNode->GetGraph());
-	UGameFlowNode* SubstituteNdoAsset = CastChecked<UGameFlowNode>(InstanceGraph->GetDestinationObject(GraphNode->GetNodeAsset()));
+	UGameFlowNode* SubstituteNodeAsset = CastChecked<UGameFlowNode>(InstanceGraph->GetDestinationObject(GraphNode->GetNodeAsset()));
     
-	UGameFlowGraphNode* SubstituteNode = UGameFlowNodeFactory::CreateGraphNode(SubstituteNdoAsset, GameFlowGraph);
+	UGameFlowGraphNode* SubstituteNode = UGameFlowNodeFactory::CreateGraphNode(SubstituteNodeAsset, GameFlowGraph);
 	SubstituteNode->NodePosX = Node->NodePosX;
 	SubstituteNode->NodePosY = Node->NodePosY;
 	
@@ -159,27 +159,29 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 	for(UEdGraphPin* Pin : Node->Pins)
 	{
 		UEdGraphPin* SubstituteNodePin = SubstituteNode->FindPin(Pin->PinName);
+		// Have we found a pin with the same name in the substitute node?
+		// If not, try creating it.
 		if(SubstituteNodePin == nullptr)
 		{
 			bool bShouldAddPin = false;
 			// Does this node have variable pins depending on the direction?
 			if(Pin->Direction == EGPD_Input)
 			{
-				bShouldAddPin = SubstituteNdoAsset->bCanAddInputPin;
+				bShouldAddPin = SubstituteNodeAsset->bCanAddInputPin;
 			}
 			else if(Pin->Direction == EGPD_Output)
 			{
-				bShouldAddPin = SubstituteNdoAsset->bCanAddOutputPin;
+				bShouldAddPin = SubstituteNodeAsset->bCanAddOutputPin;
 			}
-
+			
 			// 1. If substitute node does not have variable pins, just skip this iteration.
 			// 2.  substitute node have more or equal pins to the current node.
 			if(!bShouldAddPin && SubstituteNode->Pins.Num() < Node->Pins.Num()) continue;
 
-			// If it does have variable pins, then create a new one.
+			// Create new substitute node pin.
 			SubstituteNodePin = SubstituteNode->CreateNodePin(Pin->Direction);
 		}
-
+		
 		// If source pin had a connection, recreate it on the substitute node.
 		if(Pin->HasAnyConnections())
 		{
