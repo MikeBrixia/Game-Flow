@@ -275,8 +275,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	const UClass* NodeClass = GraphNode->GetNodeAsset()->GetClass();
 	const FString ClassName = NodeClass->GetName();
 	UClass* DummyNodeClass = UGameFlowNode_Dummy::StaticClass();
-
-	UE_LOG(LogGameFlow, Display, TEXT("Validating %s"), *GraphNode->GetNodeAsset()->GetName())
+	
 	GraphNode->bHasCompilerMessage = false;
 	// When node is a dummy just throw an error message
 	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
@@ -310,21 +309,26 @@ void UGameFlowGraphSchema::SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode
 {
 	UGameFlowAsset* GameFlowAsset = GraphNode->GetNodeAsset()->GetTypedOuter<UGameFlowAsset>();
 	UGameFlowNode_Dummy* DummyNode = CastChecked<UGameFlowNode_Dummy>(UGameFlowNodeFactory::CreateGameFlowNode(DummyNodeClass, GameFlowAsset));
-
-	GraphNode->ErrorType = EMessageSeverity::Error;
 	// The node asset to substitute.
 	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 	DummyNode->InputPins = NodeAsset->InputPins;
 	DummyNode->OutputPins = NodeAsset->OutputPins;
 	DummyNode->ReplacedNodeClass = NodeAsset->GetClass();
 	
-	const int OldNodeIndex = GameFlowAsset->Nodes.Find(NodeAsset);
-	// Substitute encapsulated node with dummy node.
-	GameFlowAsset->Nodes[OldNodeIndex] = DummyNode;
-	GraphNode->SetNodeAsset(DummyNode);
+	FObjectInstancingGraph ObjectInstancingGraph;
+	ObjectInstancingGraph.AddNewObject(DummyNode, NodeAsset);
+	TSet<FName> InOutExtraNames;
 	
-	// And then recompile it.
-	CompileGraphNode(GraphNode, TArray { EGPD_Input, EGPD_Output });
+	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
+		CreateSubstituteNode(GraphNode, GraphNode->GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
+		);
+	SubstituteNode->ErrorType = EMessageSeverity::Error;
+	
+	GraphNode->DestroyNode();
+	// Recompile substitute node; this action will update the actual game flow asset.
+	CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
+    
+	UE_LOG(LogGameFlow, Display, TEXT("Node substituted with dummy"))
 }
 
 bool UGameFlowGraphSchema::CompileGraph(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const

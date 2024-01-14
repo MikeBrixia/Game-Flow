@@ -23,7 +23,7 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Initialize node widget arguments.
 	this->GraphNode = InArgs._Node;
 	this->TitleText = InArgs._TitleText;
-
+	
 	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
 	// Each a time the encapsulated node asset gets changed, refresh the node widget.
     GameFlowGraphNode->OnNodeAssetChanged.AddSP(this, &SGameFlowNode::UpdateGraphNode);

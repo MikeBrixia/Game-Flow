@@ -20,10 +20,8 @@ public:
 	
 	virtual void Execute_Implementation(const FName& PinName) override;
 	virtual void OnFinishExecute_Implementation() override;
-#if WITH_EDITOR
-	virtual FName GenerateAddPinName(uint8 PinDirection) override;
-#endif
-	
+
+
 private:
 	
 	/* All the ports which should evaluate to true for the AND operator to execute it's output. */

@@ -12,7 +12,7 @@
 GameFlowAssetToolkit::GameFlowAssetToolkit()
 {
 	this->CommandList = MakeShared<FUICommandList>();
-
+	
 	// Register editor commands.
 	FGraphEditorCommands::Register();
 	FGameFlowEditorCommands::Register();
@@ -22,7 +22,7 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 {
 	// The asset being edited.
 	Asset = CastChecked<UGameFlowAsset>(InObjects[0]);
-
+    
 	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
 	// Mark this editor as an active by registering it inside GameFlow editor subsystem.
 	EditorSubsystem->RegisterActiveEditor(this);
@@ -44,9 +44,8 @@ bool GameFlowAssetToolkit::OnRequestClose()
 	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
 	// Mark this editor as an inactive by unregistering it from GameFlow editor subsystem.
 	EditorSubsystem->UnregisterActiveEditor(this);
-
-	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
 	
+	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
 	return true;
 }
 

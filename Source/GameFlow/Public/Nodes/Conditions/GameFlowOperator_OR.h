@@ -8,7 +8,7 @@
 #include "GameFlowOperator_OR.generated.h"
 
 /**
- * Logical OR operator as a GameFlow node
+ * Game Flow logical OR operator
  */
 UCLASS(DisplayName="OR")
 class GAMEFLOW_API UGameFlowOperator_OR : public UGameFlowNode

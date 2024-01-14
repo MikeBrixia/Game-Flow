@@ -8,6 +8,7 @@
 
 #if WITH_EDITORONLY_DATA
 DECLARE_MULTICAST_DELEGATE(FOnEditAsset)
+DECLARE_MULTICAST_DELEGATE(FOnAssetCompiled)
 #endif
 
 /**
@@ -51,13 +52,15 @@ public:
 	
 	/* Callback for when the asset gets edited in the details panel. */
 	FOnEditAsset OnEditAsset;
-
+	// Callback for when the asset gets compiled via Live Coding,
+	// Hot Reload or blueprint compile.
+    FOnAssetCompiled OnNodeCompiled;
 protected:
-	UPROPERTY(VisibleAnywhere, EditFixedSize, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
 	
 	/* All the possible output pins for this node. */
-	UPROPERTY(VisibleAnywhere, EditFixedSize, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
 
 	/* True if this node should have a variable amount of input pins */
@@ -67,6 +70,7 @@ protected:
 	/* True if this node should have a variable amount of input pins */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
+
 #endif
 	
 private:
@@ -74,11 +78,14 @@ private:
 #if WITH_EDITORONLY_DATA
     UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
     TMap<FName, FGameFlowPinNodePair> Inputs;
+	
+    TArray<FName> Temp_OldPinArray;
 #endif
 	
 	/* All the possible outputs of this node. */
 	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
 	TMap<FName, FGameFlowPinNodePair> Outputs;
+	
 public:
 	UGameFlowNode();
 	
@@ -86,7 +93,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void Execute(const FName& PinName);
 	virtual void Execute_Implementation(const FName& PinName);
-
+	
 	FORCEINLINE virtual FGameFlowPinNodePair GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
 	FORCEINLINE virtual TArray<FGameFlowPinNodePair> GetChildren() const
 	{
@@ -95,20 +102,28 @@ public:
 		return Children;
 	}
 
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
+	void OnFinishExecute();
+	virtual void OnFinishExecute_Implementation();
+	
+	/**
+	 * @brief Call this function to trigger an output and execute the next node.
+	 * @param OutputPin Name of the pin to which the next node has been mapped.
+	 * @param bFinish If true, this node will be the only output and node will be unloaded.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Game Flow")
+	void FinishExecute(FName OutputPin, bool bFinish);
+
+// Editor-only functionality of game flow node.
 #if WITH_EDITOR
+	
+public:
 	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
 	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
 	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
 	
-	/**
-	 * @brief Generate a brand new and node-unique name for a node pin added with an AddPinButton.
-	 * @param PinDirection an integer representing pin direction: 0 is input, 1 is output and 2 is max;
-	 *                     values greater then 3 are undefined and can be used to implement custom pin directions.
-	 * @return The generated FName.
-	 */
-	virtual FName GenerateAddPinName(uint8 PinDirection);
-
 	/**
 	 * @brief Add a new output pin to this node.
 	 * @param PinName The nome of the pin to create.
@@ -141,26 +156,19 @@ public:
 	 */
 	UFUNCTION(CallInEditor)
     static FORCEINLINE TArray<FName> GetNodeTypeOptions() { return UGameFlowSettings::Get()->Options; }
-#endif
 	
 protected:
-	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	void OnFinishExecute();
-	virtual void OnFinishExecute_Implementation();
-	
-	/**
-	 * @brief Call this function to trigger an output and execute the next node.
-	 * @param OutputPin Name of the pin to which the next node has been mapped.
-	 * @param bFinish If true, this node will be the only output and node will be unloaded.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void FinishExecute(FName OutputPin, bool bFinish);
-
-#if WITH_EDITOR
+	virtual void PostCDOContruct() override;
+	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+    virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+
 private:
-    TArray<FName> FindPinsDiff(const TArray<FName>& Array0, const TArray<FName>& Array1) const;
+    void AddCompiledInput(const FName PinName, const FGameFlowPinNodePair Input);
+    void AddCompiledOutput(const FName PinName, const FGameFlowPinNodePair Output);
+
 #endif
 };
+
 
 

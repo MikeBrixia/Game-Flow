@@ -87,6 +87,7 @@ public:
 	}
 	
 protected:
+	void OnAssetValidated();
 	/* Initialize this node properties. */
 	void InitNode();
 

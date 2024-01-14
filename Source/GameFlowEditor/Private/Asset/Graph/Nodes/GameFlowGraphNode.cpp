@@ -28,13 +28,46 @@ void UGameFlowGraphNode::InitNode()
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-
+	
 	// Initialize callbacks.
 	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
+	NodeAsset->OnNodeCompiled.AddUObject(this, &UGameFlowGraphNode::OnAssetValidated);
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
 {
+}
+
+void UGameFlowGraphNode::OnAssetValidated()
+{
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	GraphSchema->ValidateNodeAsset(this);
+}
+
+void UGameFlowGraphNode::OnAssetEdited()
+{
+	ReconstructNode();
+	OnNodeAssetChanged.Broadcast();
+	UE_LOG(LogGameFlow, Display, TEXT("Asset edited"))
+}
+
+void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
+{
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	
+	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
+	UGameFlowNode* SubstituteNodeAsset = UGameFlowNodeFactory::CreateGameFlowNode(ClassToReplace, GameFlowAsset);
+	
+	FObjectInstancingGraph ObjectInstancingGraph;
+	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
+	TSet<FName> InOutExtraNames;
+	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
+		GraphSchema->CreateSubstituteNode(this, GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
+		);
+	
+	DestroyNode();
+	// Recompile substitute node; this action will update the actual game flow asset.
+	GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()
@@ -74,6 +107,7 @@ TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 		                                   .TitleText(TitleText);
     // Validate node asset.
 	CastChecked<UGameFlowGraphSchema>(GetSchema())->ValidateNodeAsset(this);
+	
 	// Create and initialize node widget.
 	return NodeWidget;
 }
@@ -114,31 +148,9 @@ void UGameFlowGraphNode::ReconstructNode()
 	AllocateDefaultPins();
 	
 	UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
-	// Recreate node connections.
+	// Recompile node and recreate it's node connections.
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
-}
-
-void UGameFlowGraphNode::OnAssetEdited()
-{
-	ReconstructNode();
-	OnNodeAssetChanged.Broadcast();
-}
-
-void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
-{
-	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	
-	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
-	UGameFlowNode* SubstituteNodeAsset = UGameFlowNodeFactory::CreateGameFlowNode(ClassToReplace, GameFlowAsset);
-	FObjectInstancingGraph ObjectInstancingGraph;
-	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
-	TSet<FName> InOutExtraNames;
-	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
-		GraphSchema->CreateSubstituteNode(this, GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
-		);
-	
-	DestroyNode();	// Recompile substitute node; this action will update the actual game flow asset.
-	GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
+	GraphSchema->CompileGraphNode(this, TArray { EGPD_Input, EGPD_Output});
 }
 
 void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity)

@@ -18,6 +18,8 @@ class GameFlowAssetToolkit;
 UCLASS(NotBlueprintable, NotBlueprintType)
 class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
 {
+
+private:
 	GENERATED_BODY()
 
 public:

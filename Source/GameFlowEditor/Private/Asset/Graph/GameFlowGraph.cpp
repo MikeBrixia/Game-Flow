@@ -41,8 +41,10 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 	if(Editor != nullptr)
 	{
 		FOnAssetCompile& CompileCallback = Editor->GetAssetCompileCallback();
+		// Compilation callbacks.
 		CompileCallback.AddUObject(this, &UGameFlowGraph::OnGraphCompile);
-    
+		GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraph::OnGraphCompile);
+		
 		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
 		SaveCallback.AddUObject(this, &UGameFlowGraph::OnSaveGraph);
 	}
@@ -97,6 +99,7 @@ void UGameFlowGraph::OnGraphCompile()
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	checkf(GraphSchema != nullptr, TEXT("Game Flow Graph Schema is invalid! Please assign a valid schema to this graph"));
 
+	GraphSchema->ValidateAsset(*this);
 	const bool bCompilationSuccessful = GraphSchema->CompileGraph(*this, GameFlowAsset);
 	const FString AssetName = GameFlowAsset->GetName();
 	

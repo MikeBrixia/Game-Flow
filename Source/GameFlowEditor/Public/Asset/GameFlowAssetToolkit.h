@@ -10,9 +10,7 @@ DECLARE_MULTICAST_DELEGATE(FOnAssetCompile)
 /** The editor of a Game Flow asset. */
 class GameFlowAssetToolkit : public FAssetEditorToolkit
 {
-	
 public:
-
 	GameFlowAssetToolkit();
 
 	// -------------------- GAME FLOW EDITOR METADATA ----------------------------------------------
@@ -35,7 +33,7 @@ public:
 	void InitEditor(const TArray<UObject*>& InObjects);
 
 protected:
-
+	
 	virtual bool OnRequestClose() override;
 	virtual void ConfigureInputs();
 	virtual void CreateAssetMenu();
