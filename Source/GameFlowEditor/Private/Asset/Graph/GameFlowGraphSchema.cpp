@@ -272,11 +272,13 @@ void UGameFlowGraphSchema::ValidateAsset(UGameFlowGraph& Graph) const
 
 void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) const
 {
-	const UClass* NodeClass = GraphNode->GetNodeAsset()->GetClass();
+	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+	const UClass* NodeClass = NodeAsset->GetClass();
 	const FString ClassName = NodeClass->GetName();
 	UClass* DummyNodeClass = UGameFlowNode_Dummy::StaticClass();
 	
 	GraphNode->bHasCompilerMessage = false;
+	NodeAsset->ValidateAsset();
 	// When node is a dummy just throw an error message
 	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
 	{

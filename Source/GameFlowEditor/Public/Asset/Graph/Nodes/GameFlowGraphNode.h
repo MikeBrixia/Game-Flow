@@ -43,15 +43,31 @@ public:
 	UGameFlowGraphNode();
 
 	/**
-	 * @brief Read GameFlow node asset and create graph node pins.
-	 * @param PinDirection Whether you want to create a input or output pins.
-	 * @param PinNames An array containing all the pin names.
+	 * @brief Read Game Flow node asset and create graph node pins.
 	 */
-	void CreateNodePins(const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames);
-	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None);
+	void CreateNodePins(bool bAddToAsset = true);
+
+	/**
+	 * @brief Create a brand new pin for a Game Flow node.
+	 * @param PinDirection The direction of the new pin.
+	 * @param PinName The name of the new pin. Pins with name "None" will be ignored.
+	 * @param bAddToAsset should we add this new pin to the Game Flow node asset? 
+	 * @return The new pin.
+	 */
+	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None, bool bAddToAsset = true);
+
+	/**
+	 * @brief Create default pins for this Game Flow node.
+	 */
 	virtual void AllocateDefaultPins() override;
+
+	/**
+	 * @brief Generate a unique pin name.
+	 * @param SourcePinName The name of the previous pin, will be used
+	 *                      to generate a new name with a predictable pattern.
+	 * @return The generated pin name.
+	 */
 	virtual FName CreateUniquePinName(FName SourcePinName) const override;
-	
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
@@ -63,9 +79,13 @@ public:
 	bool IsOrphan() const;
 	virtual bool CanUserDeleteNode() const override;
 	
-	virtual void ReconstructNode() override;
 	void OnAssetEdited();
+	void OnAssetCompiled();
+	void OnAssetValidated();
+	void OnAssetSelected(const FAssetData& AssetData);
 	void OnDummyReplacement(UClass* ClassToReplace);
+
+	virtual void ReconstructNode() override;
 	void ReportError(EMessageSeverity::Type MessageSeverity);
 	
 	/* Get the asset contained inside this graph node. */
@@ -85,15 +105,10 @@ public:
 		OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
 		return OutputPinInfo;
 	}
-	
-protected:
-	void OnAssetValidated();
-	/* Initialize this node properties. */
-	void InitNode();
 
 private:
-
-	void OnAssetSelected(const FAssetData& AssetData);
+	void InitNode();
+	
 	FORCEINLINE bool ShouldFilterAssetPicker(const FAssetData& AssetData) const
 	{
 		return AssetData.AssetClassPath == UGameFlowNode_Dummy::StaticClass()->GetClassPathName();

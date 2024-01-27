@@ -43,7 +43,6 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 		FOnAssetCompile& CompileCallback = Editor->GetAssetCompileCallback();
 		// Compilation callbacks.
 		CompileCallback.AddUObject(this, &UGameFlowGraph::OnGraphCompile);
-		GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraph::OnGraphCompile);
 		
 		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
 		SaveCallback.AddUObject(this, &UGameFlowGraph::OnSaveGraph);

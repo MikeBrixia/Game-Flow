@@ -55,6 +55,8 @@ public:
 	// Callback for when the asset gets compiled via Live Coding,
 	// Hot Reload or blueprint compile.
     FOnAssetCompiled OnNodeCompiled;
+
+	bool bAssetToCompile = false;
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
@@ -124,6 +126,8 @@ public:
 	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
 	
+	void ValidateAsset();
+	
 	/**
 	 * @brief Add a new output pin to this node.
 	 * @param PinName The nome of the pin to create.
@@ -162,7 +166,7 @@ protected:
 	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
     virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-
+    
 private:
     void AddCompiledInput(const FName PinName, const FGameFlowPinNodePair Input);
     void AddCompiledOutput(const FName PinName, const FGameFlowPinNodePair Output);

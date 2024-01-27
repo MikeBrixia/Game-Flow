@@ -20,10 +20,7 @@ void UGameFlowGraphNode::InitNode()
 	// Initialize node.
 	CreateNewGuid();
 	PostPlacedNewNode();
-	if(Pins.Num() == 0)
-	{
-		AllocateDefaultPins();
-	}
+	CreateNodePins(false);
 	
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
@@ -31,7 +28,8 @@ void UGameFlowGraphNode::InitNode()
 	
 	// Initialize callbacks.
 	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
-	NodeAsset->OnNodeCompiled.AddUObject(this, &UGameFlowGraphNode::OnAssetValidated);
+	// This is the only way to listen to blueprint compile events(at least the one i've found).
+	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
@@ -42,13 +40,25 @@ void UGameFlowGraphNode::OnAssetValidated()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	GraphSchema->ValidateNodeAsset(this);
+	// Notify listeners this node has been validated.
+	OnValidationResult.Broadcast();
 }
 
 void UGameFlowGraphNode::OnAssetEdited()
 {
-	ReconstructNode();
-	OnNodeAssetChanged.Broadcast();
 	UE_LOG(LogGameFlow, Display, TEXT("Asset edited"))
+}
+
+void UGameFlowGraphNode::OnAssetCompiled()
+{
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	// Ensure compiled asset is valid.
+	GraphSchema->ValidateNodeAsset(this);
+	// reconstruct the compiled asset with the updated properties/logic.
+	ReconstructNode();
+
+	// Notify listeners this node has been compiled.
+	OnNodeAssetChanged.Broadcast();
 }
 
 void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
@@ -72,11 +82,7 @@ void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
-	Pins.Empty();
-	
-	// Create pins for graph node.
-	CreateNodePins(EGPD_Input, NodeAsset->GetInputPins());
-	CreateNodePins(EGPD_Output, NodeAsset->GetOutputPins());
+	CreateNodePins(false);
 }
 
 FName UGameFlowGraphNode::CreateUniquePinName(FName SourcePinName) const
@@ -145,9 +151,11 @@ void UGameFlowGraphNode::ReconstructNode()
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
 	// Reallocate all node pins.
-	AllocateDefaultPins();
+	Pins.Empty();
+	CreateNodePins(false);
 	
 	UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
+	
 	// Recompile node and recreate it's node connections.
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
 	GraphSchema->CompileGraphNode(this, TArray { EGPD_Input, EGPD_Output});
@@ -160,7 +168,6 @@ void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity)
 		    MessageSeverity == EMessageSeverity::Info ||
 			MessageSeverity == EMessageSeverity::PerformanceWarning;
 	ErrorType = MessageSeverity;
-	OnValidationResult.Broadcast();
 }
 
 void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
@@ -177,56 +184,62 @@ void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 	}
 }
 
-void UGameFlowGraphNode::CreateNodePins(const EEdGraphPinDirection PinDirection, const TArray<FName> PinNames)
+void UGameFlowGraphNode::CreateNodePins(bool bAddToAsset)
 {
-	// Create all input pins.
-	for(const FName& PinName : PinNames)
+	// Read input pins names from node asset and create graph pins.
+	for(const FName& PinName : NodeAsset->GetInputPins())
 	{
-		// Create logical pin and add it to the node pins list.
-		CreateNodePin(PinDirection, PinName);
+		CreateNodePin(EGPD_Input, PinName, bAddToAsset);
+	}
+
+	// Read output pins names from node asset and create graph pins.
+	for(const FName& PinName : NodeAsset->GetOutputPins())
+	{
+		CreateNodePin(EGPD_Output, PinName, bAddToAsset);
 	}
 }
 
-UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName)
+UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName, bool bAddToAsset)
 {
-	const bool bIsPinNameInvalid = PinName.IsEqual(EName::None);
-	// Update Node asset depending on the new pin direction.
-	switch(PinDirection)
+	if(bAddToAsset)
 	{
-		// Direction is not valid, do nothing.
-	default: break;
-	     // Add input pin to node asset.
-	case EGPD_Input:
+		switch(PinDirection)
 		{
-			// Generated unique pin name following previous pin pattern.
-			if(bIsPinNameInvalid)
-			{
-				TArray<FName> InputPins = NodeAsset->GetInputPins();
-				const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
-				PinName = CreateUniquePinName(PreviousName);
-			}
-			NodeAsset->AddInput(PinName, {});
-			break;
-		}
-		// Add output pin to node asset.	
-	case EGPD_Output:
-		{
-			// Generated unique pin name following previous pin pattern.
-			if(bIsPinNameInvalid)
-			{
-				TArray<FName> OutputPins = NodeAsset->GetOutputPins();
-				const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
-				PinName = CreateUniquePinName(PreviousName);
-			}
-			NodeAsset->AddOutput(PinName, {});
-			break;
+			// Direction is not valid, do nothing.
+			default: break;
+			
+			// Add input pin to node asset.
+			case EGPD_Input:
+				{
+					TArray<FName> InputPins = NodeAsset->GetInputPins();
+					const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
+					PinName = CreateUniquePinName(PreviousName);
+					NodeAsset->AddInput(PinName, {});
+					
+					break;
+				}
+			// Add output pin to node asset.	
+			case EGPD_Output:
+				{
+					TArray<FName> OutputPins = NodeAsset->GetOutputPins();
+					const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
+					PinName = CreateUniquePinName(PreviousName);
+					NodeAsset->AddOutput(PinName, {});
+					
+					break;
+				}
 		}
 	}
 	
-	const FEdGraphPinType PinType = GetGraphPinType();
-	// Create the pin object.
-	UEdGraphPin* Pin = CreatePin(PinDirection, PinType, PinName);
-	Pin->PinFriendlyName = FText::FromName(PinName);
+	UEdGraphPin* Pin = nullptr;
+	// Create pin object only if name is valid.
+	if(!PinName.IsEqual(EName::None))
+	{
+		const FEdGraphPinType PinType = GetGraphPinType();
+		// Create the pin object.
+		Pin = CreatePin(PinDirection, PinType, PinName);
+		Pin->PinFriendlyName = FText::FromName(PinName);
+	}
 	return Pin;
 }
 
