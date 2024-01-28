@@ -39,7 +39,7 @@ private:
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
 
-	/* True if the blueprint asset is waiting to be compiled. */
+	/* True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
 public:
 	UGameFlowGraphNode();

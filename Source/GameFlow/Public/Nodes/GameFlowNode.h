@@ -6,11 +6,6 @@
 #include "Config/GameFlowSettings.h"
 #include "GameFlowNode.generated.h"
 
-#if WITH_EDITORONLY_DATA
-DECLARE_MULTICAST_DELEGATE(FOnEditAsset)
-DECLARE_MULTICAST_DELEGATE(FOnAssetCompiled)
-#endif
-
 /**
  * Serializable alternative to TPair for storing
  * Input pins name and nodes in Game Flow.
@@ -34,6 +29,7 @@ struct GAMEFLOW_API FGameFlowPinNodePair
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
+	
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	
@@ -49,14 +45,7 @@ public:
 	/* The type of this node(Latent, Event ecc.)*/
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
-	
-	/* Callback for when the asset gets edited in the details panel. */
-	FOnEditAsset OnEditAsset;
-	// Callback for when the asset gets compiled via Live Coding,
-	// Hot Reload or blueprint compile.
-    FOnAssetCompiled OnNodeCompiled;
 
-	bool bAssetToCompile = false;
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
@@ -162,10 +151,9 @@ public:
     static FORCEINLINE TArray<FName> GetNodeTypeOptions() { return UGameFlowSettings::Get()->Options; }
 	
 protected:
-	virtual void PostCDOContruct() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
     virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-    
+   
 private:
     void AddCompiledInput(const FName PinName, const FGameFlowPinNodePair Input);
     void AddCompiledOutput(const FName PinName, const FGameFlowPinNodePair Output);

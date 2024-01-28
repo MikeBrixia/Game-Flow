@@ -58,6 +58,15 @@ public:
 	
 	void OnGraphCompile();
 	void OnSaveGraph();
+#if WITH_HOT_RELOAD
+	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
+#endif
+#if WITH_LIVE_CODING
+	void OnLiveCompile(const TArray<UClass*>& ReloadedClasses);
+	void OnLiveCompile(FName Name);
+	void OnLiveCompile(UObject* CompiledObj);
+    void OnLiveCompile(UObject* CompiledObj, const FObjectPostCDOCompiledContext& Context);
+#endif
 	void RebuildGraphFromAsset();
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 
@@ -67,5 +76,10 @@ protected:
 	virtual void OnNodesRemoved(const TArray<UGameFlowGraphNode*>& RemovedNodes);
 	virtual void OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedNodes);
 };
+
+
+
+
+
 
 

@@ -1,8 +1,13 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
+
+#include "AssetCompilingManager.h"
+#include "AssetSelection.h"
+#include "Editor.h"
 #include "GameFlow.h"
 #include "GameFlowAsset.h"
+#include "Engine/AssetManager.h"
 
 FGameFlowPinNodePair::FGameFlowPinNodePair()
 {
@@ -51,13 +56,6 @@ void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
 }
 
 #if WITH_EDITOR
-
-void UGameFlowNode::PostCDOContruct()
-{
-	UObject::PostCDOContruct();
-	OnNodeCompiled.Broadcast();
-	UE_LOG(LogGameFlow, Display, TEXT("Cpp compilation"))
-}
 
 void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {

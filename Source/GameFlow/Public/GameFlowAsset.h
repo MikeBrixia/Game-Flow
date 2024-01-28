@@ -9,6 +9,7 @@
 #include "Nodes/GameFlowNode_Output.h"
 #include "GameFlowAsset.generated.h"
 
+
 /**
  * Game Flow asset, stores events flow in a tree
  * data structures.
@@ -24,20 +25,20 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 public:
 
 #if WITH_EDITORONLY_DATA
-	/* All asset nodes mapped by their corresponding guid.*/
+	/** All asset nodes mapped by their corresponding guid.*/
 	UPROPERTY(VisibleAnywhere)
 	TArray<UGameFlowNode*> Nodes;
 	
-	/* True if this asset has already been opened inside a GameFlow editor, false otherwise. */
+	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
 	UPROPERTY()
 	bool bHasAlreadyBeenOpened;
 #endif
 	
-	/* All the user-defined entry points of the asset. */
+	/** All the user-defined entry points of the asset. */
 	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
 	TMap<FName, UGameFlowNode_Input*> CustomInputs;
 	
-	/* All the user-defined exit points of the asset. */
+	/** All the user-defined exit points of the asset. */
 	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
 	TMap<FName, UGameFlowNode_Output*> CustomOutputs;
 	

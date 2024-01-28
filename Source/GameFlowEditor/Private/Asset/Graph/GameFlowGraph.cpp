@@ -44,6 +44,12 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 		// Compilation callbacks.
 		CompileCallback.AddUObject(this, &UGameFlowGraph::OnGraphCompile);
 		
+		FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
+		FCoreUObjectDelegates::ReloadAddedClassesDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
+		FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
+		FCoreUObjectDelegates::OnObjectPostCDOCompiled.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
+		FCoreUObjectDelegates::OnObjectConstructed.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
+		
 		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
 		SaveCallback.AddUObject(this, &UGameFlowGraph::OnSaveGraph);
 	}
@@ -124,6 +130,47 @@ void UGameFlowGraph::OnSaveGraph()
 	}
 }
 
+#if WITH_HOT_RELOAD
+
+void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
+{
+	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
+	for(UGameFlowGraphNode* Node : ReloadedNodes)
+	{
+		Node->OnLiveOrHotReloadCompile();
+	}
+}
+
+#endif
+
+#if WITH_LIVE_CODING
+
+void UGameFlowGraph::OnLiveCompile(const TArray<UClass*>& ReloadedClasses)
+{
+	UE_LOG(LogGameFlow, Display, TEXT("Live Compile"))
+}
+
+void UGameFlowGraph::OnLiveCompile(FName Name)
+{
+	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
+	for(UGameFlowGraphNode* Node : ReloadedNodes)
+	{
+		Node->OnLiveOrHotReloadCompile();
+	}
+}
+
+void UGameFlowGraph::OnLiveCompile(UObject* CompiledObj)
+{
+	UE_LOG(LogGameFlow, Display, TEXT("Live Compile with obj"))
+}
+
+void UGameFlowGraph::OnLiveCompile(UObject* CompiledObj, const FObjectPostCDOCompiledContext& Context)
+{
+	UE_LOG(LogGameFlow, Display, TEXT("Live Compile with obj and context"))
+}
+
+#endif
+
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
 	Super::NotifyGraphChanged(Action);
@@ -160,7 +207,11 @@ void UGameFlowGraph::OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedN
 	// Build selected nodes assets array.
 	for(const UGameFlowGraphNode* SelectedNode : SelectedNodes)
 	{
-		SelectedAssets.Add(SelectedNode->GetNodeAsset());
+		if(SelectedNode != nullptr)
+		{
+			UGameFlowNode* NodeAsset = SelectedNode->GetNodeAsset();
+			SelectedAssets.Add(NodeAsset);
+		}
 	}
 				
 	// Inspect selected nodes inside editor nodes details view.

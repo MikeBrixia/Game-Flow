@@ -22,7 +22,7 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 {
 	// The asset being edited.
 	Asset = CastChecked<UGameFlowAsset>(InObjects[0]);
-    
+	
 	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
 	// Mark this editor as an active by registering it inside GameFlow editor subsystem.
 	EditorSubsystem->RegisterActiveEditor(this);

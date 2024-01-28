@@ -26,9 +26,6 @@ void UGameFlowGraphNode::InitNode()
 	// Get node asset info from config.
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 	
-	// Initialize callbacks.
-	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
-	NodeAsset->GetClass()->GetDefaultObject<UGameFlowNode>()->OnNodeCompiled.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
 	// This is the only way to listen to blueprint compile events(at least the one i've found).
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
@@ -48,6 +45,7 @@ void UGameFlowGraphNode::OnAssetValidated()
 
 void UGameFlowGraphNode::OnAssetEdited()
 {
+	
 }
 
 void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
@@ -56,7 +54,6 @@ void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
 	bPendingCompilation = true;
 	// Call default asset compilation callback.
 	OnAssetCompiled();
-	UE_LOG(LogGameFlow, Display, TEXT("Cpp compilation completed"))
 }
 
 void UGameFlowGraphNode::OnAssetCompiled()
@@ -64,12 +61,13 @@ void UGameFlowGraphNode::OnAssetCompiled()
 	// Reconstruct node only if it is pending compile.
 	if(bPendingCompilation)
 	{
+		//UE_LOG(LogGameFlow, Display, TEXT("Cpp compile event received for %s"), *NodeAsset->GetName())
 		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 		// Ensure compiled asset is valid.
 		GraphSchema->ValidateNodeAsset(this);
 		// reconstruct the compiled asset with the updated properties/logic.
 		ReconstructNode();
-
+		
 		// Notify listeners this node has been compiled.
 		OnNodeAssetChanged.Broadcast();
 
