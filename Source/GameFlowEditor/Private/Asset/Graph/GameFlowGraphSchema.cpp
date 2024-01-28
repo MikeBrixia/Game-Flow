@@ -150,14 +150,30 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 	const UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
     UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GraphNode->GetGraph());
 	UGameFlowNode* SubstituteNodeAsset = CastChecked<UGameFlowNode>(InstanceGraph->GetDestinationObject(GraphNode->GetNodeAsset()));
-    
+
+	// The number of input pins found on the node we want to substitute.
+	const int32 CurrentInputPinsNum = GraphNode->Pins.FilterByPredicate([](const UEdGraphPin* PinObj)
+	{
+		return PinObj->Direction == EGPD_Input;
+	}).Num();
+	
+	// The number of output pins found on the node we wanto to substitute
+	const int32 CurrentOutputPinsNum = GraphNode->Pins.FilterByPredicate([](const UEdGraphPin* PinObj)
+	{
+		return PinObj->Direction == EGPD_Output;
+	}).Num();
+	
 	UGameFlowGraphNode* SubstituteNode = UGameFlowNodeFactory::CreateGraphNode(SubstituteNodeAsset, GameFlowGraph);
+	// Place the new node at the same position of the old one.
 	SubstituteNode->NodePosX = Node->NodePosX;
 	SubstituteNode->NodePosY = Node->NodePosY;
 	
 	// Rewire pins inside substitute node to match source node.
 	for(UEdGraphPin* Pin : Node->Pins)
 	{
+		const int32 SubstituteInputPinsNum = SubstituteNodeAsset->GetInputPins().Num();
+		const int32 SubstituteOutputPinsNum = SubstituteNodeAsset->GetOutputPins().Num();
+		
 		UEdGraphPin* SubstituteNodePin = SubstituteNode->FindPin(Pin->PinName);
 		// Have we found a pin with the same name in the substitute node?
 		// If not, try creating it.
@@ -167,17 +183,18 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 			// Does this node have variable pins depending on the direction?
 			if(Pin->Direction == EGPD_Input)
 			{
-				bShouldAddPin = SubstituteNodeAsset->bCanAddInputPin;
+				bShouldAddPin = SubstituteNodeAsset->bCanAddInputPin
+				                 && CurrentInputPinsNum > SubstituteInputPinsNum;
 			}
 			else if(Pin->Direction == EGPD_Output)
 			{
-				bShouldAddPin = SubstituteNodeAsset->bCanAddOutputPin;
+				bShouldAddPin = SubstituteNodeAsset->bCanAddOutputPin
+				                && CurrentOutputPinsNum > SubstituteOutputPinsNum;
 			}
 			
-			// 1. If substitute node does not have variable pins, just skip this iteration.
-			// 2.  substitute node have more or equal pins to the current node.
-			if(!bShouldAddPin && SubstituteNode->Pins.Num() < Node->Pins.Num()) continue;
-
+			// If we've determined that no pin should be added, skip the iteration.
+			if(!bShouldAddPin) continue;
+			
 			// Create new substitute node pin.
 			SubstituteNodePin = SubstituteNode->CreateNodePin(Pin->Direction);
 		}

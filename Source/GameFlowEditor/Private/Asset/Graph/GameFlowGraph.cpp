@@ -43,12 +43,10 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 		FOnAssetCompile& CompileCallback = Editor->GetAssetCompileCallback();
 		// Compilation callbacks.
 		CompileCallback.AddUObject(this, &UGameFlowGraph::OnGraphCompile);
-		
+
+		// Cpp compilation callbacks, both for Live Coding and Hot Reload.
 		FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
-		FCoreUObjectDelegates::ReloadAddedClassesDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
 		FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
-		FCoreUObjectDelegates::OnObjectPostCDOCompiled.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
-		FCoreUObjectDelegates::OnObjectConstructed.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
 		
 		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
 		SaveCallback.AddUObject(this, &UGameFlowGraph::OnSaveGraph);
