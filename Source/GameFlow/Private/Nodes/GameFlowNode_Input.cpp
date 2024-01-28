@@ -5,7 +5,7 @@
 UGameFlowNode_Input::UGameFlowNode_Input()
 {
 	TypeName = "Input";
-	RemoveInputPin("Exec");
+	AddOutput("Out", {});
 }
 
 

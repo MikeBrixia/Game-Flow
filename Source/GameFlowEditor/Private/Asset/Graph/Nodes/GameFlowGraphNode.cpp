@@ -28,8 +28,10 @@ void UGameFlowGraphNode::InitNode()
 	
 	// Initialize callbacks.
 	NodeAsset->OnEditAsset.AddUObject(this, &UGameFlowGraphNode::OnAssetEdited);
+	NodeAsset->GetClass()->GetDefaultObject<UGameFlowNode>()->OnNodeCompiled.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
 	// This is the only way to listen to blueprint compile events(at least the one i've found).
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
+	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
@@ -46,19 +48,40 @@ void UGameFlowGraphNode::OnAssetValidated()
 
 void UGameFlowGraphNode::OnAssetEdited()
 {
-	UE_LOG(LogGameFlow, Display, TEXT("Asset edited"))
+}
+
+void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
+{
+	// Mark as pending compilation on cpp compile(live coding or hot reload).
+	bPendingCompilation = true;
+	// Call default asset compilation callback.
+	OnAssetCompiled();
+	UE_LOG(LogGameFlow, Display, TEXT("Cpp compilation completed"))
 }
 
 void UGameFlowGraphNode::OnAssetCompiled()
 {
-	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	// Ensure compiled asset is valid.
-	GraphSchema->ValidateNodeAsset(this);
-	// reconstruct the compiled asset with the updated properties/logic.
-	ReconstructNode();
+	// Reconstruct node only if it is pending compile.
+	if(bPendingCompilation)
+	{
+		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+		// Ensure compiled asset is valid.
+		GraphSchema->ValidateNodeAsset(this);
+		// reconstruct the compiled asset with the updated properties/logic.
+		ReconstructNode();
 
-	// Notify listeners this node has been compiled.
-	OnNodeAssetChanged.Broadcast();
+		// Notify listeners this node has been compiled.
+		OnNodeAssetChanged.Broadcast();
+
+		// Node has already been compiled, remove the mark from it.
+		bPendingCompilation = false;
+	}
+}
+
+void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
+{
+	// If the compiled node is the graph encapsulated node, mark it as a pending compile graph node.
+	bPendingCompilation = Blueprint != nullptr && Blueprint == NodeAsset->GetClass()->ClassGeneratedBy;
 }
 
 void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)

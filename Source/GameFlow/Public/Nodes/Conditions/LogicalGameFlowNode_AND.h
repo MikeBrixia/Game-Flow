@@ -10,7 +10,7 @@
 /**
  * Game Flow logical AND boolean operator.
  */
-UCLASS(DisplayName="AND", Abstract)
+UCLASS(DisplayName="AND")
 class GAMEFLOW_API ULogicalGameFlowNode_AND final : public UGameFlowNode
 {
 	GENERATED_BODY()
@@ -20,7 +20,6 @@ public:
 	
 	virtual void Execute_Implementation(const FName& PinName) override;
 	virtual void OnFinishExecute_Implementation() override;
-
 
 private:
 	

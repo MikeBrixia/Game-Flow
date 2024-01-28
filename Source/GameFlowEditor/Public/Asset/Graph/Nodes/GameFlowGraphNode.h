@@ -38,7 +38,9 @@ private:
 	/* Node asset info red from global GameFlow plugin settings. */
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
-	
+
+	/* True if the blueprint asset is waiting to be compiled. */
+	bool bPendingCompilation;
 public:
 	UGameFlowGraphNode();
 
@@ -80,7 +82,9 @@ public:
 	virtual bool CanUserDeleteNode() const override;
 	
 	void OnAssetEdited();
+	void OnLiveOrHotReloadCompile();
 	void OnAssetCompiled();
+	void OnAssetBlueprintPreCompiled(UBlueprint* Blueprint);
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnDummyReplacement(UClass* ClassToReplace);

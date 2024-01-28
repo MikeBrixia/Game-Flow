@@ -163,7 +163,6 @@ public:
 	
 protected:
 	virtual void PostCDOContruct() override;
-	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
     virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
     
