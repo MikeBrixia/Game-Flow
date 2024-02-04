@@ -214,6 +214,26 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 	return SubstituteNode;
 }
 
+void UGameFlowGraphSchema::AlignNodeAssetToGraphNode(UGameFlowGraphNode* GraphNode) const
+{
+	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+	// Ensure there node asset ports are aligned with graph node pins connections.
+	for(const UEdGraphPin* Pin : GraphNode->Pins)
+	{
+		if(!Pin->HasAnyConnections())
+		{
+			if(Pin->Direction == EGPD_Input)
+			{
+				NodeAsset->RemoveInputPort(Pin->PinName);
+			}
+			else if(Pin->Direction == EGPD_Output)
+			{
+				NodeAsset->RemoveOutputPort(Pin->PinName);
+			}
+		}
+	}
+}
+
 UGameFlowNode_Input* UGameFlowGraphSchema::CreateDefaultInputs(UGameFlowGraph& Graph) const
 {
 	UGameFlowAsset* GameFlowAsset = Graph.GameFlowAsset;
@@ -296,6 +316,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	
 	GraphNode->bHasCompilerMessage = false;
 	NodeAsset->ValidateAsset();
+	AlignNodeAssetToGraphNode(GraphNode);
 	// When node is a dummy just throw an error message
 	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
 	{
@@ -538,7 +559,6 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		// If connection could not be recreated, remove asset pin logic port.
 		if(!bConnectionResult)
 		{
-			UE_LOG(LogGameFlow, Display, TEXT("Connection failed"))
 			if(Pin->Direction == EGPD_Input)
 			{
 				NodeAsset->RemoveInputPort(Pin->PinName);

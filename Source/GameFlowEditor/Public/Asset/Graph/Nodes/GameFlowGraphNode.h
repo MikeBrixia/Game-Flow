@@ -62,7 +62,7 @@ public:
 	 * @brief Create default pins for this Game Flow node.
 	 */
 	virtual void AllocateDefaultPins() override;
-
+	
 	/**
 	 * @brief Generate a unique pin name.
 	 * @param SourcePinName The name of the previous pin, will be used
@@ -81,14 +81,13 @@ public:
 	bool IsOrphan() const;
 	virtual bool CanUserDeleteNode() const override;
 	
-	void OnAssetEdited();
 	void OnLiveOrHotReloadCompile();
 	void OnAssetCompiled();
 	void OnAssetBlueprintPreCompiled(UBlueprint* Blueprint);
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnDummyReplacement(UClass* ClassToReplace);
-
+	
 	virtual void ReconstructNode() override;
 	void ReportError(EMessageSeverity::Type MessageSeverity);
 	

@@ -193,7 +193,7 @@ void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 	// Read new info data from config using the new node asset type.
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-	UE_LOG(LogGameFlow, Display, TEXT("Set node asset"))
+	
 	// Notify listeners that the node asset has been changed.
 	if(OnNodeAssetChanged.IsBound())
 	{
