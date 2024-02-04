@@ -93,7 +93,7 @@ TArray<UGameFlowGraphNode*> UGameFlowGraph::GetOrphanNodes() const
 			OrphanNodes.Add(GraphNode);
 		}
 	}
-
+    
 	return OrphanNodes;
 }
 
