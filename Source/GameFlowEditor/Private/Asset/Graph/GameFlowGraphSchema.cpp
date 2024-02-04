@@ -517,7 +517,7 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 	{
 		if (!Directions.Contains(Pin->Direction)) continue;
 
-		const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 		// Find the node and pin to which the current node is connected to.
 		FGameFlowPinNodePair Pair = Pin->Direction == EGPD_Output
 			            ? NodeAsset->GetNextNode(Pin->PinName)
@@ -527,14 +527,27 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
         
 		// If next node is invalid or input pin name is None, skip the iteration.
 		if (ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
-
-		// Create the graph node for the connected node.
-		const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
 		
+		const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
 		UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
+		
 		// After finding the current node output pin and the next node input pin,
 		// create a connection between the two.
-		TryCreateConnection(Pin, OtherPin);
+		bool bConnectionResult = TryCreateConnection(Pin, OtherPin);
+
+		// If connection could not be recreated, remove asset pin logic port.
+		if(!bConnectionResult)
+		{
+			UE_LOG(LogGameFlow, Display, TEXT("Connection failed"))
+			if(Pin->Direction == EGPD_Input)
+			{
+				NodeAsset->RemoveInputPort(Pin->PinName);
+			}
+			else if(Pin->Direction == EGPD_Output)
+			{
+				NodeAsset->RemoveOutputPort(Pin->PinName);
+			}
+		}
 	}
 }
 

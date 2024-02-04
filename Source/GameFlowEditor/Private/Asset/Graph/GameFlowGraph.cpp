@@ -205,11 +205,8 @@ void UGameFlowGraph::OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedN
 	// Build selected nodes assets array.
 	for(const UGameFlowGraphNode* SelectedNode : SelectedNodes)
 	{
-		if(SelectedNode != nullptr)
-		{
-			UGameFlowNode* NodeAsset = SelectedNode->GetNodeAsset();
-			SelectedAssets.Add(NodeAsset);
-		}
+		UGameFlowNode* NodeAsset = SelectedNode->GetNodeAsset();
+		SelectedAssets.Add(NodeAsset);
 	}
 				
 	// Inspect selected nodes inside editor nodes details view.

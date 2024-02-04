@@ -25,7 +25,8 @@ void UGameFlowGraphNode::InitNode()
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-	
+
+	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
 	// This is the only way to listen to blueprint compile events(at least the one i've found).
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
@@ -41,11 +42,6 @@ void UGameFlowGraphNode::OnAssetValidated()
 	GraphSchema->ValidateNodeAsset(this);
 	// Notify listeners this node has been validated.
 	OnValidationResult.Broadcast();
-}
-
-void UGameFlowGraphNode::OnAssetEdited()
-{
-	
 }
 
 void UGameFlowGraphNode::OnLiveOrHotReloadCompile()

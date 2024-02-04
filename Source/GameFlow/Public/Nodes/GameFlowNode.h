@@ -25,6 +25,9 @@ struct GAMEFLOW_API FGameFlowPinNodePair
 	TObjectPtr<UGameFlowNode> Node;
 };
 
+
+DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
+
 /* Base interface for all GameFlow nodes. */
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class GAMEFLOW_API UGameFlowNode : public UObject
@@ -46,6 +49,9 @@ public:
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
 
+	/** Called when this asset gets deleted and replaced or hot-reloaded(C++ compilation) */
+	FOnAssetRedirected OnAssetRedirected;
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
@@ -142,7 +148,7 @@ public:
 	 * @param PinName The name of the pin which holds the connection.
 	 */
 	void RemoveOutput(const FName PinName);
-
+	
 	/**
 	 * @brief Get all the registered Game Flow node types
 	 * @return An array of node types.
@@ -158,8 +164,20 @@ private:
     void AddCompiledInput(const FName PinName, const FGameFlowPinNodePair Input);
     void AddCompiledOutput(const FName PinName, const FGameFlowPinNodePair Output);
 
+	/**
+	 * Remove an active input pin port on this node.
+	 * @param PinName The name of the pin.
+	 */
+	void RemoveInputPort(FName PinName);
+	
+	/**
+	* Remove an active output port on this node.
+	* @param PinName The name of the pin.
+	*/
+	void RemoveOutputPort(FName PinName);
 #endif
 };
+
 
 
 

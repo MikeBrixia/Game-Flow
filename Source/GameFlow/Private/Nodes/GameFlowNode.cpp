@@ -7,7 +7,9 @@
 #include "Editor.h"
 #include "GameFlow.h"
 #include "GameFlowAsset.h"
+#include "ObjectTools.h"
 #include "Engine/AssetManager.h"
+#include "UObject/CoreRedirects.h"
 
 FGameFlowPinNodePair::FGameFlowPinNodePair()
 {
@@ -61,60 +63,75 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);
 
-	const bool bIsArray = PropertyChangedEvent.Property->ArrayDim == 1;
-	const FName& PropertyName = PropertyChangedEvent.GetPropertyName();
-	const int32 ArrayIndex = PropertyChangedEvent.GetArrayIndex(PropertyName.ToString());
-	
-	switch(PropertyChangedEvent.ChangeType)
+	// Check if modified property is valid.
+	// FProperty could be null when replacing game flow node references,
+	// in particular if pins connections are different between deleted and replacement nodes.
+	if(PropertyChangedEvent.Property != nullptr)
 	{
-	default: break;
+		const bool bIsArray = PropertyChangedEvent.Property->ArrayDim == 1;
+		const FName& PropertyName = PropertyChangedEvent.GetPropertyName();
+		const int32 ArrayIndex = PropertyChangedEvent.GetArrayIndex(PropertyName.ToString());
+	
+		switch(PropertyChangedEvent.ChangeType)
+		{
+		default: break;
 
-	case EPropertyChangeType::ValueSet:
-		{
-			// Is the modified property inside a TArray?
-			if(bIsArray)
+		case EPropertyChangeType::ValueSet:
 			{
-				const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-				FName NewPropertyValue;
+				// Is the modified property inside a TArray?
+				if(bIsArray)
+				{
+					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
+					FName NewPropertyValue;
 				
-				if(PropertyName.IsEqual("InputPins"))
-				{
-					const FGameFlowPinNodePair Connection = Inputs.FindRef(OldPropertyValue);
-					NewPropertyValue = InputPins[ArrayIndex];
-					const bool bIsChanged = !NewPropertyValue.IsEqual(OldPropertyValue);
-					if(bIsChanged)
+					if(PropertyName.IsEqual("InputPins"))
 					{
-						Inputs.Remove(OldPropertyValue);
-						AddCompiledInput(NewPropertyValue, Connection);
+						const FGameFlowPinNodePair Connection = Inputs.FindRef(OldPropertyValue);
+						NewPropertyValue = InputPins[ArrayIndex];
+						const bool bIsChanged = !NewPropertyValue.IsEqual(OldPropertyValue);
+						if(bIsChanged)
+						{
+							Inputs.Remove(OldPropertyValue);
+							AddCompiledInput(NewPropertyValue, Connection);
+						}
+					}
+					else if(PropertyName.IsEqual("OutputPins"))
+					{
+						const FGameFlowPinNodePair Connection = Outputs.FindRef(OldPropertyValue);
+						NewPropertyValue = OutputPins[ArrayIndex];
+						const bool bIsChanged = !NewPropertyValue.IsEqual(OldPropertyValue);
+						if(bIsChanged)
+						{
+							Outputs.Remove(OldPropertyValue);
+							AddCompiledOutput(NewPropertyValue, Connection);
+						}
 					}
 				}
-				else if(PropertyName.IsEqual("OutputPins"))
-				{
-					const FGameFlowPinNodePair Connection = Outputs.FindRef(OldPropertyValue);
-					NewPropertyValue = OutputPins[ArrayIndex];
-					const bool bIsChanged = !NewPropertyValue.IsEqual(OldPropertyValue);
-					if(bIsChanged)
-					{
-						Outputs.Remove(OldPropertyValue);
-						AddCompiledOutput(NewPropertyValue, Connection);
-					}
-				}
-		    }
-	    }
+			}
     
-	case EPropertyChangeType::ArrayRemove:
-		{
-			if(bIsArray)
+		case EPropertyChangeType::ArrayRemove:
 			{
-				const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-				if(PropertyName.IsEqual("InputPins"))
+				if(bIsArray)
 				{
-					RemoveInputPin(OldPropertyValue);
+					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
+					if(PropertyName.IsEqual("InputPins"))
+					{
+						RemoveInputPin(OldPropertyValue);
+					}
+					else if(PropertyName.IsEqual("OutputPins"))
+					{
+						RemoveOutput(OldPropertyValue);
+					}
 				}
-				else if(PropertyName.IsEqual("OutputPins"))
-				{
-					RemoveOutput(OldPropertyValue);
-				}
+				break;
+			}
+
+			// Notify listeners this asset has been redirected.
+		case EPropertyChangeType::Redirected:
+			{
+				UE_LOG(LogGameFlow, Display, TEXT("Asset redirected"))
+				OnAssetRedirected.Broadcast();
+				break;
 			}
 		}
 	}
@@ -123,8 +140,9 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 void UGameFlowNode::PreEditChange(FProperty* PropertyAboutToChange)
 {
 	UObject::PreEditChange(PropertyAboutToChange);
-	
-	if(PropertyAboutToChange->ArrayDim == 1)
+	if(PropertyAboutToChange != nullptr &&
+		(PropertyAboutToChange->GetOwner<UClass>() != UBlueprintCore::StaticClass() &&
+		PropertyAboutToChange->ArrayDim == 1))
 	{
 		Temp_OldPinArray = *PropertyAboutToChange->ContainerPtrToValuePtr<TArray<FName>>(this);
 	}
@@ -143,7 +161,7 @@ void UGameFlowNode::ValidateAsset()
 			Inputs.Remove(InputPinKey);
 		}
 	}
-
+	
 	TArray<FName> OutputKeys;
 	Outputs.GenerateKeyArray(OutputKeys);
 	for(const FName& OutputPinKey : OutputKeys)
@@ -180,6 +198,13 @@ void UGameFlowNode::AddCompiledInput(const FName PinName, const FGameFlowPinNode
 
 void UGameFlowNode::RemoveInputPin(const FName PinName)
 {
+	// Remove from this node.
+	InputPins.Remove(PinName);
+	RemoveInputPort(PinName);
+}
+
+void UGameFlowNode::RemoveInputPort(FName PinName)
+{
 	const FGameFlowPinNodePair Pair = Inputs.FindRef(PinName);
 	UGameFlowNode* ConnectedNode = Pair.Node;
 	// Remove from other connected node.
@@ -188,8 +213,6 @@ void UGameFlowNode::RemoveInputPin(const FName PinName)
 		ConnectedNode->Outputs.Remove(Pair.InputPinName);
 	}
 
-	// Remove from this node.
-	InputPins.Remove(PinName);
 	Inputs.Remove(PinName);
 }
 
@@ -216,6 +239,12 @@ void UGameFlowNode::AddCompiledOutput(const FName PinName, const FGameFlowPinNod
 
 void UGameFlowNode::RemoveOutput(const FName PinName)
 {
+	OutputPins.Remove(PinName);
+	RemoveOutputPort(PinName);
+}
+
+void UGameFlowNode::RemoveOutputPort(FName PinName)
+{
 	const FGameFlowPinNodePair Pair = Outputs.FindRef(PinName);
 	UGameFlowNode* ConnectedNode = Pair.Node;
 	// Remove from other connected node.
@@ -223,8 +252,7 @@ void UGameFlowNode::RemoveOutput(const FName PinName)
 	{
 		ConnectedNode->Inputs.Remove(Pair.InputPinName);
 	}
-	
-	OutputPins.Remove(PinName);
+
 	Outputs.Remove(PinName);
 }
 
