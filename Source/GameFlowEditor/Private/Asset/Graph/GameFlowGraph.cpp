@@ -157,16 +157,6 @@ void UGameFlowGraph::OnLiveCompile(FName Name)
 	}
 }
 
-void UGameFlowGraph::OnLiveCompile(UObject* CompiledObj)
-{
-	UE_LOG(LogGameFlow, Display, TEXT("Live Compile with obj"))
-}
-
-void UGameFlowGraph::OnLiveCompile(UObject* CompiledObj, const FObjectPostCDOCompiledContext& Context)
-{
-	UE_LOG(LogGameFlow, Display, TEXT("Live Compile with obj and context"))
-}
-
 #endif
 
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)

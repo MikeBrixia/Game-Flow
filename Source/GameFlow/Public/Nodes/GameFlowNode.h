@@ -161,8 +161,24 @@ protected:
     virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
    
 private:
-    void AddCompiledInput(const FName PinName, const FGameFlowPinNodePair Input);
-    void AddCompiledOutput(const FName PinName, const FGameFlowPinNodePair Output);
+
+	/**
+	 * Add a new logical input pin port.
+	 * @remark Input ports are used to establish a connections between one of this
+	 *         node input pins and another node output pins.
+	 * @param PinName the name of the input pin to create the port from.
+	 * @param Input the actual input port connection.
+	 */
+    void AddInputPort(const FName PinName, const FGameFlowPinNodePair Input);
+
+	/**
+	 * Add a new logical output pin port
+	 * @remark Output ports are used to establish a connections between one of this
+	 *         node output pins and another node input pins.
+	 * @param PinName the name of the output pin to create the port from.
+	 * @param Output the actual output port connection.
+	 */
+    void AddOutputPort(const FName PinName, const FGameFlowPinNodePair Output);
 
 	/**
 	 * Remove an active input pin port on this node.

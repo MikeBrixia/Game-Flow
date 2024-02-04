@@ -64,8 +64,6 @@ public:
 #if WITH_LIVE_CODING
 	void OnLiveCompile(const TArray<UClass*>& ReloadedClasses);
 	void OnLiveCompile(FName Name);
-	void OnLiveCompile(UObject* CompiledObj);
-    void OnLiveCompile(UObject* CompiledObj, const FObjectPostCDOCompiledContext& Context);
 #endif
 	void RebuildGraphFromAsset();
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;

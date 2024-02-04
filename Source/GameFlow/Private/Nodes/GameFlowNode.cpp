@@ -85,7 +85,7 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 						if(bIsChanged)
 						{
 							Inputs.Remove(OldPropertyValue);
-							AddCompiledInput(NewPropertyValue, Connection);
+							AddInputPort(NewPropertyValue, Connection);
 						}
 					}
 					else if(PropertyName.IsEqual("OutputPins"))
@@ -96,7 +96,7 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 						if(bIsChanged)
 						{
 							Outputs.Remove(OldPropertyValue);
-							AddCompiledOutput(NewPropertyValue, Connection);
+							AddOutputPort(NewPropertyValue, Connection);
 						}
 					}
 				}
@@ -178,10 +178,10 @@ void UGameFlowNode::AddInput(const FName PinName, const FGameFlowPinNodePair Inp
 {
 	// Add input pin if not already present.
 	InputPins.AddUnique(PinName);
-	AddCompiledInput(PinName, Input);
+	AddInputPort(PinName, Input);
 }
 
-void UGameFlowNode::AddCompiledInput(const FName PinName, const FGameFlowPinNodePair Input)
+void UGameFlowNode::AddInputPort(const FName PinName, const FGameFlowPinNodePair Input)
 {
 	const bool bValidOutput = Input.Node != nullptr && !Input.InputPinName.IsNone();
 	const bool bRecursiveOutput = Input.Node == this;
@@ -219,10 +219,10 @@ void UGameFlowNode::AddOutput(const FName PinName, const FGameFlowPinNodePair Ou
 {
 	// Add output pin if not already present.
 	OutputPins.AddUnique(PinName);
-	AddCompiledOutput(PinName, Output);
+	AddOutputPort(PinName, Output);
 }
 
-void UGameFlowNode::AddCompiledOutput(const FName PinName, const FGameFlowPinNodePair Output)
+void UGameFlowNode::AddOutputPort(const FName PinName, const FGameFlowPinNodePair Output)
 {
 	const bool bValidOutput = Output.Node != nullptr && !Output.InputPinName.IsNone();
 	const bool bRecursiveOutput = Output.Node == this;

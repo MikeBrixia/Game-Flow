@@ -171,7 +171,7 @@ void UGameFlowGraphNode::ReconstructNode()
 	Pins.Empty();
 	CreateNodePins(false);
 	
-	UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
+	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
 	
 	// Recompile node and recreate it's node connections.
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
