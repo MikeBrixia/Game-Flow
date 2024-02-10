@@ -12,8 +12,12 @@ UEdGraphNode* FGameFlowNodeSchemaAction_NewNode::PerformAction(UEdGraph* ParentG
 	UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(ParentGraph);
 	// Create a brand new game flow graph node of supplied type.
 	UGameFlowGraphNode* GraphNode = UGameFlowNodeFactory::CreateGraphNode(NodeClass, GameFlowGraph->GameFlowAsset, GameFlowGraph);
+	// Initialize UedGraphNode properties.
 	GraphNode->NodePosX = Location.X;
 	GraphNode->NodePosY = Location.Y;
+	GraphNode->Modify();
+	GraphNode->PostPlacedNewNode();
+	GraphNode->CreateNewGuid();
 	
 	// Is the context menu been created after a pin drag action?
 	if(FromPin != nullptr)

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Nodes/GameFlowGraphNode.h"
 #include "Nodes/GameFlowNode.h"
 
 /**

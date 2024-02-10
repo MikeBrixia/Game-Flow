@@ -78,7 +78,6 @@ private:
 	inline static const FName GraphTabName = "GraphTab";
 	inline static const FName DetailsTabName = "DetailsTab";
 	inline static const FName NodeDetailsTabName = "NodeDetailsTab";
-	inline static const FName PaletteTabName = "PaletteTab";
 
 	// -------------------------------------------------------------------------------------------------
 };
