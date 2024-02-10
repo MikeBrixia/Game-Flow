@@ -266,32 +266,27 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 	Super::GetGraphContextActions(ContextMenuBuilder);
 	
 	// Add Custom input and output context actions.
-	TSharedRef<FGameFlowNodeSchemaAction_NewNode> CustomInputAction (new FGameFlowNodeSchemaAction_NewNode(UGameFlowNode_Input::StaticClass(),INVTEXT("Node"), INVTEXT("Custom Input"),
-		                                                            INVTEXT("Create a custom entry point."), 0));
+	TSharedRef<FGameFlowNodeSchemaAction_NewNode> CustomInputAction (new FGameFlowNodeSchemaAction_NewNode(UGameFlowNode_Input::StaticClass(),INVTEXT("I/O"), INVTEXT("Custom Input"),
+		                                                            INVTEXT("Create a custom entry point."), 1));
 	ContextMenuBuilder.AddAction(CustomInputAction);
-	TSharedRef<FGameFlowNodeSchemaAction_NewNode> CustomOutputAction (new FGameFlowNodeSchemaAction_NewNode(UGameFlowNode_Output::StaticClass(),INVTEXT("Node"), INVTEXT("Custom Output"),
-																	INVTEXT("Create a custom exit point."), 0));
+	TSharedRef<FGameFlowNodeSchemaAction_NewNode> CustomOutputAction (new FGameFlowNodeSchemaAction_NewNode(UGameFlowNode_Output::StaticClass(),INVTEXT("I/O"), INVTEXT("Custom Output"),
+																	INVTEXT("Create a custom exit point."), 1));
 	ContextMenuBuilder.AddAction(CustomOutputAction);
 	
 	// Build a context menu action for all nodes which derives from UGameFlowNode.
 	for(TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 	{
 		UClass* ChildClass = *ClassIt;
-		
-		// Ignore deprecated classes and old classes which have a new version.
-		if(ChildClass->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists)) continue;
-		
-		const bool bIsInputOrOutputNodeClass = ChildClass == UGameFlowNode_Input::StaticClass() || ChildClass == UGameFlowNode_Output::StaticClass();
-        const bool bIsChildClass = ChildClass->IsChildOf(UGameFlowNode::StaticClass()) && ChildClass != UGameFlowNode::StaticClass();
-		const bool bIsDummyClass = ChildClass->IsChildOf(UGameFlowNode_Dummy::StaticClass()) && ChildClass != UGameFlowNode_Dummy::StaticClass();
-		// List of conditions a class needs to meet in order to appear in contextual menu:
-		// 1. Select only classes which are children of UGameFlowNode, Base class excluded.
-		// 2. Should not be an input or output node classes, we already have actions for these.
-		if(bIsChildClass & !bIsInputOrOutputNodeClass & !bIsDummyClass)
+		// Create context menu actions only for nodes who respects game flow criteria
+		if(CanCreateGraphNodeForClass(ChildClass))
 		{
-			TSharedRef<FGameFlowNodeSchemaAction_NewNode> NewNodeAction(new FGameFlowNodeSchemaAction_NewNode(ChildClass, INVTEXT("Node"),
-			                                                                                          FText::FromString(ChildClass->GetDescription()),
-			                                                                                          FText::FromString(ChildClass->GetName()), 0));
+			FText ClassCategory = ChildClass->GetMetaDataText("Category");
+			// If node class has no defined category, use the default one.
+			ClassCategory = ClassCategory.IsEmptyOrWhitespace()? INVTEXT("Default") : ClassCategory;
+			
+			// Add context menu action for creating a new node of this class.
+			TSharedRef<FGameFlowNodeSchemaAction_NewNode> NewNodeAction(new FGameFlowNodeSchemaAction_NewNode(ChildClass, ClassCategory,
+															   FText::FromString(ChildClass->GetDescription()), ChildClass->GetToolTipText(),0));
 			ContextMenuBuilder.AddAction(NewNodeAction);
 		}
 	}
@@ -343,6 +338,23 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 			GraphNode->ReportError(EMessageSeverity::Warning);
 		}
 	}
+}
+
+bool UGameFlowGraphSchema::CanCreateGraphNodeForClass(UClass* Class) const
+{
+	const bool bIsSkellClass = Class->GetName().StartsWith("SKEL_", ESearchCase::CaseSensitive);
+	// True if this class cannot be instanced inside the graph, false otherwise.
+	const bool bNotInstanceable = Class->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_Abstract | CLASS_Hidden) || bIsSkellClass;
+	
+	// True only if this class is a child of UGameFlowNode, otherwise false.
+	const bool bIsChildClass = Class->IsChildOf(UGameFlowNode::StaticClass()) && Class != UGameFlowNode::StaticClass();
+	// True if this class is or derives from game flow dummy nodes.
+	const bool bIsDummyClass = Class->IsChildOf(UGameFlowNode_Dummy::StaticClass()) && Class == UGameFlowNode_Dummy::StaticClass();
+	const bool bIsInputOrOutputClass = Class == UGameFlowNode_Input::StaticClass() || Class == UGameFlowNode_Output::StaticClass();
+    // True if the given class does not belong to a category of classes which could not be directly instanced by the user.
+	const bool bUserInstancedAllowed = bIsChildClass && !bIsDummyClass && !bIsInputOrOutputClass;
+
+	return bUserInstancedAllowed && !bNotInstanceable;
 }
 
 void UGameFlowGraphSchema::SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const

@@ -29,7 +29,7 @@ struct GAMEFLOW_API FGameFlowPinNodePair
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 
 /* Base interface for all GameFlow nodes. */
-UCLASS(Abstract, Blueprintable, BlueprintType)
+UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default")
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
 	

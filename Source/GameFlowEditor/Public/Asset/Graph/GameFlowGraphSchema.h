@@ -120,6 +120,14 @@ public:
 	void ValidateNodeAsset(UGameFlowGraphNode* GraphNode) const;
 
 	/**
+	 * Can we create a graph node for the given game flow node class?
+	 * @param Class the class of the game flow node.
+	 * @return True if we can create graph node from the game flow node class,
+	 *         false otherwise.
+	 */
+	bool CanCreateGraphNodeForClass(UClass* Class) const;
+	
+	/**
 	 * @brief Substitute the given graph node with a replacement dummy node.
 	 * @param GraphNode The graph node you want to substitute.
 	 * @param DummyNodeClass The class of the dummy node to use as the replacement.

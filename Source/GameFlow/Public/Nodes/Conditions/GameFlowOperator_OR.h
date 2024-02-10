@@ -10,7 +10,7 @@
 /**
  * Game Flow logical OR operator
  */
-UCLASS(DisplayName="OR")
+UCLASS(DisplayName="OR", meta=(Category="Logical operators"))
 class GAMEFLOW_API UGameFlowOperator_OR : public UGameFlowNode
 {
 	GENERATED_BODY()

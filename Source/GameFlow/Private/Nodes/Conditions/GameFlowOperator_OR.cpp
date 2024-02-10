@@ -6,10 +6,10 @@
 UGameFlowOperator_OR::UGameFlowOperator_OR()
 {
 	TypeName = "Conditional";
-	
+
 	InputPins.Add("1");
 	InputPins.Add("2");
-
+    
 	OutputPins.Add("Out");
 	
 	bCanAddInputPin = true;
