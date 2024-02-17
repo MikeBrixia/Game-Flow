@@ -1,14 +1,14 @@
 ﻿#pragma once
 
 #include "GameFlowAsset.h"
-#include "Graph/GameFlowGraph.h"
 #include "Toolkits/AssetEditorToolkit.h"
+#include "Widget/SGameFlowGraph.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetSaved)
 DECLARE_MULTICAST_DELEGATE(FOnAssetCompile)
 
 /** The editor of a Game Flow asset. */
-class GameFlowAssetToolkit : public FAssetEditorToolkit
+class GameFlowAssetToolkit : public FAssetEditorToolkit, FEditorUndoClient
 {
 public:
 	GameFlowAssetToolkit();
@@ -18,13 +18,12 @@ private:
 
 	/* Asset inspected by this editor. */
 	TObjectPtr<UGameFlowAsset> Asset;
-	TObjectPtr<UGameFlowGraph> Graph;
 
 public:
 	TSharedPtr<IDetailsView> NodesDetailsView;
+	TSharedPtr<SGameFlowGraph> GraphWidget;
 	
 	FORCEINLINE UObject* GetAsset() const { return Asset; }
-	FORCEINLINE UGameFlowGraph* GetGraph() const { return Graph; }
 	FORCEINLINE virtual FText GetBaseToolkitName() const override { return INVTEXT("GameFlowToolkit"); }
 	FORCEINLINE virtual FName GetToolkitFName() const override { return "Game Flow Toolkit"; }
 	
@@ -53,9 +52,17 @@ protected:
 	FORCEINLINE virtual bool CanCompile() { return true; }
 	FORCEINLINE bool CanCompileOnSave() const { return Asset->bCompileOnSave; }
 	FORCEINLINE bool CanLiveCompile() const { return Asset->bLiveCompile; }
+
 public:
+	virtual void PostUndo(bool bSuccess) override;
+	virtual void PostRedo(bool bSuccess) override;
+	
 	FORCEINLINE FOnAssetSaved& GetAssetSavedCallback() { return OnAssetSavedCallback; };
 	FORCEINLINE FOnAssetCompile& GetAssetCompileCallback() { return OnAssetCompileCallback; }
+
+private:
+    /** Apply undo/redo registered actions to game flow editor. */
+	void ExecuteUndoRedo();
 	
 	// ---------------------- EDITOR LAYOUT -------------------------------------------------------
 

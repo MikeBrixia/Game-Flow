@@ -1,8 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/SGameFlowGraph.h"
-
-#include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
 #include "SlateOptMacros.h"
 #include "Framework/Commands/GenericCommands.h"
@@ -34,12 +32,18 @@ void SGameFlowGraph::RegisterGraphCommands()
 	FGraphEditorCommands::Register();
 	FGenericCommands::Register();
 	
-	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
 	CommandList = MakeShareable(new FUICommandList);
 	
 	CommandList->MapAction(GenericCommands.Delete,
 						   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnDeleteNodes));
+	
+	// Generic Node commands
+	CommandList->MapAction(GenericCommands.Undo,
+								   FExecuteAction::CreateSP(this, &SGameFlowGraph::UndoGraphAction));
+	
+	CommandList->MapAction(GenericCommands.Redo,
+								   FExecuteAction::CreateSP(this, &SGameFlowGraph::RedoGraphAction));
 }
 
 void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
@@ -59,10 +63,20 @@ void SGameFlowGraph::OnDeleteNodes()
 	}
 }
 
+void SGameFlowGraph::UndoGraphAction()
+{
+	GEditor->UndoTransaction();
+}
+
+void SGameFlowGraph::RedoGraphAction()
+{
+	GEditor->RedoTransaction();
+}
+
 FGraphAppearanceInfo SGameFlowGraph::GetGraphAppearanceInfo()
 {
 	FGraphAppearanceInfo GraphAppearanceInfo;
-	GraphAppearanceInfo.CornerText = NSLOCTEXT("GameFlow","GameFlowGraph","Game Flow Editor");
+	GraphAppearanceInfo.CornerText = NSLOCTEXT("GameFlow", "GameFlowGraph", "Game Flow Editor");
 	GraphAppearanceInfo.InstructionText = NSLOCTEXT("GameFlow", "GameFlowGraphInstruction", 
 													"Create a Start node to use it as an entry point for your logic!");
 	return GraphAppearanceInfo;

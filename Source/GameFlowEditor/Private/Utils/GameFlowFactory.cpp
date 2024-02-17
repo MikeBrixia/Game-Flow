@@ -26,6 +26,7 @@ UEdGraph* UGameFlowFactory::CreateGraph(UObject* Asset, const TSubclassOf<UGameF
 	// Create and initialize the Game Flow graph.
 	UGameFlowGraph* Graph = Cast<UGameFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(Asset, "Flow Graph", GraphClass, SchemaClass));
 	Graph->GameFlowAsset = CastChecked<UGameFlowAsset>(Asset);
+	Graph->SetFlags(RF_Transactional);
 	Graph->InitGraph();
 	
 	return Graph;
@@ -45,6 +46,7 @@ TGraphType* UGameFlowFactory::CreateGraph(UObject* Asset)
 	// Create and initialize the Game Flow graph.
 	UGameFlowGraph* Graph = Cast<UGameFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(Asset, "Flow Graph", GraphClass, SchemaClass));
 	Graph->GameFlowAsset = CastChecked<UGameFlowAsset>(Asset);
+	Graph->SetFlags(RF_Transactional);
 	Graph->InitGraph();
 	
 	return Graph;

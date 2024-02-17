@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Nodes/GameFlowGraphNode.h"
+#include "GameFlowGraph.h"
 #include "Nodes/GameFlowNode.h"
 
 /**
@@ -11,6 +11,7 @@
  */
 struct GAMEFLOWEDITOR_API FGameFlowNodeSchemaAction_NewNode : public FEdGraphSchemaAction
 {
+
 private:
 	
 	/* The type of the node to be created. */
@@ -32,4 +33,16 @@ public:
 	
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode) override;
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode) override;
+
+private:
+	
+    /**
+     * Connect a pin to another node default pin.
+     * @remark Default pin are the "Exec" or "Out" pins of each node. In case of missing
+     *         default pins, first node pin will be considered the default pin.
+     * @param FromPin The pin trying to connect to a default pin.
+     * @param GraphNode The target graph node for the connection.
+     * @param Graph The graph in which the operation takes place.
+     */
+	void ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode, const UGameFlowGraph* Graph) const;
 };

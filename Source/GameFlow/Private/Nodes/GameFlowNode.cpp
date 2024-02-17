@@ -133,17 +133,17 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 void UGameFlowNode::PreEditChange(FProperty* PropertyAboutToChange)
 {
 	UObject::PreEditChange(PropertyAboutToChange);
-
-	const bool bIsValidProperty = PropertyAboutToChange != nullptr;
-	const bool bIsValidArrayProperty = bIsValidProperty && PropertyAboutToChange->ArrayDim == 1;
 	
-	const UClass* OwnerClass = PropertyAboutToChange->GetOwner<UClass>();
-	const bool bIsValidOwnerClass = bIsValidProperty && (OwnerClass != nullptr
-	                                && PropertyAboutToChange->GetOwner<UClass>() != UBlueprintCore::StaticClass());
-	
-	if(bIsValidArrayProperty && bIsValidOwnerClass)
+	if(PropertyAboutToChange != nullptr)
 	{
-		Temp_OldPinArray = *PropertyAboutToChange->ContainerPtrToValuePtr<TArray<FName>>(this);
+		const UClass* OwnerClass = PropertyAboutToChange->GetOwner<UClass>();
+		const bool bIsValidOwnerClass = OwnerClass != nullptr
+									    && PropertyAboutToChange->GetOwner<UClass>() != UBlueprintCore::StaticClass();
+		const bool bIsValidArrayProperty = PropertyAboutToChange->ArrayDim == 1;
+		if(bIsValidArrayProperty && bIsValidOwnerClass)
+		{
+			Temp_OldPinArray = *PropertyAboutToChange->ContainerPtrToValuePtr<TArray<FName>>(this);
+		}
 	}
 }
 

@@ -18,6 +18,8 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SGameFlowNode::Construct(const FArguments& InArgs)
 {
+	checkf(InArgs._Node != nullptr, TEXT("Cannot create a slate widget of type SGameFlowNode from a nullptr node obj"));
+	
 	SGraphNode::Construct();
 	
 	// Initialize node widget arguments.

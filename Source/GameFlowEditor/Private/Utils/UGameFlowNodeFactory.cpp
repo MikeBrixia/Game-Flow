@@ -13,13 +13,9 @@ UGameFlowGraphNode* UGameFlowNodeFactory::CreateGraphNode(UGameFlowNode* NodeAss
 {
 	// Make sure both node class and parent graph are valid.
 	checkf(Graph, TEXT("Invalid parent graph! Nodes must be created inside a valid graph(not nullptr)."));
-
+	
 	// Create the node
 	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(Graph, NAME_None, RF_Transactional);
-	if (Graph->HasAnyFlags(RF_Transient))
-	{
-		GraphNode->SetFlags(RF_Transient);
-	}
 	
 	// Initialize the node.
 	GraphNode->NodeAsset = NodeAsset;

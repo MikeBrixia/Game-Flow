@@ -5,6 +5,8 @@
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Misc/ITransactionObjectAnnotation.h"
+#include "Misc/TransactionObjectEvent.h"
 #include "Utils/UGameFlowNodeFactory.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
@@ -18,8 +20,6 @@ void UGameFlowGraphNode::InitNode()
 	checkf(NodeAsset != nullptr, TEXT("Node asset is invalid(nullptr)"));
 
 	// Initialize node.
-	CreateNewGuid();
-	PostPlacedNewNode();
 	CreateNodePins(false);
 	
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
@@ -124,10 +124,11 @@ TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 {
 	// Use UCLASS display name attribute value as node title.
 	const FText TitleText = GetNodeTitle(ENodeTitleType::EditableTitle);
-
+	
 	TSharedRef<SGameFlowNode> NodeWidget = SNew(SGameFlowNode)
 		                                   .Node(this)
 		                                   .TitleText(TitleText);
+	
     // Validate node asset.
 	CastChecked<UGameFlowGraphSchema>(GetSchema())->ValidateNodeAsset(this);
 	

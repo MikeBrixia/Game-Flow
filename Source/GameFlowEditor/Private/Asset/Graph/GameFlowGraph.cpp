@@ -5,6 +5,8 @@
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+#include "Misc/ITransactionObjectAnnotation.h"
+#include "Misc/TransactionObjectEvent.h"
 #include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/UGameFlowNodeFactory.h"
 
@@ -186,7 +188,7 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 		default: break;
 	}
 }
-	
+
 void UGameFlowGraph::OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedNodes)
 {
 	// Array of selected nodes assets.

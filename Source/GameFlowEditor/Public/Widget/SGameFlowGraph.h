@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/GameFlowAssetToolkit.h"
 #include "Widgets/SCompoundWidget.h"
 
@@ -25,13 +26,15 @@ public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<GameFlowAssetToolkit> AssetEditor);
 
 protected:
+	virtual void RegisterGraphCommands();
     virtual void OnSelectionChange(const TSet<UObject*>& Selection);
     virtual void OnDeleteNodes();
-	virtual void RegisterGraphCommands();
+	void UndoGraphAction();
+	void RedoGraphAction();
 	
 	/* Get the appearance of the Game Flow graph. */
 	virtual FGraphAppearanceInfo GetGraphAppearanceInfo();
-	
+
 private:
 	TSharedPtr<FUICommandList> CommandList;
 };

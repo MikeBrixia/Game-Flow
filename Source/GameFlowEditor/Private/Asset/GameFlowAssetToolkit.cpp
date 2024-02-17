@@ -12,6 +12,8 @@
 GameFlowAssetToolkit::GameFlowAssetToolkit()
 {
 	this->CommandList = MakeShared<FUICommandList>();
+
+	GEditor->RegisterForUndo(this);
 	
 	// Register editor commands.
 	FGraphEditorCommands::Register();
@@ -28,7 +30,9 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	EditorSubsystem->RegisterActiveEditor(this);
 	
 	// Create the graph.
-	Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
+	UGameFlowGraph* Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
+	GraphWidget = SNew(SGameFlowGraph, SharedThis(this))
+			       .GraphToEdit(Graph);
 	
 	// Initialize all different components of the Game Flow editor.
 	EditorLayout = CreateEditorLayout();
@@ -103,12 +107,8 @@ TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetNodeDetails()
 	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
 	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 	const TSharedRef<IDetailsView> DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
-
-	TArray<UEdGraphNode*> SelectedNodes = Graph->Nodes.FilterByPredicate([](const UEdGraphNode* Node)
-	{
-		return Node->IsSelected();
-	});
-    
+	
+	TArray<UObject*> SelectedNodes = GraphWidget->GetSelectedNodes().Array();
 	if(SelectedNodes.Num() == 1)
 	{
 		// Set the object to be inspected by the details tab.
@@ -224,6 +224,25 @@ void GameFlowAssetToolkit::LiveCompileToogle()
 	Asset->bLiveCompile = !CurrentValue;
 }
 
+void GameFlowAssetToolkit::PostUndo(bool bSuccess)
+{
+	FEditorUndoClient::PostUndo(bSuccess);
+	ExecuteUndoRedo();
+}
+
+void GameFlowAssetToolkit::PostRedo(bool bSuccess)
+{
+	FEditorUndoClient::PostRedo(bSuccess);
+	ExecuteUndoRedo();
+}
+
+void GameFlowAssetToolkit::ExecuteUndoRedo()
+{
+	GraphWidget->ClearSelectionSet();
+	GraphWidget->NotifyGraphChanged();
+	FSlateApplication::Get().DismissAllMenus();
+}
+
 void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
 	// Initialize editor workspace.
@@ -251,8 +270,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
 		[
-			SNew(SGameFlowGraph, SharedThis(this))
-			.GraphToEdit(Graph)
+			GraphWidget->AsShared()
 		];
 		return Tab;
 	}));

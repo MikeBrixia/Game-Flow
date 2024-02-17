@@ -21,6 +21,7 @@ UCLASS(NotBlueprintable, NotBlueprintType)
 class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 {
 	friend class UGameFlowNodeFactory;
+	friend struct FGameFlowNodeSchemaAction_NewNode;
 	
 	GENERATED_BODY()
 
@@ -41,9 +42,10 @@ private:
 
 	/* True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
+	
 public:
 	UGameFlowGraphNode();
-
+	
 	/**
 	 * @brief Read Game Flow node asset and create graph node pins.
 	 */
