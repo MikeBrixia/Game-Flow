@@ -34,15 +34,21 @@ public:
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode) override;
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode) override;
 
-private:
-	
-    /**
-     * Connect a pin to another node default pin.
-     * @remark Default pin are the "Exec" or "Out" pins of each node. In case of missing
-     *         default pins, first node pin will be considered the default pin.
-     * @param FromPin The pin trying to connect to a default pin.
-     * @param GraphNode The target graph node for the connection.
-     * @param Graph The graph in which the operation takes place.
-     */
-	void ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode, const UGameFlowGraph* Graph) const;
+	/**
+	 * Create a brand new game flow node.
+	 * @param NodeClass the class of encapsulated node asset, used to create it.
+	 * @param GameFlowGraph the graph in which the operation takes place.
+	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
+	 * @return A brand new and ready-to-use game flow graph node.
+	 */
+	static UGameFlowGraphNode* CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph, UEdGraphPin* FromPin);
+
+	/**
+	 * Create a brand new game flow node.
+	 * @param NodeAsset The node asset from which the graph node will be created.
+	 * @param GameFlowGraph the graph in which the operation takes place.
+	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
+	 * @return A brand new and ready-to-use game flow graph node.
+	 */
+	static UGameFlowGraphNode* CreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, UEdGraphPin* FromPin);
 };

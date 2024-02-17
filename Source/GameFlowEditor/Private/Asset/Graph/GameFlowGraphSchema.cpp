@@ -85,6 +85,25 @@ bool UGameFlowGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) c
 	return bConnectionCreated;
 }
 
+void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode,
+	const UGameFlowGraph* Graph) const
+{
+	UEdGraphPin* NewNodeTargetPin = nullptr;
+	// Depending on the direction, find a different target pin.
+	if (FromPin->Direction == EGPD_Input)
+	{
+		NewNodeTargetPin = GraphNode->GetPinWithDirectionAt(0, EGPD_Output);
+	}
+	else if (FromPin->Direction == EGPD_Output)
+	{
+		NewNodeTargetPin = GraphNode->GetPinWithDirectionAt(0, EGPD_Input);
+	}
+	
+	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(Graph->GetSchema());
+	// Create a connection with the new node first pin.
+	GameFlowGraphSchema->TryCreateConnection(FromPin, NewNodeTargetPin);
+}
+
 void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
 {
 	Super::BreakSinglePinLink(SourcePin, TargetPin);
@@ -132,11 +151,11 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 
 	// Create standard input node.
 	UGameFlowNode_Input* StandardInputNode = CreateDefaultInputs(*GameFlowGraph);
-	UGameFlowNodeFactory::CreateGraphNode(StandardInputNode, GameFlowGraph);
+	FGameFlowNodeSchemaAction_NewNode::CreateNode(StandardInputNode, GameFlowGraph, nullptr);
 	
 	// Create standard output node.
 	UGameFlowNode_Output* StandardOutputNode = CreateDefaultOutputs(*GameFlowGraph);
-	UGameFlowGraphNode* OutputGraphNode = UGameFlowNodeFactory::CreateGraphNode(StandardOutputNode, GameFlowGraph);
+	UGameFlowGraphNode* OutputGraphNode = FGameFlowNodeSchemaAction_NewNode::CreateNode(StandardOutputNode, GameFlowGraph, nullptr);
 	OutputGraphNode->NodePosX += 300.f;
 
 	// Mark the asset as already been opened at least one time.
@@ -163,7 +182,7 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 		return PinObj->Direction == EGPD_Output;
 	}).Num();
 	
-	UGameFlowGraphNode* SubstituteNode = UGameFlowNodeFactory::CreateGraphNode(SubstituteNodeAsset, GameFlowGraph);
+	UGameFlowGraphNode* SubstituteNode = FGameFlowNodeSchemaAction_NewNode::CreateNode(SubstituteNodeAsset, GameFlowGraph, nullptr);
 	// Place the new node at the same position of the old one.
 	SubstituteNode->NodePosX = Node->NodePosX;
 	SubstituteNode->NodePosY = Node->NodePosY;
@@ -360,7 +379,8 @@ bool UGameFlowGraphSchema::CanCreateGraphNodeForClass(UClass* Class) const
 void UGameFlowGraphSchema::SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const
 {
 	UGameFlowAsset* GameFlowAsset = GraphNode->GetNodeAsset()->GetTypedOuter<UGameFlowAsset>();
-	UGameFlowNode_Dummy* DummyNode = CastChecked<UGameFlowNode_Dummy>(UGameFlowNodeFactory::CreateGameFlowNode(DummyNodeClass, GameFlowAsset));
+	
+	UGameFlowNode_Dummy* DummyNode = NewObject<UGameFlowNode_Dummy>(GameFlowAsset, DummyNodeClass, NAME_None, RF_Transactional);
 	// The node asset to substitute.
 	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 	DummyNode->InputPins = NodeAsset->InputPins;

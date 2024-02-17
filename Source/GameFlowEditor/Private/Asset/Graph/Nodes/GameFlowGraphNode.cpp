@@ -81,7 +81,7 @@ void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	
 	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
-	UGameFlowNode* SubstituteNodeAsset = UGameFlowNodeFactory::CreateGameFlowNode(ClassToReplace, GameFlowAsset);
+	UGameFlowNode* SubstituteNodeAsset = NewObject<UGameFlowNode>(GameFlowAsset, ClassToReplace, NAME_None, RF_Transactional);
 	
 	FObjectInstancingGraph ObjectInstancingGraph;
 	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);

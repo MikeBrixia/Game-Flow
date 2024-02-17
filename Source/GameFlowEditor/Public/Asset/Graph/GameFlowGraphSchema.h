@@ -37,6 +37,16 @@ public:
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
 
 	/**
+	* Connect a pin to another node default pin.
+	* @remark Default pin are the "Exec" or "Out" pins of each node. In case of missing
+	*         default pins, first node pin will be considered the default pin.
+	* @param FromPin The pin trying to connect to a default pin.
+	* @param GraphNode The target graph node for the connection.
+	* @param Graph The graph in which the operation takes place.
+	*/
+	void ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode, const UGameFlowGraph* Graph) const;
+	
+	/**
 	* @brief Break a single connection between two pins. Game Flow schema
 	*        override supports live compilation features for game flow assets.
 	 */

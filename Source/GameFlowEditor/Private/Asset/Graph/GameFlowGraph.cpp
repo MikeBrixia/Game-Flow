@@ -4,6 +4,7 @@
 #include "GameFlowEditor.h"
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Asset/Graph/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/UGameFlowNodeFactory.h"
@@ -229,9 +230,9 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	// e.g. their input pins have no links.
 	for(UGameFlowNode* NodeAsset : GameFlowAsset->Nodes)
 	{
-		UGameFlowNodeFactory::CreateGraphNode(NodeAsset, this);
+		FGameFlowNodeSchemaAction_NewNode::CreateNode(NodeAsset, this, nullptr);
 	}
-	
+	 
 	// Recreate all graph node connections.
 	GameFlowSchema->RecreateGraphNodesConnections(*this);
 }

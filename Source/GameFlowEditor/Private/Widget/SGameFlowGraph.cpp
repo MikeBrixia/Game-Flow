@@ -40,10 +40,10 @@ void SGameFlowGraph::RegisterGraphCommands()
 	
 	// Generic Node commands
 	CommandList->MapAction(GenericCommands.Undo,
-								   FExecuteAction::CreateSP(this, &SGameFlowGraph::UndoGraphAction));
+	                       FExecuteAction::CreateSP(this, &SGameFlowGraph::UndoGraphAction));
 	
 	CommandList->MapAction(GenericCommands.Redo,
-								   FExecuteAction::CreateSP(this, &SGameFlowGraph::RedoGraphAction));
+	                       FExecuteAction::CreateSP(this, &SGameFlowGraph::RedoGraphAction));
 }
 
 void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
