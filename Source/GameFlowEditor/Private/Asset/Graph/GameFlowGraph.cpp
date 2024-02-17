@@ -5,8 +5,6 @@
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-#include "Misc/ITransactionObjectAnnotation.h"
-#include "Misc/TransactionObjectEvent.h"
 #include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/UGameFlowNodeFactory.h"
 
@@ -164,7 +162,7 @@ void UGameFlowGraph::OnLiveCompile(FName Name)
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
 	Super::NotifyGraphChanged(Action);
-	const TArray<UGameFlowGraphNode*> ModifiedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Action.Nodes);
+	const TSet<UGameFlowGraphNode*> ModifiedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(Action.Nodes);
 	
 	// We want to use a set of UGameFlowGraphNode type.
 	switch(Action.Action)
@@ -189,11 +187,11 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	}
 }
 
-void UGameFlowGraph::OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedNodes)
+void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes)
 {
 	// Array of selected nodes assets.
 	TArray<UObject*> SelectedAssets;
-                
+	
 	// Build selected nodes assets array.
 	for(const UGameFlowGraphNode* SelectedNode : SelectedNodes)
 	{
@@ -205,7 +203,7 @@ void UGameFlowGraph::OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedN
 	GameFlowEditor->NodesDetailsView->SetObjects(SelectedAssets);
 }
 
-void UGameFlowGraph::OnNodesRemoved(const TArray<UGameFlowGraphNode*>& RemovedNodes)
+void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes)
 {
 	for(const UGameFlowGraphNode* GraphNode : RemovedNodes)
 	{
@@ -214,7 +212,7 @@ void UGameFlowGraph::OnNodesRemoved(const TArray<UGameFlowGraphNode*>& RemovedNo
 	}
 }
 
-void UGameFlowGraph::OnNodesAdded(const TArray<UGameFlowGraphNode*>& AddedNodes)
+void UGameFlowGraph::OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes)
 {
 	for(const UGameFlowGraphNode* GraphNode : AddedNodes)
 	{

@@ -67,10 +67,9 @@ public:
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 
 protected:
-
-	virtual void OnNodesAdded(const TArray<UGameFlowGraphNode*>& AddedNodes);
-	virtual void OnNodesRemoved(const TArray<UGameFlowGraphNode*>& RemovedNodes);
-	virtual void OnNodesSelected(const TArray<UGameFlowGraphNode*> SelectedNodes);
+	virtual void OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes);
+	virtual void OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes);
+	virtual void OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes);
 };
 
 

@@ -35,7 +35,7 @@ UEdGraphNode* FGameFlowNodeSchemaAction_NewNode::PerformAction(UEdGraph* ParentG
 	GraphNode->InitNode();
 
 	// Add the graph node to the outer graph.
-	GameFlowGraph->AddNode(GraphNode, false, bSelectNewNode);
+	GameFlowGraph->AddNode(GraphNode, false, false);
 	
 	// Once we've completed creation and initialization process,
 	// notify graph node that it has successfully been placed

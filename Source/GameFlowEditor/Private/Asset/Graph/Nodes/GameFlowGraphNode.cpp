@@ -5,8 +5,6 @@
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Misc/ITransactionObjectAnnotation.h"
-#include "Misc/TransactionObjectEvent.h"
 #include "Utils/UGameFlowNodeFactory.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
