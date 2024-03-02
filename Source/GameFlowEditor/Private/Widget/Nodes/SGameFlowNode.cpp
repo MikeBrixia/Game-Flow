@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SGameFlowNode.h"
-
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorSettings.h"
@@ -32,12 +31,6 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Each time the encapsulated node gets validated, setup error info.
 	GameFlowGraphNode->OnValidationResult.AddSP(this, &SGameFlowNode::UpdateGraphNode);
 	
-	UGameFlowNode_Dummy* DummyNode = Cast<UGameFlowNode_Dummy>(GameFlowGraphNode->GetNodeAsset());
-	if(DummyNode != nullptr)
-	{
-		DummyNode->OnReplaceDummyNodeRequest.AddSP(this, &SGameFlowNode::OnRequestDummyReplacement);
-	}
-	
 	// Use UCLASS display name attribute value as node title.
 	if(InlineEditableText != nullptr)
 	{
@@ -47,32 +40,6 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Construct node by reading GraphNode data.
 	UpdateGraphNode();
 	SetupErrorReporting();
-}
-
-void SGameFlowNode::OnRequestDummyReplacement(UClass* ClassToReplace)
-{
-	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
-	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
-	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
-	// Has the user picked a replacement class and clicked the "Replace" button?
-	if(PressedButtonIndex == 0 && PickedClass != nullptr)
-	{
-		if(ReplaceNodeDialog->ShouldReplaceAll())
-		{
-			const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetNodeObj()->GetGraph());
-			TArray<UGameFlowGraphNode*> Nodes = GameFlowGraph->GetNodesOfClass(ClassToReplace);
-			for(UGameFlowGraphNode* NodeToReplace : Nodes)
-			{
-				UE_LOG(LogGameFlow, Display, TEXT("Replace all"))
-				NodeToReplace->OnDummyReplacement(PickedClass);
-			}
-		}
-		else
-		{
-			UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
-			GameFlowGraphNode->OnDummyReplacement(PickedClass);
-		}
-	}
 }
 
 void SGameFlowNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)

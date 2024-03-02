@@ -143,7 +143,7 @@ public:
 	 * @param DummyNodeClass The class of the dummy node to use as the replacement.
 	 */
 	void SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const;
-
+    
 	/**
 	 * @brief Substitute a graph node with a substitute node. Substitute node will encapsulate
 	 *        target node asset(UGameFlowNode) passed with InstanceGraph.

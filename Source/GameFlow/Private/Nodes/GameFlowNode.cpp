@@ -122,7 +122,6 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 			// Notify listeners this asset has been redirected.
 		case EPropertyChangeType::Redirected:
 			{
-				UE_LOG(LogGameFlow, Display, TEXT("Asset redirected"))
 				OnAssetRedirected.Broadcast();
 				break;
 			}

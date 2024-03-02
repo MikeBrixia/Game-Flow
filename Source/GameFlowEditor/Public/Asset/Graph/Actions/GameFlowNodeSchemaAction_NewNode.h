@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFlowGraph.h"
+#include "../GameFlowGraph.h"
 #include "Nodes/GameFlowNode.h"
 
 /**
- * Graph schema action responsible for creating new nodes.
+ * Graph schema action responsible for creating and destroying new game flow nodes.
  */
-struct GAMEFLOWEDITOR_API FGameFlowNodeSchemaAction_NewNode : public FEdGraphSchemaAction
+struct GAMEFLOWEDITOR_API FGameFlowNodeSchemaAction_CreateOrDestroyNode : public FEdGraphSchemaAction
 {
 
 private:
@@ -19,13 +19,17 @@ private:
 	
 public:
 
-	FGameFlowNodeSchemaAction_NewNode(const FGameFlowNodeSchemaAction_NewNode& Other)
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode()
+	{
+	}
+	
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode(const FGameFlowNodeSchemaAction_CreateOrDestroyNode& Other)
 		: FEdGraphSchemaAction(Other.GetCategory(), Other.GetMenuDescription(), Other.GetTooltipDescription(), Other.GetGrouping()),
 		  NodeClass(Other.NodeClass)
 	{
 	}
 	
-	FGameFlowNodeSchemaAction_NewNode(TSubclassOf<UGameFlowNode> NodeClass, const FText& InNodeCategory, const FText& InMenuDesc, const FText& InToolTip, int32 InGrouping)
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode(TSubclassOf<UGameFlowNode> NodeClass, const FText& InNodeCategory, const FText& InMenuDesc, const FText& InToolTip, int32 InGrouping)
 		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping)
 	    , NodeClass(NodeClass)
 	{
@@ -34,6 +38,13 @@ public:
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode) override;
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode) override;
 
+	/**
+	 * Destroy a game flow node and record a transaction for it.
+	 * @param GraphNode The node to destroy
+	 * @return true if node was destroyed and transaction recorded successfully, false otherwise.
+	 */
+    virtual void PerformAction_DestroyNode(UGameFlowGraphNode* GraphNode);
+	
 	/**
 	 * Create a brand new game flow node.
 	 * @param NodeClass the class of encapsulated node asset, used to create it.

@@ -40,8 +40,6 @@ public:
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
-
-	void OnRequestDummyReplacement(UClass* ClassToReplace);
 	
 	// -------------------- Widget pins --------------------------------
 	

@@ -56,16 +56,19 @@ public:
 	
 	void OnGraphCompile();
 	void OnSaveGraph();
+	void OnDummyReplacementRequest();
+    
 #if WITH_HOT_RELOAD
 	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
 #endif
 #if WITH_LIVE_CODING
-	void OnLiveCompile(const TArray<UClass*>& ReloadedClasses);
 	void OnLiveCompile(FName Name);
 #endif
 	void RebuildGraphFromAsset();
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
-
+	
+	void ReplaceDummyNode(UGameFlowGraphNode* DummyNode, UClass* ReplacementClass) const;
+	
 protected:
 	virtual void OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes);
 	virtual void OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes);

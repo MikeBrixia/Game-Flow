@@ -4,10 +4,10 @@
 #include "GameFlowEditor.h"
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
-#include "Asset/Graph/GameFlowNodeSchemaAction_NewNode.h"
+#include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Utils/GameFlowEditorSubsystem.h"
-#include "Utils/UGameFlowNodeFactory.h"
+#include "Widget/SGameFlowReplaceNodeDialog.h"
 
 class UGameFlowNode;
 
@@ -144,11 +144,6 @@ void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 
 #if WITH_LIVE_CODING
 
-void UGameFlowGraph::OnLiveCompile(const TArray<UClass*>& ReloadedClasses)
-{
-	UE_LOG(LogGameFlow, Display, TEXT("Live Compile"))
-}
-
 void UGameFlowGraph::OnLiveCompile(FName Name)
 {
 	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
@@ -188,6 +183,47 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	}
 }
 
+void UGameFlowGraph::OnDummyReplacementRequest()
+{
+	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
+	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
+	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
+	
+	// Has the user picked a valid replacement class and clicked the "Replace" button?
+	if(PressedButtonIndex == 0 && PickedClass != nullptr
+		&& ReplaceNodeDialog->ShouldReplaceAll())
+	{
+		TArray<UGameFlowGraphNode*> GraphNodes = GetNodesOfClass(PickedClass);
+		for(UGameFlowGraphNode* NodeToReplace : GraphNodes)
+		{
+			ReplaceDummyNode(NodeToReplace, PickedClass);
+		}
+	}
+	
+}
+
+void UGameFlowGraph::ReplaceDummyNode(UGameFlowGraphNode* DummyNode, UClass* ReplacementClass) const
+{
+	UGameFlowNode* NodeAsset = DummyNode->GetNodeAsset();
+	
+	if(NodeAsset->IsA(UGameFlowNode_Dummy::StaticClass()))
+	{
+		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+		
+		UGameFlowNode* SubstituteNodeAsset = NewObject<UGameFlowNode>(GameFlowAsset, ReplacementClass, NAME_None, RF_Transactional);
+		FObjectInstancingGraph ObjectInstancingGraph;
+		ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
+		TSet<FName> InOutExtraNames;
+		UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
+			GraphSchema->CreateSubstituteNode(DummyNode, this, &ObjectInstancingGraph, InOutExtraNames)
+			);
+		DummyNode->DestroyNode();
+		
+		// Recompile substitute node; this action will update the actual game flow asset.
+		GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
+	}
+}
+
 void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes)
 {
 	// Array of selected nodes assets.
@@ -206,10 +242,11 @@ void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNod
 
 void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes)
 {
-	for(const UGameFlowGraphNode* GraphNode : RemovedNodes)
+	for(UGameFlowGraphNode* GraphNode : RemovedNodes)
 	{
 		// Remove node from the game flow asset.
-		GameFlowAsset->Nodes.Remove(GraphNode->GetNodeAsset());
+		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+		GameFlowAsset->Nodes.Remove(NodeAsset);
 	}
 }
 
@@ -230,7 +267,7 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	// e.g. their input pins have no links.
 	for(UGameFlowNode* NodeAsset : GameFlowAsset->Nodes)
 	{
-		FGameFlowNodeSchemaAction_NewNode::CreateNode(NodeAsset, this, nullptr);
+		FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this, nullptr);
 	}
 	 
 	// Recreate all graph node connections.

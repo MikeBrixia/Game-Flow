@@ -3,6 +3,7 @@
 #include "Widget/SGameFlowGraph.h"
 #include "GraphEditorActions.h"
 #include "SlateOptMacros.h"
+#include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Framework/Commands/GenericCommands.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -56,10 +57,11 @@ void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 
 void SGameFlowGraph::OnDeleteNodes()
 {
-	const TSet<UEdGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UEdGraphNode*>&>(GetSelectedNodes());
-	for(UEdGraphNode* SelectedNode : SelectedNodes)
+	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
+	for(UGameFlowGraphNode* SelectedNode : SelectedNodes)
 	{
-		SelectedNode->DestroyNode();
+		FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
+		DestroyNodeAction.PerformAction_DestroyNode(SelectedNode);
 	}
 }
 

@@ -1,9 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Asset/Graph/GameFlowNodeSchemaAction_NewNode.h"
+#include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 
-UEdGraphNode* FGameFlowNodeSchemaAction_NewNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin,
+UEdGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin,
                                                                const FVector2D Location, bool bSelectNewNode)
 {
 	const FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "CreateNode", "Create Node"));
@@ -28,14 +28,25 @@ UEdGraphNode* FGameFlowNodeSchemaAction_NewNode::PerformAction(UEdGraph* ParentG
 	return GraphNode;
 }
 
-UEdGraphNode* FGameFlowNodeSchemaAction_NewNode::PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins,
+UEdGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins,
 	const FVector2D Location, bool bSelectNewNode)
 {
 	return FEdGraphSchemaAction::PerformAction(ParentGraph, FromPins, Location, bSelectNewNode);
 }
 
-UGameFlowGraphNode* FGameFlowNodeSchemaAction_NewNode::CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph,
-	UEdGraphPin* FromPin)
+void FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction_DestroyNode(UGameFlowGraphNode* GraphNode)
+{
+	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "DestroyNode", "Destroy Node"));
+	UGameFlowGraph* ParentGraph = CastChecked<UGameFlowGraph>(GraphNode->GetGraph());
+	
+    // Record changes on game flow graph and asset.
+	ParentGraph->Modify();
+	ParentGraph->GameFlowAsset->Modify();
+	GraphNode->DestroyNode();
+}
+
+UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph,
+                                                                  UEdGraphPin* FromPin)
 {
 	UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
 	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
@@ -48,7 +59,7 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_NewNode::CreateNode(UClass* NodeCl
 		// Connect the dragged pin to the new graph node default pin.
 		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode, GameFlowGraph);
 	}
-
+	
 	// Initialize UedGraphNode properties.
 	GraphNode->CreateNewGuid();
 	
@@ -67,7 +78,7 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_NewNode::CreateNode(UClass* NodeCl
 	return GraphNode;
 }
 
-UGameFlowGraphNode* FGameFlowNodeSchemaAction_NewNode::CreateNode(UGameFlowNode* NodeAsset,
+UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode* NodeAsset,
 	UGameFlowGraph* GameFlowGraph, UEdGraphPin* FromPin)
 {
 	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());

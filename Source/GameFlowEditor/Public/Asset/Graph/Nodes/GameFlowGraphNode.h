@@ -21,7 +21,7 @@ UCLASS(NotBlueprintable, NotBlueprintType)
 class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 {
 	friend class UGameFlowNodeFactory;
-	friend struct FGameFlowNodeSchemaAction_NewNode;
+	friend struct FGameFlowNodeSchemaAction_CreateOrDestroyNode;
 	
 	GENERATED_BODY()
 
@@ -50,7 +50,7 @@ public:
 	 * @brief Read Game Flow node asset and create graph node pins.
 	 */
 	void CreateNodePins(bool bAddToAsset = true);
-
+	
 	/**
 	 * @brief Create a brand new pin for a Game Flow node.
 	 * @param PinDirection The direction of the new pin.

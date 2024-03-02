@@ -1,11 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+#include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Utils/UGameFlowNodeFactory.h"
+#include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
 UGameFlowGraphNode::UGameFlowGraphNode()
@@ -23,11 +24,17 @@ void UGameFlowGraphNode::InitNode()
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-
+	
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
 	// This is the only way to listen to blueprint compile events(at least the one i've found).
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
+
+	UGameFlowNode_Dummy* DummyNode = Cast<UGameFlowNode_Dummy>(NodeAsset);
+	if(DummyNode != nullptr)
+	{
+		DummyNode->OnReplaceDummyNodeRequest.AddUObject(this, &UGameFlowGraphNode::OnDummyReplacement);
+	}
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
@@ -55,7 +62,6 @@ void UGameFlowGraphNode::OnAssetCompiled()
 	// Reconstruct node only if it is pending compile.
 	if(bPendingCompilation)
 	{
-		//UE_LOG(LogGameFlow, Display, TEXT("Cpp compile event received for %s"), *NodeAsset->GetName())
 		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 		// Ensure compiled asset is valid.
 		GraphSchema->ValidateNodeAsset(this);
@@ -73,26 +79,21 @@ void UGameFlowGraphNode::OnAssetCompiled()
 void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 {
 	// If the compiled node is the graph encapsulated node, mark it as a pending compile graph node.
-	bPendingCompilation = Blueprint != nullptr && Blueprint == NodeAsset->GetClass()->ClassGeneratedBy;
+	bPendingCompilation = Blueprint != nullptr && Blueprint == NodeAsset->GetClass()->ClassGeneratedBy
+	                      && GetGraph()->Nodes.Contains(this);
 }
 
 void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
 {
-	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	
-	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
-	UGameFlowNode* SubstituteNodeAsset = NewObject<UGameFlowNode>(GameFlowAsset, ClassToReplace, NAME_None, RF_Transactional);
-	
-	FObjectInstancingGraph ObjectInstancingGraph;
-	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
-	TSet<FName> InOutExtraNames;
-	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
-		GraphSchema->CreateSubstituteNode(this, GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
-		);
-	
-	DestroyNode();
-	// Recompile substitute node; this action will update the actual game flow asset.
-	GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
+	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
+	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
+	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
+
+	if(PressedButtonIndex == 0 && PickedClass != nullptr)
+	{
+		UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+		GameFlowGraph->ReplaceDummyNode(this, PickedClass);
+	}
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()

@@ -3,9 +3,8 @@
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "GameFlowEditor.h"
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
-#include "Asset/Graph/GameFlowNodeSchemaAction_NewNode.h"
+#include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-#include "Utils/UGameFlowNodeFactory.h"
 
 FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID,
                                                                               float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
@@ -151,11 +150,11 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 
 	// Create standard input node.
 	UGameFlowNode_Input* StandardInputNode = CreateDefaultInputs(*GameFlowGraph);
-	FGameFlowNodeSchemaAction_NewNode::CreateNode(StandardInputNode, GameFlowGraph, nullptr);
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(StandardInputNode, GameFlowGraph, nullptr);
 	
 	// Create standard output node.
 	UGameFlowNode_Output* StandardOutputNode = CreateDefaultOutputs(*GameFlowGraph);
-	UGameFlowGraphNode* OutputGraphNode = FGameFlowNodeSchemaAction_NewNode::CreateNode(StandardOutputNode, GameFlowGraph, nullptr);
+	UGameFlowGraphNode* OutputGraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(StandardOutputNode, GameFlowGraph, nullptr);
 	OutputGraphNode->NodePosX += 300.f;
 
 	// Mark the asset as already been opened at least one time.
@@ -182,12 +181,13 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 		return PinObj->Direction == EGPD_Output;
 	}).Num();
 	
-	UGameFlowGraphNode* SubstituteNode = FGameFlowNodeSchemaAction_NewNode::CreateNode(SubstituteNodeAsset, GameFlowGraph, nullptr);
+	UGameFlowGraphNode* SubstituteNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(SubstituteNodeAsset, GameFlowGraph, nullptr);
 	// Place the new node at the same position of the old one.
 	SubstituteNode->NodePosX = Node->NodePosX;
 	SubstituteNode->NodePosY = Node->NodePosY;
 	
-	// Rewire pins inside substitute node to match source node.
+	// If substitute node has variable pins, try to match the
+	// image of the old node.
 	for(UEdGraphPin* Pin : Node->Pins)
 	{
 		const int32 SubstituteInputPinsNum = SubstituteNodeAsset->GetInputPins().Num();
@@ -198,20 +198,13 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 		// If not, try creating it.
 		if(SubstituteNodePin == nullptr)
 		{
-			bool bShouldAddPin = false;
-			// Does this node have variable pins depending on the direction?
-			if(Pin->Direction == EGPD_Input)
-			{
-				bShouldAddPin = SubstituteNodeAsset->bCanAddInputPin
-				                 && CurrentInputPinsNum > SubstituteInputPinsNum;
-			}
-			else if(Pin->Direction == EGPD_Output)
-			{
-				bShouldAddPin = SubstituteNodeAsset->bCanAddOutputPin
-				                && CurrentOutputPinsNum > SubstituteOutputPinsNum;
-			}
+			const bool bShouldAddInputPin = Pin->Direction == EGPD_Input && SubstituteNodeAsset->bCanAddInputPin
+								            && CurrentInputPinsNum > SubstituteInputPinsNum;
+			const bool bShouldAddOutputPin = Pin->Direction == EGPD_Output && SubstituteNodeAsset->bCanAddOutputPin
+								             && CurrentOutputPinsNum > SubstituteOutputPinsNum;
+			const bool bShouldAddPin = bShouldAddInputPin || bShouldAddOutputPin;
 			
-			// If we've determined that no pin should be added, skip the iteration.
+			// If no pin should be added, skip the iteration.
 			if(!bShouldAddPin) continue;
 			
 			// Create new substitute node pin.
@@ -285,10 +278,12 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 	Super::GetGraphContextActions(ContextMenuBuilder);
 	
 	// Add Custom input and output context actions.
-	TSharedRef<FGameFlowNodeSchemaAction_NewNode> CustomInputAction (new FGameFlowNodeSchemaAction_NewNode(UGameFlowNode_Input::StaticClass(),INVTEXT("I/O"), INVTEXT("Custom Input"),
+	TSharedRef<FGameFlowNodeSchemaAction_CreateOrDestroyNode> CustomInputAction (new FGameFlowNodeSchemaAction_CreateOrDestroyNode(UGameFlowNode_Input::StaticClass(),
+		                                                            INVTEXT("I/O"), INVTEXT("Custom Input"),
 		                                                            INVTEXT("Create a custom entry point."), 1));
 	ContextMenuBuilder.AddAction(CustomInputAction);
-	TSharedRef<FGameFlowNodeSchemaAction_NewNode> CustomOutputAction (new FGameFlowNodeSchemaAction_NewNode(UGameFlowNode_Output::StaticClass(),INVTEXT("I/O"), INVTEXT("Custom Output"),
+	TSharedRef<FGameFlowNodeSchemaAction_CreateOrDestroyNode> CustomOutputAction (new FGameFlowNodeSchemaAction_CreateOrDestroyNode(UGameFlowNode_Output::StaticClass(),
+		                                                            INVTEXT("I/O"), INVTEXT("Custom Output"),
 																	INVTEXT("Create a custom exit point."), 1));
 	ContextMenuBuilder.AddAction(CustomOutputAction);
 	
@@ -304,7 +299,7 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 			ClassCategory = ClassCategory.IsEmptyOrWhitespace()? INVTEXT("Default") : ClassCategory;
 			
 			// Add context menu action for creating a new node of this class.
-			TSharedRef<FGameFlowNodeSchemaAction_NewNode> NewNodeAction(new FGameFlowNodeSchemaAction_NewNode(ChildClass, ClassCategory,
+			TSharedRef<FGameFlowNodeSchemaAction_CreateOrDestroyNode> NewNodeAction(new FGameFlowNodeSchemaAction_CreateOrDestroyNode(ChildClass, ClassCategory,
 															   FText::FromString(ChildClass->GetDescription()), ChildClass->GetToolTipText(),0));
 			ContextMenuBuilder.AddAction(NewNodeAction);
 		}
@@ -331,6 +326,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	GraphNode->bHasCompilerMessage = false;
 	NodeAsset->ValidateAsset();
 	AlignNodeAssetToGraphNode(GraphNode);
+	
 	// When node is a dummy just throw an error message
 	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
 	{
@@ -394,13 +390,12 @@ void UGameFlowGraphSchema::SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode
 	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
 		CreateSubstituteNode(GraphNode, GraphNode->GetGraph(), &ObjectInstancingGraph, InOutExtraNames)
 		);
-	SubstituteNode->ErrorType = EMessageSeverity::Error;
-	
+
 	GraphNode->DestroyNode();
-	// Recompile substitute node; this action will update the actual game flow asset.
 	CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
-    
-	UE_LOG(LogGameFlow, Display, TEXT("Node substituted with dummy"))
+
+	// Signal graph node error to the user.
+	SubstituteNode->ErrorType = EMessageSeverity::Error;
 }
 
 bool UGameFlowGraphSchema::CompileGraph(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const
@@ -468,7 +463,7 @@ bool UGameFlowGraphSchema::CompileGraphBranch(UGameFlowGraphNode* RootNode) cons
 				const UEdGraphPin* DestinationPin = Pin->LinkedTo[0];
 				
 				// Connect the source and destination node.
-				SourceNodeAsset->AddOutput(Pin->PinName, FGameFlowPinNodePair(DestinationPin->PinName, DestinationNodeAsset));
+				SourceNodeAsset->AddOutputPort(Pin->PinName, FGameFlowPinNodePair(DestinationPin->PinName, DestinationNodeAsset));
 				// Put the destination node inside the queue, it's the next we're going to compile.
 				ToCompile.Enqueue(DestinationNode);
 			}
@@ -492,15 +487,17 @@ bool UGameFlowGraphSchema::CompileGraphNode(UGameFlowGraphNode* GraphNode, const
 		UGameFlowNode* ConnectedNode = CastChecked<UGameFlowNode>(Pin->DefaultObject);
 		const UEdGraphPin* ConnectedPin = Pin->LinkedTo[0];
 		const EEdGraphPinDirection PinDirection = Pin->Direction;
+		const FGameFlowPinNodePair ConnectionPair(ConnectedPin->PinName, ConnectedNode);
+		
 		// Compile output pin...
 		if(PinDirection == EGPD_Output && Directions.Contains(EGPD_Output))
 		{
-			NodeAsset->AddOutput(Pin->PinName, FGameFlowPinNodePair(ConnectedPin->PinName, ConnectedNode));
+			NodeAsset->AddOutputPort(Pin->PinName, ConnectionPair);
 		}
 		// Compile input pin...
 		else if(PinDirection == EGPD_Input && Directions.Contains(EGPD_Input))
 		{
-			NodeAsset->AddInput(Pin->PinName, FGameFlowPinNodePair(ConnectedPin->PinName, ConnectedNode));
+			NodeAsset->AddInputPort(Pin->PinName, ConnectionPair);
 		}
 	}
 	
