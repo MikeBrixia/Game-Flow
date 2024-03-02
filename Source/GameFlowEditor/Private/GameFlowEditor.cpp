@@ -1,8 +1,11 @@
 ﻿
 #include "GameFlowEditor.h"
 #include "EdGraphUtilities.h"
+#include "GraphEditorActions.h"
 #include "ISettingsModule.h"
+#include "Asset/GameFlowEditorCommands.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
+#include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Styling/SlateStyleRegistry.h"
@@ -17,6 +20,11 @@ EAssetTypeCategories::Type FGameFlowEditorModule::GameFlowCategory = EAssetTypeC
 // This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 void FGameFlowEditorModule::StartupModule()
 {
+	// Register game flow editor commands.
+	FGraphEditorCommands::Register();
+	FGameFlowEditorCommands::Register();
+	FGameFlowGraphNodeCommands::Register();
+	
 	// Initialize asset tools modules
 	const FAssetToolsModule& AssetToolModule = FAssetToolsModule::GetModule();
 	

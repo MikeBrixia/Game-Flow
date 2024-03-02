@@ -321,38 +321,28 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 	const UClass* NodeClass = NodeAsset->GetClass();
 	const FString ClassName = NodeClass->GetName();
-	UClass* DummyNodeClass = UGameFlowNode_Dummy::StaticClass();
 	
 	GraphNode->bHasCompilerMessage = false;
 	NodeAsset->ValidateAsset();
 	AlignNodeAssetToGraphNode(GraphNode);
 	
-	// When node is a dummy just throw an error message
-	if(NodeClass->IsChildOf(DummyNodeClass) || NodeClass == DummyNodeClass)
+	// When a node is of a class which has been marked as 'Abstract', proceed
+	// by replacing all associated instances of this class from the Game Flow asset.
+	if (NodeClass->HasAnyClassFlags(CLASS_Abstract))
 	{
+		UE_LOG(LogGameFlow, Error, TEXT( "%s class is abstract! all instances of this class will be invalidated and should be replaced."), *ClassName);
 		GraphNode->ReportError(EMessageSeverity::Error);
 	}
-	else // Otherwise go through all the validation process.
+
+	// When a node has been marked as deprecated, log a warning to the console
+	// and inform users they should replace or remove that node in the near future.
+	if (NodeClass->HasAnyClassFlags(CLASS_Deprecated))
 	{
-		// When a node is of a class which has been marked as 'Abstract', proceed
-		// by replacing all associated instances of this class from the Game Flow asset.
-		if(NodeClass->HasAnyClassFlags(CLASS_Abstract))
-		{
-			UE_LOG(LogGameFlow, Error, TEXT("%s class is abstract! all instances of this class will be removed from Game Flow assets and replaced"
-									  "with dummy node of class: %s."), *ClassName, *DummyNodeClass->GetName());
-			SubstituteWithDummyNode(GraphNode, DummyNodeClass);
-			GraphNode->ReportError(EMessageSeverity::Error);
-		}
-	
-		// When a node has been marked as deprecated, log a warning to the console
-		// and inform users they should replace or remove that node in the near future.
-		if(NodeClass->HasAnyClassFlags(CLASS_Deprecated))
-		{
-			const FString DeprecationMessage = NodeClass->GetMetaData("DeprecationMessage");
-			UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
-			GraphNode->ReportError(EMessageSeverity::Warning);
-		}
+		const FString DeprecationMessage = NodeClass->GetMetaData("DeprecationMessage");
+		UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
+		GraphNode->ReportError(EMessageSeverity::Warning);
 	}
+	
 }
 
 bool UGameFlowGraphSchema::CanCreateGraphNodeForClass(UClass* Class) const

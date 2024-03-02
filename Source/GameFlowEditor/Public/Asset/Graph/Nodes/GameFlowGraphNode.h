@@ -40,6 +40,9 @@ private:
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
 
+	/** List of game flow graph node context menu command actions. */
+	TSharedPtr<FUICommandList> ContextMenuCommands;
+	
 	/* True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
 	
@@ -64,6 +67,8 @@ public:
 	 * @brief Create default pins for this Game Flow node.
 	 */
 	virtual void AllocateDefaultPins() override;
+
+	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	
 	/**
 	 * @brief Generate a unique pin name.
@@ -103,7 +108,7 @@ public:
 	{
 		return Info.TitleBarColor;
 	}
-
+	
 	FORCEINLINE static FEdGraphPinType GetGraphPinType()
 	{
 		FEdGraphPinType OutputPinInfo = {};
@@ -111,7 +116,12 @@ public:
 		return OutputPinInfo;
 	}
 
+protected:
+    void OnReplacementRequest();
+	
 private:
+	
+	void ConfigureContextMenuAction();
 	void InitNode();
 	
 	FORCEINLINE bool ShouldFilterAssetPicker(const FAssetData& AssetData) const

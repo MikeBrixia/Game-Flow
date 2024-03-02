@@ -121,6 +121,16 @@ void SGameFlowNode::AddButton_CreatePin(EEdGraphPinDirection PinDirection)
 	CreateStandardPinWidget(NewPin);
 }
 
+void SGameFlowNode::UpdateErrorInfo()
+{
+	SGraphNode::UpdateErrorInfo();
+	// If node presents an error, render it transparent.
+	if(GraphNode->ErrorType == EMessageSeverity::Error)
+	{
+		this->RenderOpacity = .5f;
+	}
+}
+
 void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 {
 	PinToAdd->SetOwner(SharedThis(this));

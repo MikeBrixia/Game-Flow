@@ -70,6 +70,8 @@ private:
 
 	/* Stylesheet which determines the look of the node. */
 	const TSharedPtr<ISlateStyle> NodeStyle;
+
+	virtual void UpdateErrorInfo() override;
 	
 	/** Get the slate brush of the GameFlow node body. */
 	FORCEINLINE virtual const FSlateBrush* GetNodeBodyBrush() const override

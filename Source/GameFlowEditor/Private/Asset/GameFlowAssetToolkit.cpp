@@ -4,6 +4,7 @@
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/GameFlowFactory.h"
@@ -14,10 +15,6 @@ GameFlowAssetToolkit::GameFlowAssetToolkit()
 	this->CommandList = MakeShared<FUICommandList>();
 
 	GEditor->RegisterForUndo(this);
-	
-	// Register editor commands.
-	FGraphEditorCommands::Register();
-	FGameFlowEditorCommands::Register();
 }
 
 void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
@@ -125,8 +122,7 @@ void GameFlowAssetToolkit::ConfigureInputs()
 	
 	// Engine's Play commands.
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
-
-	// Compiling input action.
+	
 	ToolkitCommands->MapAction(GameFlowCommands.CompileAsset,
 		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::TryCompiling),
 		                       FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile));
@@ -158,9 +154,9 @@ void GameFlowAssetToolkit::CreateAssetMenu()
 		Section.Label = INVTEXT("Game Flow");
 		
 		// Add compile command to Asset tool menu, inside 'Game Flow' section.
-		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileAsset, CommandList);
-		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileOnSave, CommandList);
-		Section.AddMenuEntryWithCommandList(GameFlowCommands.LiveCompile, CommandList);
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileAsset, ToolkitCommands);
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileOnSave, ToolkitCommands);
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.LiveCompile, ToolkitCommands);
 	}
 }
 

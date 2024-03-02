@@ -1,12 +1,11 @@
 ﻿#include "Asset/GameFlowEditorCommands.h"
-
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 
 #define LOCTEXT_NAMESPACE "GameFlowGraphCommands"
 
 FGameFlowEditorCommands::FGameFlowEditorCommands() : TCommands<FGameFlowEditorCommands>("GameFlowCommands",
 	                                                                                   INVTEXT("Commands for the Game Flow editor"),
-	                                                                                   NAME_None,FGameFlowEditorStyle::TypeName)
+	                                                                                   NAME_None, FGameFlowEditorStyle::TypeName)
 {
 }
 
