@@ -188,9 +188,6 @@ void UGameFlowNode::AddInputPort(const FName PinName, const FGameFlowPinNodePair
 	if(bValidOutput && !bRecursiveOutput)
 	{
 		Inputs.Add(PinName, Input);
-		
-		UGameFlowNode* InputNode = Input.Node;
-		InputNode->Outputs.Add(Input.InputPinName, FGameFlowPinNodePair(PinName, this));
 	}
 }
 
@@ -203,15 +200,6 @@ void UGameFlowNode::RemoveInputPin(const FName PinName)
 
 void UGameFlowNode::RemoveInputPort(FName PinName)
 {
-	const FGameFlowPinNodePair Pair = Inputs.FindRef(PinName);
-	UGameFlowNode* ConnectedNode = Pair.Node;
-	
-	// Remove from other connected node.
-	if(ConnectedNode != nullptr)
-	{
-		ConnectedNode->Outputs.Remove(Pair.InputPinName);
-	}
-
 	Inputs.Remove(PinName);
 }
 
@@ -231,10 +219,6 @@ void UGameFlowNode::AddOutputPort(const FName PinName, const FGameFlowPinNodePai
 	{
 		// Connect this node output port port to the other node input port.
 		Outputs.Add(PinName, Output);
-        
-		UGameFlowNode* InputNode = Output.Node;
-		// Connect other node input port port to this node output port.
-		InputNode->Inputs.Add(Output.InputPinName, FGameFlowPinNodePair(PinName, this));
 	}
 }
 
@@ -246,18 +230,6 @@ void UGameFlowNode::RemoveOutput(const FName PinName)
 
 void UGameFlowNode::RemoveOutputPort(FName PinName)
 {
-	const FGameFlowPinNodePair Pair = Outputs.FindRef(PinName);
-	UGameFlowNode* ConnectedNode = Pair.Node;
-
-	this->Modify();
-	
-	// Remove from other connected node.
-	if(ConnectedNode != nullptr)
-	{
-	    ConnectedNode->Modify();
-		ConnectedNode->Inputs.Remove(Pair.InputPinName);
-	}
-
 	Outputs.Remove(PinName);
 }
 

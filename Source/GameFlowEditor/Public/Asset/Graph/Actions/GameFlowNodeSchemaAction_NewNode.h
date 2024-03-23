@@ -52,7 +52,7 @@ public:
 	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
 	 * @return A brand new and ready-to-use game flow graph node.
 	 */
-	static UGameFlowGraphNode* CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph, UEdGraphPin* FromPin);
+	static UGameFlowGraphNode* CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph, FName NodeName =EName::None, UEdGraphPin* FromPin = nullptr);
 
 	/**
 	 * Create a brand new game flow node.
@@ -61,5 +61,5 @@ public:
 	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
 	 * @return A brand new and ready-to-use game flow graph node.
 	 */
-	static UGameFlowGraphNode* CreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, UEdGraphPin* FromPin);
+	static UGameFlowGraphNode* CreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, FName NodeName =EName::None, UEdGraphPin* FromPin = nullptr);
 };

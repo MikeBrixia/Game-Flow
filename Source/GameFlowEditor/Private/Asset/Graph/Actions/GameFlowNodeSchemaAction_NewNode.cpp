@@ -21,7 +21,7 @@ UEdGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction(UEdGr
 	}
 
 	// Create the actual graph node.
-	UGameFlowGraphNode* GraphNode = CreateNode(NodeClass, GameFlowGraph, FromPin);
+	UGameFlowGraphNode* GraphNode = CreateNode(NodeClass, GameFlowGraph, EName::None, FromPin);
     // Position it at mouse click position.
 	GraphNode->NodePosX = Location.X;
 	GraphNode->NodePosY = Location.Y;
@@ -46,12 +46,25 @@ void FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction_DestroyNode(UG
 }
 
 UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph,
-                                                                  UEdGraphPin* FromPin)
+                                                                  FName NodeName, UEdGraphPin* FromPin)
 {
 	UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
 	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
 	
-	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass, NAME_None, RF_Transactional);
+	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass, NodeName, RF_Transactional);
+	if(NewNode->IsA(UGameFlowNode_Input::StaticClass()))
+	{
+		// Register input node inside game flow asset.
+		GameFlowAsset->CustomInputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Input>(NewNode));
+		GameFlowAsset->Nodes.Add(NewNode);
+	}
+	else if(NewNode->IsA(UGameFlowNode_Output::StaticClass()))
+	{
+		// Register output node inside game flow asset.
+		GameFlowAsset->CustomOutputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Output>(NewNode));
+		GameFlowAsset->Nodes.Add(NewNode);
+	}
+	
 	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
 	
 	if(FromPin != nullptr)
@@ -79,10 +92,10 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 }
 
 UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode* NodeAsset,
-	UGameFlowGraph* GameFlowGraph, UEdGraphPin* FromPin)
+	UGameFlowGraph* GameFlowGraph, FName NodeName, UEdGraphPin* FromPin)
 {
 	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
-	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
+	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NodeName, RF_Transactional);
 
 	if(FromPin != nullptr)
 	{

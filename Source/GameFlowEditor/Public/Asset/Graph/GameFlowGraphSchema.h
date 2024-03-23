@@ -73,30 +73,6 @@ public:
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
 	
 	/**
-	 * @brief Compile the asset edited by the given graph.
-	 * @param Graph The graph to compile
-	 * @param GameFlowAsset The asset being edited by the graph editor.
-	 * @return True if compilation was successful, false otherwise.
-	 */
-	bool CompileGraph(const UGameFlowGraph& Graph, UGameFlowAsset* GameFlowAsset) const;
-
-	/**
-	 * @brief Compile a single branch inside the Game Flow graph. A branch must be compiled from
-	 *        a root node, which is also known as a Game Flow input.
-	 * @param RootNode The root of a Game Flow branch. Root nodes are also known as input nodes. 
-	 * @return True if branch compilation was successful, false otherwise.
-	 */
-	bool CompileGraphBranch(UGameFlowGraphNode* RootNode) const;
-
-	/**
-	 * @brief Compile a single node inside the graph.
-	 * @param GraphNode The node to compile
-	 * @param Directions Specify in which directions you want to compile the pins.
-	 * @return True if node was compiled successfully, false otherwise.
-	 */
-	bool CompileGraphNode(UGameFlowGraphNode* GraphNode, const TArray<EEdGraphPinDirection> Directions) const;
-	
-	/**
 	 * @brief Recreate all logical and visual connections between all the graph nodes.
 	 * @param Graph The graph in which the operation takes place.
 	 */
@@ -138,13 +114,6 @@ public:
 	bool CanCreateGraphNodeForClass(UClass* Class) const;
 	
 	/**
-	 * @brief Substitute the given graph node with a replacement dummy node.
-	 * @param GraphNode The graph node you want to substitute.
-	 * @param DummyNodeClass The class of the dummy node to use as the replacement.
-	 */
-	void SubstituteWithDummyNode(UGameFlowGraphNode* GraphNode, const TSubclassOf<UGameFlowNode_Dummy> DummyNodeClass) const;
-    
-	/**
 	 * @brief Substitute a graph node with a substitute node. Substitute node will encapsulate
 	 *        target node asset(UGameFlowNode) passed with InstanceGraph.
 	 * @param Node The node you want to substitute.
@@ -167,7 +136,4 @@ protected:
 	 * @param GraphNode The graph node to check and align.
 	 */
 	void AlignNodeAssetToGraphNode(UGameFlowGraphNode* GraphNode) const;
-	
-	virtual UGameFlowNode_Input* CreateDefaultInputs(UGameFlowGraph& Graph) const;
-	virtual UGameFlowNode_Output* CreateDefaultOutputs(UGameFlowGraph& Graph) const;
 };

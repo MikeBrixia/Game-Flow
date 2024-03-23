@@ -41,10 +41,6 @@ void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
 {
 	if(Editor != nullptr)
 	{
-		FOnAssetCompile& CompileCallback = Editor->GetAssetCompileCallback();
-		// Compilation callbacks.
-		CompileCallback.AddUObject(this, &UGameFlowGraph::OnGraphCompile);
-
 		// Cpp compilation callbacks, both for Live Coding and Hot Reload.
 		FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
 		FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
@@ -96,27 +92,6 @@ TArray<UGameFlowGraphNode*> UGameFlowGraph::GetOrphanNodes() const
 	}
     
 	return OrphanNodes;
-}
-
-void UGameFlowGraph::OnGraphCompile()
-{
-	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	checkf(GraphSchema != nullptr, TEXT("Game Flow Graph Schema is invalid! Please assign a valid schema to this graph"));
-
-	GraphSchema->ValidateAsset(*this);
-	const bool bCompilationSuccessful = GraphSchema->CompileGraph(*this, GameFlowAsset);
-	const FString AssetName = GameFlowAsset->GetName();
-	
-	// Log the result of the graph compilation to the Unreal engine output log and
-	// also the GameFlow log console.
-	if(bCompilationSuccessful)
-	{
-		UE_LOG(LogGameFlow, Display, TEXT("Game Flow Asset: %s, was compiled successfully"), *AssetName);
-	}
-	else
-	{
-		UE_LOG(LogGameFlow, Error, TEXT("Game Flow Asset: %s, could not be compiled"), *AssetName);
-	}
 }
 
 void UGameFlowGraph::OnSaveGraph()
@@ -217,10 +192,6 @@ void UGameFlowGraph::ReplaceGraphNode(UGameFlowGraphNode* NodeToReplace, UClass*
 	);
 	FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
 	DestroyNodeAction.PerformAction_DestroyNode(NodeToReplace);
-
-	// Recompile substitute node; this action will update the actual game flow asset.
-	GraphSchema->CompileGraphNode(SubstituteNode, TArray{EGPD_Input, EGPD_Output});
-	
 }
 
 void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes)
@@ -266,7 +237,7 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	// e.g. their input pins have no links.
 	for(UGameFlowNode* NodeAsset : GameFlowAsset->Nodes)
 	{
-		FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this, nullptr);
+		FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this);
 	}
 	 
 	// Recreate all graph node connections.

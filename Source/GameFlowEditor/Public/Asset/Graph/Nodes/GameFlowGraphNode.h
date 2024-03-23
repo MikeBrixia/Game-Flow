@@ -9,7 +9,6 @@
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
-class UGameFlowNode_Dummy;
 DECLARE_MULTICAST_DELEGATE(FOnNodeAssetChanged)
 DECLARE_MULTICAST_DELEGATE(FOnValidationEnd)
 

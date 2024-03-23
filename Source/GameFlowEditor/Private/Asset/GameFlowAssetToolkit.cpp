@@ -122,20 +122,6 @@ void GameFlowAssetToolkit::ConfigureInputs()
 	
 	// Engine's Play commands.
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
-	
-	ToolkitCommands->MapAction(GameFlowCommands.CompileAsset,
-		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::TryCompiling),
-		                       FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile));
-	
-	ToolkitCommands->MapAction(GameFlowCommands.CompileOnSave,
-		                       FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CompileOnSaveToogle),
-		                        FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile),
-		                        FIsActionChecked::CreateRaw(this, &GameFlowAssetToolkit::CanCompileOnSave));
-
-	ToolkitCommands->MapAction(GameFlowCommands.LiveCompile,
-		                      FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::LiveCompileToogle),
-		                      FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanCompile),
-		                      FIsActionChecked::CreateRaw(this, &GameFlowAssetToolkit::CanLiveCompile));
 }
 
 void GameFlowAssetToolkit::CreateAssetMenu()
@@ -185,11 +171,6 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 
 void GameFlowAssetToolkit::SaveAsset_Execute()
 {
-	if(CanCompileOnSave())
-	{
-		TryCompiling();
-	}
-	
 	// If there's at least one listener, broadcast save asset event.
 	if(OnAssetSavedCallback.IsBound())
 	{
@@ -197,27 +178,6 @@ void GameFlowAssetToolkit::SaveAsset_Execute()
 	}
 
 	FAssetEditorToolkit::SaveAsset_Execute();
-}
-
-void GameFlowAssetToolkit::TryCompiling()
-{
-	// If there's at least one listener, broadcast asset compilation event.
-	if(OnAssetCompileCallback.IsBound())
-	{
-		OnAssetCompileCallback.Broadcast();
-	}
-}
-
-void GameFlowAssetToolkit::CompileOnSaveToogle()
-{
-	const bool CurrentValue = Asset->bCompileOnSave;
-	Asset->bCompileOnSave = !CurrentValue;
-}
-
-void GameFlowAssetToolkit::LiveCompileToogle()
-{
-	const bool CurrentValue = Asset->bLiveCompile;
-	Asset->bLiveCompile = !CurrentValue;
 }
 
 void GameFlowAssetToolkit::PostUndo(bool bSuccess)

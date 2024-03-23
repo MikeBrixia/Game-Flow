@@ -238,7 +238,6 @@ void UGameFlowGraphNode::ReconstructNode()
 	
 	// Recompile node and recreate it's node connections.
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
-	GraphSchema->CompileGraphNode(this, TArray { EGPD_Input, EGPD_Output});
 }
 
 void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity)
@@ -319,6 +318,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 		// Create the pin object.
 		Pin = CreatePin(PinDirection, PinType, PinName);
 		Pin->PinFriendlyName = FText::FromName(PinName);
+		Pin->DefaultObject = NodeAsset;
 	}
 	return Pin;
 }

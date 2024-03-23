@@ -35,11 +35,11 @@ public:
 #endif
 	
 	/** All the user-defined entry points of the asset. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
+	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
 	TMap<FName, UGameFlowNode_Input*> CustomInputs;
 	
 	/** All the user-defined exit points of the asset. */
-	UPROPERTY(VisibleDefaultsOnly, Category="Game Flow")
+	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
 	TMap<FName, UGameFlowNode_Output*> CustomOutputs;
 	
 private:

@@ -54,7 +54,6 @@ public:
 	 */
 	TArray<UGameFlowGraphNode*> GetOrphanNodes() const;
 	
-	void OnGraphCompile();
 	void OnSaveGraph();
 	void OnDummyReplacementRequest();
     

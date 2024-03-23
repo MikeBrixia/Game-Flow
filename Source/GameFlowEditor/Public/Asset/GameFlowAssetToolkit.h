@@ -5,7 +5,6 @@
 #include "Widget/SGameFlowGraph.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetSaved)
-DECLARE_MULTICAST_DELEGATE(FOnAssetCompile)
 
 /** The editor of a Game Flow asset. */
 class GameFlowAssetToolkit : public FAssetEditorToolkit, FEditorUndoClient
@@ -42,23 +41,14 @@ protected:
 	
 	TSharedPtr<FUICommandList> CommandList;
 	FOnAssetSaved OnAssetSavedCallback;
-	FOnAssetCompile OnAssetCompileCallback;
 	
 	virtual void SaveAsset_Execute() override;
-	virtual void TryCompiling();
-	void CompileOnSaveToogle();
-	void LiveCompileToogle();
-	
-	FORCEINLINE virtual bool CanCompile() { return true; }
-	FORCEINLINE bool CanCompileOnSave() const { return Asset->bCompileOnSave; }
-	FORCEINLINE bool CanLiveCompile() const { return Asset->bLiveCompile; }
 
 public:
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
 	
 	FORCEINLINE FOnAssetSaved& GetAssetSavedCallback() { return OnAssetSavedCallback; };
-	FORCEINLINE FOnAssetCompile& GetAssetCompileCallback() { return OnAssetCompileCallback; }
 
 private:
     /** Apply undo/redo registered actions to game flow editor. */
