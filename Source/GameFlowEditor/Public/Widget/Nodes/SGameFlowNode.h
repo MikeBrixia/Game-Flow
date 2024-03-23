@@ -19,7 +19,7 @@ class GAMEFLOWEDITOR_API SGameFlowNode : public SGraphNode
 public:
 	SLATE_BEGIN_ARGS(SGameFlowNode)
 			: _Node(nullptr),
-	          _TitleText(INVTEXT("Dummy_Node"))
+	          _TitleText(INVTEXT("Game Flow Node"))
 	{}
 	    SLATE_ARGUMENT(UGameFlowGraphNode*, Node)
 	    SLATE_ARGUMENT(FText, TitleText)
@@ -37,6 +37,7 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
+	virtual bool IsNodeEditable() const override { return true; }
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
@@ -45,7 +46,8 @@ protected:
 	
 	TSharedPtr<SButton> AddInputPinButton;
 	TSharedPtr<SButton> AddOutputPinButton;
-	
+
+	virtual TSharedRef<SWidget> CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle) override;
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
@@ -56,12 +58,15 @@ protected:
 	 * @return Event handler.
 	 */
 	virtual FReply OnAddInputPin();
-
+	
 	/**
 	 * @brief Called when an output pin gets created using the InputSideAddButton
 	 * @return Event handler.
 	 */
 	virtual FReply OnAddOutputPin();
+
+	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual void OnTitleTextChanged(const FText& CommittedText, ETextCommit::Type CommitType);
 	
 private:
 	void AddButton_CreatePin(EEdGraphPinDirection PinDirection);

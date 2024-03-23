@@ -64,7 +64,6 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 		GameFlowAsset->CustomOutputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Output>(NewNode));
 		GameFlowAsset->Nodes.Add(NewNode);
 	}
-	
 	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
 	
 	if(FromPin != nullptr)

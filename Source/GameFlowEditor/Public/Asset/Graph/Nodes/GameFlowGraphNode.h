@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFlowEditor.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Nodes/GameFlowNode.h"
 #include "Nodes/GameFlowNode_Input.h"
+#include "Nodes/GameFlowNode_Output.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
@@ -104,9 +106,20 @@ public:
 
 	FORCEINLINE FGameFlowNodeInfo& GetNodeInfo() { return Info; }
 	FORCEINLINE void SetNodeInfo(FGameFlowNodeInfo NewInfo) { this->Info = NewInfo; }
+
+	virtual void OnRenameNode(const FString& NewName) override;
 	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override
 	{
 		return Info.TitleBarColor;
+	}
+	
+	FORCEINLINE virtual bool GetCanRenameNode() const override
+	{
+		const bool bIsInputOrOutputNode = UGameFlowNode_Input::StaticClass() || UGameFlowNode_Output::StaticClass();
+		
+		const FString NodeName = NodeAsset->GetName();
+		const bool bIsDefaultInputOrOutput = NodeName.Equals("Start") || NodeName.Equals("Finish");
+		return bIsInputOrOutputNode && !bIsDefaultInputOrOutput;
 	}
 	
 	FORCEINLINE static FEdGraphPinType GetGraphPinType()

@@ -6,8 +6,6 @@
 UGameFlowAsset::UGameFlowAsset()
 {
 	this->bHasAlreadyBeenOpened = false;
-	this->bCompileOnSave = true;
-	this->bLiveCompile = true;
 }
 
 void UGameFlowAsset::Execute(FName EntryPointName)
@@ -40,3 +38,12 @@ void UGameFlowAsset::TerminateExecution()
 	ActiveNodes.Empty();
 }
 
+#if WITH_EDITOR
+
+void UGameFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	UObject::PostEditChangeProperty(PropertyChangedEvent);
+	
+}
+
+#endif

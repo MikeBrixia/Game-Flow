@@ -158,7 +158,7 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	
 	// Create standard output node.
 	UGameFlowGraphNode* OutputGraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Output::StaticClass(), GameFlowGraph, "Finish");
-	OutputGraphNode->NodePosX += 300.f;
+	OutputGraphNode->NodePosX += 600.f;
 
 	// Mark the asset as already been opened at least one time.
 	// Doing this will avoid creating duplicate default nodes.

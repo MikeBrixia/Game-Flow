@@ -200,7 +200,9 @@ TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 
 FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return NodeAsset->GetClass()->GetDisplayNameText();
+	const bool bIsInputOrOutputNode = NodeAsset->IsA(UGameFlowNode_Input::StaticClass()) ||
+		                              NodeAsset->IsA(UGameFlowNode_Output::StaticClass());
+	return bIsInputOrOutputNode? FText::FromString(NodeAsset->GetName()) : NodeAsset->GetClass()->GetDisplayNameText();
 }
 
 bool UGameFlowGraphNode::IsOrphan() const
@@ -260,6 +262,35 @@ void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 	if(OnNodeAssetChanged.IsBound())
 	{
 		OnNodeAssetChanged.Broadcast();
+	}
+}
+
+void UGameFlowGraphNode::OnRenameNode(const FString& NewName)
+{
+	Super::OnRenameNode(NewName);
+	
+	const FName NewNodeName (NewName);
+	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
+	// Rename node object only if the supplied name is unique.
+	if(IsUniqueObjectName(NewNodeName, GameFlowAsset)
+		&& GetCanRenameNode())
+	{
+		if(UGameFlowNode_Input* InputNode = Cast<UGameFlowNode_Input>(NodeAsset))
+		{
+			GameFlowAsset->CustomInputs.Remove(NodeAsset->GetFName());
+			GameFlowAsset->CustomInputs.Add(NewNodeName, InputNode);
+		}
+		else if(UGameFlowNode_Output* OutputNode = Cast<UGameFlowNode_Output>(NodeAsset))
+		{
+			GameFlowAsset->CustomOutputs.Remove(NodeAsset->GetFName());
+			GameFlowAsset->CustomOutputs.Add(NewNodeName, OutputNode);
+		}
+		NodeAsset->Rename(*NewName);
+	}
+	else
+	{
+		// Notify the user there has been an error with node renaming.
+		UE_LOG(LogGameFlow, Error, TEXT("Object name '%s' is already in use inside '%s' asset!"), *NewName, *GameFlowAsset->GetName())
 	}
 }
 

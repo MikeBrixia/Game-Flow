@@ -25,7 +25,6 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 public:
 
 #if WITH_EDITORONLY_DATA
-	/** All asset nodes mapped by their corresponding guid.*/
 	UPROPERTY(VisibleAnywhere)
 	TArray<UGameFlowNode*> Nodes;
 	
@@ -48,20 +47,6 @@ private:
 	UPROPERTY(BlueprintGetter="GetActiveNodes")
 	TArray<UGameFlowNode*> ActiveNodes;
 
-#if WITH_EDITORONLY_DATA
-	/* Nodes which are not connected to any parent. */
-    UPROPERTY(VisibleDefaultsOnly)
-    TArray<UGameFlowNode*> OrphanNodes;
-
-	/* If true, asset will first be compiled and then saved. */
-	UPROPERTY()
-	bool bCompileOnSave;
-
-	/* If true, asset will be compiled each time the users creates or breaks a connection. */
-	UPROPERTY()
-	bool bLiveCompile;
-#endif
-	
 public:
 	
 	UGameFlowAsset();
@@ -102,5 +87,8 @@ public:
 	 * the execution of this GameFlow object.
 	 */
 	void TerminateExecution();
-	
+
+#if WITH_EDITOR
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

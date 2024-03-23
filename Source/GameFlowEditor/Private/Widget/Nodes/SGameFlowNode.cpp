@@ -7,9 +7,8 @@
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
-#include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNodePin.h"
-#include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "Slate/Public/Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowReplaceNodeWindow"
 
@@ -31,15 +30,37 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	// Each time the encapsulated node gets validated, setup error info.
 	GameFlowGraphNode->OnValidationResult.AddSP(this, &SGameFlowNode::UpdateGraphNode);
 	
-	// Use UCLASS display name attribute value as node title.
-	if(InlineEditableText != nullptr)
-	{
-		InlineEditableText->SetText(TitleText);
-	}
-	
 	// Construct node by reading GraphNode data.
 	UpdateGraphNode();
 	SetupErrorReporting();
+}
+
+TSharedRef<SWidget> SGameFlowNode::CreateTitleWidget(TSharedPtr<SNodeTitle> NodeTitle)
+{
+	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+		.Style(FAppStyle::Get(), "Graph.Node.NodeTitleInlineEditableText")
+		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+		.OnVerifyTextChanged(this, &SGameFlowNode::OnVerifyNameTextChanged)
+		.OnTextCommitted(this, &SGameFlowNode::OnTitleTextChanged)
+		.IsReadOnly(this, &SGameFlowNode::IsNameReadOnly)
+		.IsSelected(this, &SGameFlowNode::IsSelectedExclusively);
+	InlineEditableText->SetColorAndOpacity(TAttribute<FLinearColor>::Create(TAttribute<FLinearColor>::FGetter::CreateSP(this, &SGraphNode::GetNodeTitleTextColor)));
+	return InlineEditableText.ToSharedRef();
+}
+
+FReply SGameFlowNode::OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent)
+{
+	if(!IsNameReadOnly() && GraphNode->GetCanRenameNode()
+		&& InlineEditableText->IsHovered())
+	{
+		InlineEditableText->EnterEditingMode();
+	}
+	return SGraphNode::OnMouseButtonDoubleClick(InMyGeometry, InMouseEvent);
+}
+
+void SGameFlowNode::OnTitleTextChanged(const FText& CommittedText, ETextCommit::Type CommitType)
+{
+	GraphNode->OnRenameNode(CommittedText.ToString());
 }
 
 void SGameFlowNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)
@@ -138,7 +159,7 @@ void SGameFlowNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	const bool bAdvancedParameter = (PinObj != nullptr) && PinObj->bAdvancedView;
 	if (bAdvancedParameter)
 	{
-		PinToAdd->SetVisibility( TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced) );
+		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
 	}
 	
 	int LastPinBoxSlotIndex;
