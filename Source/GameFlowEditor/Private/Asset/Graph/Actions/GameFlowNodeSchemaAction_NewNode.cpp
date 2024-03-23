@@ -38,11 +38,22 @@ void FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction_DestroyNode(UG
 {
 	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "DestroyNode", "Destroy Node"));
 	UGameFlowGraph* ParentGraph = CastChecked<UGameFlowGraph>(GraphNode->GetGraph());
+	UGameFlowAsset* GameFlowAsset = ParentGraph->GameFlowAsset;
 	
     // Record changes on game flow graph and asset.
 	ParentGraph->Modify();
 	ParentGraph->GameFlowAsset->Modify();
 	GraphNode->DestroyNode();
+
+	const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+	if(NodeAsset->IsA(UGameFlowNode_Input::StaticClass()))
+	{
+		GameFlowAsset->CustomInputs.Remove(NodeAsset->GetFName());
+	}
+	else if(NodeAsset->IsA(UGameFlowNode_Output::StaticClass()))
+	{
+		GameFlowAsset->CustomOutputs.Remove(NodeAsset->GetFName());
+	}
 }
 
 UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph,

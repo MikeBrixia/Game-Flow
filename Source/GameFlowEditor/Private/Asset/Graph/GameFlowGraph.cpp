@@ -187,9 +187,8 @@ void UGameFlowGraph::ReplaceGraphNode(UGameFlowGraphNode* NodeToReplace, UClass*
 	FObjectInstancingGraph ObjectInstancingGraph;
 	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
 	TSet<FName> InOutExtraNames;
-	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
-		GraphSchema->CreateSubstituteNode(NodeToReplace, this, &ObjectInstancingGraph, InOutExtraNames)
-	);
+	GraphSchema->CreateSubstituteNode(NodeToReplace, this, &ObjectInstancingGraph, InOutExtraNames);
+	
 	FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
 	DestroyNodeAction.PerformAction_DestroyNode(NodeToReplace);
 }
