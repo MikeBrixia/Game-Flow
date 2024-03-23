@@ -196,32 +196,31 @@ void UGameFlowGraph::OnDummyReplacementRequest()
 		TArray<UGameFlowGraphNode*> GraphNodes = GetNodesOfClass(PickedClass);
 		for(UGameFlowGraphNode* NodeToReplace : GraphNodes)
 		{
-			ReplaceDummyNode(NodeToReplace, PickedClass);
+			ReplaceGraphNode(NodeToReplace, PickedClass);
 		}
 	}
 	
 }
 
-void UGameFlowGraph::ReplaceDummyNode(UGameFlowGraphNode* DummyNode, UClass* ReplacementClass) const
+void UGameFlowGraph::ReplaceGraphNode(UGameFlowGraphNode* NodeToReplace, UClass* ReplacementClass) 
 {
-	UGameFlowNode* NodeAsset = DummyNode->GetNodeAsset();
+	UGameFlowNode* NodeAsset = NodeToReplace->GetNodeAsset();
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+
+	UGameFlowNode* SubstituteNodeAsset = NewObject<UGameFlowNode>(GameFlowAsset, ReplacementClass, NAME_None,
+	                                                              RF_Transactional);
+	FObjectInstancingGraph ObjectInstancingGraph;
+	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
+	TSet<FName> InOutExtraNames;
+	UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
+		GraphSchema->CreateSubstituteNode(NodeToReplace, this, &ObjectInstancingGraph, InOutExtraNames)
+	);
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
+	DestroyNodeAction.PerformAction_DestroyNode(NodeToReplace);
+
+	// Recompile substitute node; this action will update the actual game flow asset.
+	GraphSchema->CompileGraphNode(SubstituteNode, TArray{EGPD_Input, EGPD_Output});
 	
-	if(NodeAsset->IsA(UGameFlowNode_Dummy::StaticClass()))
-	{
-		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-		
-		UGameFlowNode* SubstituteNodeAsset = NewObject<UGameFlowNode>(GameFlowAsset, ReplacementClass, NAME_None, RF_Transactional);
-		FObjectInstancingGraph ObjectInstancingGraph;
-		ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
-		TSet<FName> InOutExtraNames;
-		UGameFlowGraphNode* SubstituteNode = CastChecked<UGameFlowGraphNode>(
-			GraphSchema->CreateSubstituteNode(DummyNode, this, &ObjectInstancingGraph, InOutExtraNames)
-			);
-		DummyNode->DestroyNode();
-		
-		// Recompile substitute node; this action will update the actual game flow asset.
-		GraphSchema->CompileGraphNode(SubstituteNode, TArray { EGPD_Input, EGPD_Output });
-	}
 }
 
 void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes)

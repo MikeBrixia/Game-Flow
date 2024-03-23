@@ -68,7 +68,6 @@ void SGameFlowNode::CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox)
 void SGameFlowNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox)
 {
 	const UGameFlowNode* NodeAsset = CastChecked<UGameFlowGraphNode>(GraphNode)->GetNodeAsset();
-	
 	// Add output pin button only if node asset allows it.
 	if(NodeAsset != nullptr && NodeAsset->CanAddOutputPin())
 	{

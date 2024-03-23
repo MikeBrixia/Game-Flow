@@ -2,6 +2,7 @@
 
 #include "Widget/SGameFlowGraph.h"
 #include "GraphEditorActions.h"
+#include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Framework/Commands/GenericCommands.h"

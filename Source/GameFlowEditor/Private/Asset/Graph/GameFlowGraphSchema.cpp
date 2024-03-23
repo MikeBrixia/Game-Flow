@@ -47,36 +47,40 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 
 bool UGameFlowGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
 {
+	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "TryCreateConnection", "Create Pin Connection"));
+	A->Modify();
+	B->Modify();
+	
 	const bool bConnectionCreated = Super::TryCreateConnection(A, B);
 	
 	if(bConnectionCreated)
 	{
 		UGameFlowNode* A_NodeAsset = CastChecked<UGameFlowGraphNode>(A->GetOwningNode())->GetNodeAsset();
 		UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(B->GetOwningNode())->GetNodeAsset();
-		const UGameFlowAsset* GameFlowAsset = A_NodeAsset->GetTypedOuter<UGameFlowAsset>();
 
-		// Update node asset on the two pins.
-		A->DefaultObject = B_NodeAsset;
-		B->DefaultObject = A_NodeAsset;
+		A_NodeAsset->Modify();
+		B_NodeAsset->Modify();
 		
-		// Is the asset enabled for live compile?
-		if(GameFlowAsset->bLiveCompile)
+		// Update node asset on the two pins.
+		A->DefaultObject = B->GetOwningNode();
+		B->DefaultObject = A->GetOwningNode();
+		
+		switch (A->Direction)
 		{
-			switch(A->Direction)
-			{
-			default: break;
+		default: break;
 
-			case EGPD_Input:
-				{
-					A_NodeAsset->AddInput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
-					break;
-				}
-			
-			case EGPD_Output:
-				{
-					A_NodeAsset->AddOutput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
-					break;
-				}
+		case EGPD_Input:
+			{
+				A_NodeAsset->AddInput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
+				B_NodeAsset->AddOutput(B->PinName, FGameFlowPinNodePair(A->PinName, A_NodeAsset));
+				break;
+			}
+
+		case EGPD_Output:
+			{
+				A_NodeAsset->AddOutput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
+				B_NodeAsset->AddInput(B->PinName, FGameFlowPinNodePair(A->PinName, A_NodeAsset));
+				break;
 			}
 		}
 	}
@@ -98,38 +102,40 @@ void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNod
 		NewNodeTargetPin = GraphNode->GetPinWithDirectionAt(0, EGPD_Input);
 	}
 	
-	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(Graph->GetSchema());
 	// Create a connection with the new node first pin.
-	GameFlowGraphSchema->TryCreateConnection(FromPin, NewNodeTargetPin);
+	TryCreateConnection(FromPin, NewNodeTargetPin);
 }
 
 void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
 {
+	UGameFlowNode* A_NodeAsset = CastChecked<UGameFlowGraphNode>(SourcePin->GetOwningNode())->GetNodeAsset();
+	UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(TargetPin->GetOwningNode())->GetNodeAsset();
+	
+	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "BreakSinglePinLink", "Break Single Pin Link"));
+	SourcePin->Modify();
+	TargetPin->Modify();
+	A_NodeAsset->Modify();
+	B_NodeAsset->Modify();
+	
 	Super::BreakSinglePinLink(SourcePin, TargetPin);
 	
-	const UGameFlowGraphNode* A_Node = CastChecked<UGameFlowGraphNode>(SourcePin->GetOwningNode());
-	const UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(A_Node->GetGraph());
-	if (Graph->GameFlowAsset->bLiveCompile)
+	switch (SourcePin->Direction)
 	{
-		UGameFlowNode* A_NodeAsset = A_Node->GetNodeAsset();
-		UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(TargetPin->GetOwningNode())->GetNodeAsset();
-		switch (SourcePin->Direction)
+	default: break;
+
+	case EGPD_Input:
 		{
-		default: break;
+			B_NodeAsset->RemoveOutput(TargetPin->PinName);
+			break;
+		}
 
-		case EGPD_Input:
-			{
-				B_NodeAsset->RemoveOutput(TargetPin->PinName);
-				break;
-			}
-
-		case EGPD_Output:
-			{
-				A_NodeAsset->RemoveOutput(SourcePin->PinName);
-				break;
-			}
+	case EGPD_Output:
+		{
+			A_NodeAsset->RemoveOutput(SourcePin->PinName);
+			break;
 		}
 	}
+	
 }
 
 void UGameFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
@@ -219,7 +225,7 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 			{
 				// Here we call superclass implementation because we want to
 				// avoid unnecessary live compilation features offered by game flow schema.
-				Super::TryCreateConnection(SubstituteNodePin, ConnectedPin);
+				TryCreateConnection(SubstituteNodePin, ConnectedPin);
 			}
 		}
 	}

@@ -157,7 +157,7 @@ public:
 	 * @return The substituted graph node.
 	 */
 	virtual UEdGraphNode* CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph, FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const override;
-	
+
 protected:
 	
 	/**

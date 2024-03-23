@@ -9,4 +9,5 @@ public:
 	virtual void RegisterCommands() override;
 
 	TSharedPtr<FUICommandInfo> ReplaceNode;
+	TSharedPtr<FUICommandInfo> ValidateNode;
 };

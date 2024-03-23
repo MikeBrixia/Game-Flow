@@ -17,7 +17,23 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 
 void UGameFlowGraphNode::OnReplacementRequest()
 {
-	UE_LOG(LogGameFlow, Display, TEXT("Node replacement request"))
+	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
+	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
+	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
+	
+	// If user has picked a valid and different UCLASS and confirmed replacement, then replace the node.
+	if(PressedButtonIndex == 0 && PickedClass != nullptr
+		&& NodeAsset->GetClass() != PickedClass)
+	{
+		UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+		GameFlowGraph->ReplaceGraphNode(this, PickedClass);
+	}
+}
+
+void UGameFlowGraphNode::OnValidationRequest()
+{
+	const UGameFlowGraphSchema* Schema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	Schema->ValidateNodeAsset(this);
 }
 
 void UGameFlowGraphNode::ConfigureContextMenuAction()
@@ -26,6 +42,9 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 	
 	ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
 		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnReplacementRequest));
+
+	ContextMenuCommands->MapAction(GraphNodeCommands.ValidateNode,
+		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
 }
 
 void UGameFlowGraphNode::InitNode()
@@ -46,6 +65,14 @@ void UGameFlowGraphNode::InitNode()
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 
 	ConfigureContextMenuAction();
+}
+
+void UGameFlowGraphNode::DestroyNode()
+{
+	const UGameFlowGraphSchema* GameFlowSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	GameFlowSchema->BreakNodeLinks(*this);
+
+	GetGraph()->RemoveNode(this, false);
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
@@ -96,9 +123,7 @@ void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 
 void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
 {
-	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
-	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
-	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
+
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()
@@ -106,20 +131,40 @@ void UGameFlowGraphNode::AllocateDefaultPins()
 	CreateNodePins(false);
 }
 
+
 void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
+	Super::GetNodeContextMenuActions(Menu, Context);
+	
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
-
+	
+	// When only the node is selected, show available context actions.
 	if(Context->Pin != nullptr)
 	{
+		// Pin handle actions
+		{
+			// TODO Should implement pin handle context actions.
+		}
+		
+		// Pin debug actions
+		{
+			// TODO Should implement pin debug context actions.
+		}
 	}
-	
-	if(Context->Node != nullptr)
+	else if(Context->Node != nullptr)
 	{
-		FToolMenuSection& GameFlowSection = Menu->AddSection("Game Flow");
-		GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
-	}
-	
+		// Core actions
+		{
+			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
+			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
+			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
+		}
+
+		// Debug actions
+		{
+			// TODO Should implement debug context actions.
+		}
+	} 
 }
 
 FName UGameFlowGraphNode::CreateUniquePinName(FName SourcePinName) const
@@ -277,4 +322,5 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 	}
 	return Pin;
 }
+
 

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Nodes/GameFlowNode.h"
-#include "Nodes/GameFlowNode_Dummy.h"
 #include "Nodes/GameFlowNode_Input.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
@@ -62,12 +61,14 @@ public:
 	 * @return The new pin.
 	 */
 	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None, bool bAddToAsset = true);
-
+	
+	virtual void DestroyNode() override;
+	
 	/**
 	 * @brief Create default pins for this Game Flow node.
 	 */
 	virtual void AllocateDefaultPins() override;
-
+    
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	
 	/**
@@ -117,16 +118,14 @@ public:
 	}
 
 protected:
+	///////  GRAPH NODE CONTEXT ACTIONS EVENTS  ///////////
     void OnReplacementRequest();
-	
+	void OnValidationRequest();
+	///////////////////////////////////////////////////////
 private:
 	
 	void ConfigureContextMenuAction();
 	void InitNode();
-	
-	FORCEINLINE bool ShouldFilterAssetPicker(const FAssetData& AssetData) const
-	{
-		return AssetData.AssetClassPath == UGameFlowNode_Dummy::StaticClass()->GetClassPathName();
-	}
 };
+
 

@@ -12,7 +12,12 @@ FGameFlowGraphNodeCommands::FGameFlowGraphNodeCommands(): TCommands("GameFlowGra
 void FGameFlowGraphNodeCommands::RegisterCommands()
 {
 	FUICommandInfo::MakeCommandInfo(SharedThis(this), ReplaceNode, "ReplaceNode",
-		                            NSLOCTEXT("GameFlowGraphNodeCommands", "ReplaceNodeCommand", "Replace Node"),
+		                            NSLOCTEXT("GameFlowGraphNodeCommands", "ReplaceNodeCommand", "Replace"),
 		                            NSLOCTEXT("GameFlowCommands", "ReplaceNodeCommandDescription", "Replace this node with another game flow node"),
 		                            FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
+
+	FUICommandInfo::MakeCommandInfo(SharedThis(this), ValidateNode, "ValidateNode",
+									NSLOCTEXT("GameFlowGraphNodeCommands", "ValidateNodeCommand", "Validate"),
+									NSLOCTEXT("GameFlowCommands", "ReplaceNodeCommandDescription", "Validate and fix node invalid data"),
+									FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
 }
