@@ -66,13 +66,6 @@ public:
 	void RebuildGraphFromAsset();
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 
-	/**
-	 * @brief Replace a graph node with a another one of the supplied class.
-	 * @param NodeToReplace The node to replace
-	 * @param ReplacementClass The class of the replacement node.
-	 */;
-	void ReplaceGraphNode(UGameFlowGraphNode* NodeToReplace, UClass* ReplacementClass);
-	
 protected:
 	virtual void OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes);
 	virtual void OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes);

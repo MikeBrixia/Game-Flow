@@ -4,6 +4,7 @@
 #include "GameFlowEditor.h"
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Utils/GameFlowEditorSubsystem.h"
@@ -168,29 +169,12 @@ void UGameFlowGraph::OnDummyReplacementRequest()
 	if(PressedButtonIndex == 0 && PickedClass != nullptr
 		&& ReplaceNodeDialog->ShouldReplaceAll())
 	{
-		TArray<UGameFlowGraphNode*> GraphNodes = GetNodesOfClass(PickedClass);
-		for(UGameFlowGraphNode* NodeToReplace : GraphNodes)
-		{
-			ReplaceGraphNode(NodeToReplace, PickedClass);
-		}
+		const TArray<UGameFlowGraphNode*> GraphNodes = GetNodesOfClass(PickedClass);
+		FGameFlowSchemaAction_ReplaceNode ReplaceNodeAction(nullptr, PickedClass);
+		// Replace multiple nodes in a single action and transaction.
+		ReplaceNodeAction.PerformAction_ReplaceAll(GraphNodes, this);
 	}
 	
-}
-
-void UGameFlowGraph::ReplaceGraphNode(UGameFlowGraphNode* NodeToReplace, UClass* ReplacementClass) 
-{
-	UGameFlowNode* NodeAsset = NodeToReplace->GetNodeAsset();
-	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-
-	UGameFlowNode* SubstituteNodeAsset = NewObject<UGameFlowNode>(GameFlowAsset, ReplacementClass, NAME_None,
-	                                                              RF_Transactional);
-	FObjectInstancingGraph ObjectInstancingGraph;
-	ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
-	TSet<FName> InOutExtraNames;
-	GraphSchema->CreateSubstituteNode(NodeToReplace, this, &ObjectInstancingGraph, InOutExtraNames);
-	
-	FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
-	DestroyNodeAction.PerformAction_DestroyNode(NodeToReplace);
 }
 
 void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes)

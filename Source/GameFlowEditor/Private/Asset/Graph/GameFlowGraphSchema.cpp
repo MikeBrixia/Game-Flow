@@ -3,6 +3,7 @@
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "GameFlowEditor.h"
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
+#include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 

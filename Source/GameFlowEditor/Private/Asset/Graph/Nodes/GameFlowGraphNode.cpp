@@ -4,6 +4,7 @@
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
@@ -25,8 +26,8 @@ void UGameFlowGraphNode::OnReplacementRequest()
 	if(PressedButtonIndex == 0 && PickedClass != nullptr
 		&& NodeAsset->GetClass() != PickedClass)
 	{
-		UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-		GameFlowGraph->ReplaceGraphNode(this, PickedClass);
+		FGameFlowSchemaAction_ReplaceNode ReplaceNodeAction(this, PickedClass);
+		ReplaceNodeAction.PerformAction(GetGraph(), nullptr, FVector2d::ZeroVector, true);
 	}
 }
 
@@ -157,7 +158,10 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 		{
 			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
-			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
+			if(CanBeReplaced())
+			{
+				GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
+			}
 		}
 
 		// Debug actions
@@ -223,6 +227,12 @@ bool UGameFlowGraphNode::CanUserDeleteNode() const
 	const FText NodeDisplayName = NodeAsset->GetClass()->GetDisplayNameText();
 	// User will be able to delete all types of nodes except 'Start' and 'Finish'
 	return !(NodeDisplayName.EqualTo(INVTEXT("Start")) || NodeDisplayName.EqualTo(INVTEXT("Finish")));
+}
+
+bool UGameFlowGraphNode::CanBeReplaced() const
+{
+	return !NodeAsset->IsA(UGameFlowNode_Input::StaticClass())
+	       && !NodeAsset->IsA(UGameFlowNode_Output::StaticClass());
 }
 
 void UGameFlowGraphNode::ReconstructNode()

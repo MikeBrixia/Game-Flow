@@ -89,6 +89,7 @@ public:
 	FORCEINLINE bool IsRoot() const { return NodeAsset->IsA(UGameFlowNode_Input::StaticClass()); }
 	bool IsOrphan() const;
 	virtual bool CanUserDeleteNode() const override;
+	virtual bool CanBeReplaced() const;
 	
 	void OnLiveOrHotReloadCompile();
 	void OnAssetCompiled();
