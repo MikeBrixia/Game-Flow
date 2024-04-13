@@ -44,7 +44,7 @@ void FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction_DestroyNode(UG
 	ParentGraph->Modify();
 	ParentGraph->GameFlowAsset->Modify();
 	GraphNode->DestroyNode();
-
+	
 	const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 	if(NodeAsset->IsA(UGameFlowNode_Input::StaticClass()))
 	{

@@ -102,19 +102,18 @@ void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPi
 
 	case EGPD_Input:
 		{
-			A_NodeAsset->RemoveInputPin(SourcePin->PinName);
-			B_NodeAsset->RemoveOutput(TargetPin->PinName);
+			A_NodeAsset->RemoveInputPort(SourcePin->PinName);
+			B_NodeAsset->RemoveOutputPort(TargetPin->PinName);
 			break;
 		}
 
 	case EGPD_Output:
 		{
-			A_NodeAsset->RemoveOutput(SourcePin->PinName);
-			B_NodeAsset->RemoveInputPin(TargetPin->PinName);
+			A_NodeAsset->RemoveOutputPort(SourcePin->PinName);
+			B_NodeAsset->RemoveInputPort(TargetPin->PinName);
 			break;
 		}
 	}
-	
 }
 
 void UGameFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
@@ -215,14 +214,13 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 			SubstituteNodePin = SubstituteNode->CreateNodePin(Pin->Direction);
 		}
 		
-		// If source pin had a connection, recreate it on the substitute node.
+		// Replace source node connections with substitute node connections.
 		if(Pin->HasAnyConnections())
 		{
-			SubstituteNodePin->DefaultObject = Pin->DefaultObject;
-			for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+			TArray<UEdGraphPin*> ConnectionsList = Pin->LinkedTo;
+			BreakPinLinks(*Pin, true);
+			for(UEdGraphPin* ConnectedPin : ConnectionsList)
 			{
-				// Here we call superclass implementation because we want to
-				// avoid unnecessary live compilation features offered by game flow schema.
 				TryCreateConnection(SubstituteNodePin, ConnectedPin);
 			}
 		}
@@ -232,22 +230,7 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 
 void UGameFlowGraphSchema::AlignNodeAssetToGraphNode(UGameFlowGraphNode* GraphNode) const
 {
-	UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
-	// Ensure there node asset ports are aligned with graph node pins connections.
-	for(const UEdGraphPin* Pin : GraphNode->Pins)
-	{
-		if(!Pin->HasAnyConnections())
-		{
-			if(Pin->Direction == EGPD_Input)
-			{
-				NodeAsset->RemoveInputPort(Pin->PinName);
-			}
-			else if(Pin->Direction == EGPD_Output)
-			{
-				NodeAsset->RemoveOutputPort(Pin->PinName);
-			}
-		}
-	}
+    // TODO: Node alignement logic to fixup differences between graph nodes and assets.
 }
 
 void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const

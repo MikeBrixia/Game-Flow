@@ -59,13 +59,25 @@ void UGameFlowGraphNode::InitNode()
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-	
+
+	// Listen to game flow assets events.
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
-	// This is the only way to listen to blueprint compile events(at least the one i've found).
+	NodeAsset->OnPinRemoved.BindUObject(this, &UGameFlowGraphNode::OnPinRemovedFromAsset);
+	
+	// Listen to Unreal Editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 
 	ConfigureContextMenuAction();
+}
+
+void UGameFlowGraphNode::OnPinRemovedFromAsset(FName PinName)
+{
+	UEdGraphPin* Pin = FindPin(PinName);
+	if(Pin != nullptr)
+	{
+		GetSchema()->BreakPinLinks(*Pin, true);
+	}
 }
 
 void UGameFlowGraphNode::DestroyNode()
@@ -110,7 +122,7 @@ void UGameFlowGraphNode::OnAssetCompiled()
 		// Notify listeners this node has been compiled.
 		OnNodeAssetChanged.Broadcast();
 
-		// Node has already been compiled, remove the mark from it.
+		// Node has finished compilation, remove the mark from it.
 		bPendingCompilation = false;
 	}
 }
@@ -132,6 +144,11 @@ void UGameFlowGraphNode::AllocateDefaultPins()
 	CreateNodePins(false);
 }
 
+void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
+{
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	GraphSchema->BreakPinLinks(*InRemovedPin, true);	Super::OnPinRemoved(InRemovedPin);
+}
 
 void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
@@ -154,7 +171,7 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	}
 	else if(Context->Node != nullptr)
 	{
-		// Core actions
+		// Generic node actions.
 		{
 			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
@@ -243,7 +260,7 @@ void UGameFlowGraphNode::ReconstructNode()
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
 	// Reallocate all node pins.
-	Pins.Empty();
+	BreakAllNodeLinks();
 	CreateNodePins(false);
 	
 	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());

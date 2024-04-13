@@ -26,29 +26,29 @@ class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 	GENERATED_BODY()
 
 public:
-	/* Called when the node asset encapsulated inside this graph node gets changed. */
+	/** Called when the node asset encapsulated inside this graph node gets changed. */
 	FOnNodeAssetChanged OnNodeAssetChanged;
-	/* Callback for when this node has finished being validated. */
+	/** Callback for when this node has finished being validated. */
 	FOnValidationEnd OnValidationResult;
 private:
 	
-	/* The game flow node asset encapsulated inside this graph node. */
+	/** The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowNode> NodeAsset;
 
-	/* Node asset info red from global GameFlow plugin settings. */
+	/** Node asset info red from global GameFlow plugin settings. */
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
 
 	/** List of game flow graph node context menu command actions. */
 	TSharedPtr<FUICommandList> ContextMenuCommands;
 	
-	/* True if the node asset is waiting to be compiled. */
+	/** True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
 	
 public:
 	UGameFlowGraphNode();
-	
+
 	/**
 	 * @brief Read Game Flow node asset and create graph node pins.
 	 */
@@ -69,7 +69,7 @@ public:
 	 * @brief Create default pins for this Game Flow node.
 	 */
 	virtual void AllocateDefaultPins() override;
-    
+    virtual void OnPinRemoved(UEdGraphPin* InRemovedPin) override;
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	
 	/**
@@ -139,6 +139,7 @@ private:
 	
 	void ConfigureContextMenuAction();
 	void InitNode();
+	void OnPinRemovedFromAsset(FName PinName);
 };
 
 

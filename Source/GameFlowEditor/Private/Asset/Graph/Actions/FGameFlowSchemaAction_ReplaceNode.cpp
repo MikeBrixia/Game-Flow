@@ -47,8 +47,9 @@ UGameFlowGraphNode* FGameFlowSchemaAction_ReplaceNode::ReplaceNode(UGameFlowGrap
 		FObjectInstancingGraph ObjectInstancingGraph;
 		ObjectInstancingGraph.AddNewObject(SubstituteNodeAsset, NodeAsset);
 		TSet<FName> InOutExtraNames;
+		// Here we can use the copy of the node to create a substitute node.
 		ReplacementNode = CastChecked<UGameFlowGraphNode>(
-			GraphSchema->CreateSubstituteNode(Node_ToReplace, Node_ToReplace->GetGraph(), &ObjectInstancingGraph, InOutExtraNames));
+			GraphSchema->CreateSubstituteNode(NodeToReplace, Node_ToReplace->GetGraph(), &ObjectInstancingGraph, InOutExtraNames));
 		
 		FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
 		DestroyNodeAction.PerformAction_DestroyNode(Node_ToReplace);

@@ -107,13 +107,9 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 				if(bIsArray)
 				{
 					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-					if(PropertyName.IsEqual("InputPins"))
+					if(PropertyName.IsEqual("InputPins") || PropertyName.IsEqual("OutputPins"))
 					{
-						RemoveInputPin(OldPropertyValue);
-					}
-					else if(PropertyName.IsEqual("OutputPins"))
-					{
-						RemoveOutput(OldPropertyValue);
+						OnPinRemoved.ExecuteIfBound(OldPropertyValue);
 					}
 				}
 				break;
