@@ -75,43 +75,22 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 				if(bIsArray)
 				{
 					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-					FName NewPropertyValue;
-				
 					if(PropertyName.IsEqual("InputPins"))
 					{
-						const FGameFlowPinNodePair Connection = Inputs.FindRef(OldPropertyValue);
-						NewPropertyValue = InputPins[ArrayIndex];
-						const bool bIsChanged = !NewPropertyValue.IsEqual(OldPropertyValue);
-						if(bIsChanged)
-						{
-							Inputs.Remove(OldPropertyValue);
-							AddInputPort(NewPropertyValue, Connection);
-						}
+						OnInputPinValueSet(OldPropertyValue, ArrayIndex);
 					}
 					else if(PropertyName.IsEqual("OutputPins"))
 					{
-						const FGameFlowPinNodePair Connection = Outputs.FindRef(OldPropertyValue);
-						NewPropertyValue = OutputPins[ArrayIndex];
-						const bool bIsChanged = !NewPropertyValue.IsEqual(OldPropertyValue);
-						if(bIsChanged)
-						{
-							Outputs.Remove(OldPropertyValue);
-							AddOutputPort(NewPropertyValue, Connection);
-						}
+						OnOutputPinValueSet(OldPropertyValue, ArrayIndex);
 					}
 				}
+				break;
 			}
     
 		case EPropertyChangeType::ArrayRemove:
 			{
-				if(bIsArray)
-				{
-					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-					if(PropertyName.IsEqual("InputPins") || PropertyName.IsEqual("OutputPins"))
-					{
-						OnPinRemoved.ExecuteIfBound(OldPropertyValue);
-					}
-				}
+				const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
+				OnPinRemoved(OldPropertyValue);
 				break;
 			}
 
@@ -138,6 +117,56 @@ void UGameFlowNode::PreEditChange(FProperty* PropertyAboutToChange)
 		if(bIsValidArrayProperty && bIsValidOwnerClass)
 		{
 			Temp_OldPinArray = *PropertyAboutToChange->ContainerPtrToValuePtr<TArray<FName>>(this);
+		}
+	}
+}
+
+void UGameFlowNode::OnInputPinValueSet(FName PinName, int PinArrayIndex)
+{
+	const FGameFlowPinNodePair Connection = Inputs.FindRef(PinName);
+	FName NewPropertyValue = InputPins[PinArrayIndex];
+	const bool bIsChanged = !NewPropertyValue.IsEqual(PinName);
+	if(bIsChanged)
+	{
+		Inputs.Remove(PinName);
+		AddInputPort(NewPropertyValue, Connection);
+	}
+}
+
+void UGameFlowNode::OnOutputPinValueSet(FName PinName, int PinArrayIndex)
+{
+	const FGameFlowPinNodePair Connection = Outputs.FindRef(PinName);
+	FName NewPropertyValue = OutputPins[PinArrayIndex];
+	const bool bIsChanged = !NewPropertyValue.IsEqual(PinName);
+	if(bIsChanged)
+	{
+		Outputs.Remove(PinName);
+		AddOutputPort(NewPropertyValue, Connection);
+	}
+}
+
+void UGameFlowNode::OnPinRemoved(FName PinName)
+{
+	if(Inputs.Contains(PinName))
+	{
+		const FGameFlowPinNodePair PinNodePair = Inputs.FindRef(PinName);
+		RemoveInputPin(PinName);
+
+		UGameFlowNode* ConnectedNode = PinNodePair.Node;
+		if(ConnectedNode != nullptr)
+		{
+			ConnectedNode->RemoveOutputPort(PinNodePair.InputPinName);
+		}
+	}
+	else if(Outputs.Contains(PinName))
+	{
+		const FGameFlowPinNodePair PinNodePair = Outputs.FindRef(PinName);
+		RemoveOutput(PinName);
+
+		UGameFlowNode* ConnectedNode = PinNodePair.Node;
+		if(ConnectedNode != nullptr)
+		{
+			ConnectedNode->RemoveInputPort(PinNodePair.InputPinName);
 		}
 	}
 }

@@ -62,7 +62,6 @@ void UGameFlowGraphNode::InitNode()
 
 	// Listen to game flow assets events.
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
-	NodeAsset->OnPinRemoved.BindUObject(this, &UGameFlowGraphNode::OnPinRemovedFromAsset);
 	
 	// Listen to Unreal Editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
@@ -71,13 +70,51 @@ void UGameFlowGraphNode::InitNode()
 	ConfigureContextMenuAction();
 }
 
-void UGameFlowGraphNode::OnPinRemovedFromAsset(FName PinName)
+void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
 {
-	UEdGraphPin* Pin = FindPin(PinName);
-	if(Pin != nullptr)
+	// Break pin graph connections.
+	BreakAllNodeLinks();
+	
+	// Remove logical connections.
+	if(InRemovedPin->Direction == EGPD_Input)
 	{
-		GetSchema()->BreakPinLinks(*Pin, true);
+		NodeAsset->RemoveInputPin(InRemovedPin->PinName);
 	}
+	else if(InRemovedPin->Direction == EGPD_Output)
+	{
+		NodeAsset->RemoveOutput(InRemovedPin->PinName);
+	}
+}
+
+void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
+{
+	Super::PinConnectionListChanged(Pin);
+	
+	// Break this pin logical connection, we need to rebuild them.
+	if(Pin->Direction == EGPD_Input)
+	{
+		NodeAsset->RemoveInputPort(Pin->PinName);
+	}
+	else if(Pin->Direction == EGPD_Output)
+	{
+		NodeAsset->RemoveOutputPort(Pin->PinName);
+	}
+
+	// Recreate logical connections between game flow nodes using graph data.
+	for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+	{
+		UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
+		if(Pin->Direction == EGPD_Input)
+		{
+			NodeAsset->AddInputPort(Pin->PinName, {ConnectedPin->PinName, ConnectedNodeAsset});
+		}
+		else if(Pin->Direction == EGPD_Output)
+		{
+			NodeAsset->AddOutputPort(Pin->PinName, {ConnectedPin->PinName, ConnectedNodeAsset});
+		}
+	}
+
+	UE_LOG(LogGameFlow, Display, TEXT("%s connection list changed"), *NodeAsset->GetName())
 }
 
 void UGameFlowGraphNode::DestroyNode()
@@ -116,6 +153,7 @@ void UGameFlowGraphNode::OnAssetCompiled()
 		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 		// Ensure compiled asset is valid.
 		GraphSchema->ValidateNodeAsset(this);
+		
 		// reconstruct the compiled asset with the updated properties/logic.
 		ReconstructNode();
 		
@@ -134,20 +172,9 @@ void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 	                      && GetGraph()->Nodes.Contains(this);
 }
 
-void UGameFlowGraphNode::OnDummyReplacement(UClass* ClassToReplace)
-{
-
-}
-
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
 	CreateNodePins(false);
-}
-
-void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
-{
-	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-	GraphSchema->BreakPinLinks(*InRemovedPin, true);	Super::OnPinRemoved(InRemovedPin);
 }
 
 void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
@@ -259,12 +286,11 @@ void UGameFlowGraphNode::ReconstructNode()
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
-	// Reallocate all node pins.
 	BreakAllNodeLinks();
+	Pins.Empty();
 	CreateNodePins(false);
 	
 	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
-	
 	// Recompile node and recreate it's node connections.
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
 }

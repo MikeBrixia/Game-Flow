@@ -52,35 +52,7 @@ bool UGameFlowGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) c
 	A->Modify();
 	B->Modify();
 	
-	const bool bConnectionCreated = Super::TryCreateConnection(A, B);
-	if(bConnectionCreated)
-	{
-		UGameFlowNode* A_NodeAsset = CastChecked<UGameFlowGraphNode>(A->GetOwningNode())->GetNodeAsset();
-		UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(B->GetOwningNode())->GetNodeAsset();
-		A_NodeAsset->Modify();
-		B_NodeAsset->Modify();
-	
-		switch (A->Direction)
-		{
-		default: break;
-
-		case EGPD_Input:
-			{
-				A_NodeAsset->AddInput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
-				B_NodeAsset->AddOutput(B->PinName, FGameFlowPinNodePair(A->PinName, A_NodeAsset));
-				break;
-			}
-
-		case EGPD_Output:
-			{
-				A_NodeAsset->AddOutput(A->PinName, FGameFlowPinNodePair(B->PinName, B_NodeAsset));
-				B_NodeAsset->AddInput(B->PinName, FGameFlowPinNodePair(A->PinName, A_NodeAsset));
-				break;
-			}
-		}
-	}
-	
-	return bConnectionCreated;
+	return Super::TryCreateConnection(A, B);
 }
 
 void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
@@ -93,27 +65,6 @@ void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPi
 	TargetPin->Modify();
 	A_NodeAsset->Modify();
 	B_NodeAsset->Modify();
-	
-	Super::BreakSinglePinLink(SourcePin, TargetPin);
-	
-	switch (SourcePin->Direction)
-	{
-	default: break;
-
-	case EGPD_Input:
-		{
-			A_NodeAsset->RemoveInputPort(SourcePin->PinName);
-			B_NodeAsset->RemoveOutputPort(TargetPin->PinName);
-			break;
-		}
-
-	case EGPD_Output:
-		{
-			A_NodeAsset->RemoveOutputPort(SourcePin->PinName);
-			B_NodeAsset->RemoveInputPort(TargetPin->PinName);
-			break;
-		}
-	}
 }
 
 void UGameFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const

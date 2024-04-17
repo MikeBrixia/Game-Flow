@@ -6,8 +6,6 @@
 #include "Config/GameFlowSettings.h"
 #include "GameFlowNode.generated.h"
 
-DECLARE_DELEGATE_OneParam(FOnPinRemoved, FName)
-
 /**
  * Serializable alternative to TPair for storing
  * Input pins name and nodes in Game Flow.
@@ -37,7 +35,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
-	
+	friend class UGameFlowGraphNode;
 	GENERATED_BODY()
 
 #if WITH_EDITORONLY_DATA
@@ -53,8 +51,6 @@ public:
 
 	/** Called when this asset gets deleted and replaced or hot-reloaded(C++ compilation) */
 	FOnAssetRedirected OnAssetRedirected;
-	/**Called when a user removes an input/output pin from a game flow node BP.*/
-	FOnPinRemoved OnPinRemoved;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
@@ -124,7 +120,10 @@ public:
 	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
 	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
-	
+
+	void OnInputPinValueSet(FName PinName, int PinArrayIndex);
+	void OnOutputPinValueSet(FName PinName, int PinArrayIndex);
+	void OnPinRemoved(FName PinName);
 	void ValidateAsset();
 	
 	/**

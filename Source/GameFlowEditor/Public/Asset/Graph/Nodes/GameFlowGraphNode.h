@@ -65,11 +65,9 @@ public:
 	
 	virtual void DestroyNode() override;
 	
-	/**
-	 * @brief Create default pins for this Game Flow node.
-	 */
 	virtual void AllocateDefaultPins() override;
     virtual void OnPinRemoved(UEdGraphPin* InRemovedPin) override;
+	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	
 	/**
@@ -96,7 +94,6 @@ public:
 	void OnAssetBlueprintPreCompiled(UBlueprint* Blueprint);
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
-	void OnDummyReplacement(UClass* ClassToReplace);
 	
 	virtual void ReconstructNode() override;
 	void ReportError(EMessageSeverity::Type MessageSeverity);
@@ -109,10 +106,7 @@ public:
 	FORCEINLINE void SetNodeInfo(FGameFlowNodeInfo NewInfo) { this->Info = NewInfo; }
 
 	virtual void OnRenameNode(const FString& NewName) override;
-	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override
-	{
-		return Info.TitleBarColor;
-	}
+	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override { return Info.TitleBarColor; }
 	
 	FORCEINLINE virtual bool GetCanRenameNode() const override
 	{
@@ -135,11 +129,10 @@ protected:
     void OnReplacementRequest();
 	void OnValidationRequest();
 	///////////////////////////////////////////////////////
+	///
 private:
-	
 	void ConfigureContextMenuAction();
 	void InitNode();
-	void OnPinRemovedFromAsset(FName PinName);
 };
 
 
