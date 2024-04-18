@@ -82,13 +82,18 @@ void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
 	}
 	else if(InRemovedPin->Direction == EGPD_Output)
 	{
-		NodeAsset->RemoveOutput(InRemovedPin->PinName);
+		NodeAsset->RemoveOutputPin(InRemovedPin->PinName);
 	}
 }
 
 void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 {
+	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "Pin Connection List changed", "Rebuild pin connections"));
+	
 	Super::PinConnectionListChanged(Pin);
+
+	Pin->Modify();
+	NodeAsset->Modify();
 	
 	// Break this pin logical connection, we need to rebuild them.
 	if(Pin->Direction == EGPD_Input)
@@ -377,8 +382,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 					TArray<FName> InputPins = NodeAsset->GetInputPins();
 					const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddInput(PinName, {});
-					
+					NodeAsset->AddInputPin(PinName, {});
 					break;
 				}
 			// Add output pin to node asset.	
@@ -387,8 +391,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 					TArray<FName> OutputPins = NodeAsset->GetOutputPins();
 					const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddOutput(PinName, {});
-					
+					NodeAsset->AddOutputPin(PinName, {});
 					break;
 				}
 		}

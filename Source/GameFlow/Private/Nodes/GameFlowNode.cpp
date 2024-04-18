@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
-#include "GameFlow.h"
 #include "GameFlowAsset.h"
 
 FGameFlowPinNodePair::FGameFlowPinNodePair()
@@ -68,7 +67,7 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 		switch(PropertyChangedEvent.ChangeType)
 		{
 		default: break;
-
+		
 		case EPropertyChangeType::ValueSet:
 			{
 				// Is the modified property inside a TArray?
@@ -128,8 +127,18 @@ void UGameFlowNode::OnInputPinValueSet(FName PinName, int PinArrayIndex)
 	const bool bIsChanged = !NewPropertyValue.IsEqual(PinName);
 	if(bIsChanged)
 	{
-		Inputs.Remove(PinName);
+		const FGameFlowPinNodePair InputPair = Inputs.FindRef(PinName);
+		
+		RemoveInputPort(PinName);
 		AddInputPort(NewPropertyValue, Connection);
+
+		UGameFlowNode* ConnectedNode = InputPair.Node;
+		// Update connected node pins accordingly.
+		if(ConnectedNode != nullptr)
+		{
+			const FName ConnectedPinName = InputPair.InputPinName;
+			ConnectedNode->AddOutputPort(ConnectedPinName, {NewPropertyValue, this});
+		}
 	}
 }
 
@@ -140,8 +149,18 @@ void UGameFlowNode::OnOutputPinValueSet(FName PinName, int PinArrayIndex)
 	const bool bIsChanged = !NewPropertyValue.IsEqual(PinName);
 	if(bIsChanged)
 	{
-		Outputs.Remove(PinName);
+		const FGameFlowPinNodePair OutputPair = Inputs.FindRef(PinName);
+		
+		RemoveOutputPort(PinName);
 		AddOutputPort(NewPropertyValue, Connection);
+
+		UGameFlowNode* ConnectedNode = OutputPair.Node;
+		// Update connected node pin accordingly.
+		if(ConnectedNode != nullptr)
+		{
+			const FName ConnectedPinName = OutputPair.InputPinName;
+			ConnectedNode->AddInputPort(ConnectedPinName, {NewPropertyValue, this});
+		}
 	}
 }
 
@@ -161,7 +180,7 @@ void UGameFlowNode::OnPinRemoved(FName PinName)
 	else if(Outputs.Contains(PinName))
 	{
 		const FGameFlowPinNodePair PinNodePair = Outputs.FindRef(PinName);
-		RemoveOutput(PinName);
+		RemoveOutputPin(PinName);
 
 		UGameFlowNode* ConnectedNode = PinNodePair.Node;
 		if(ConnectedNode != nullptr)
@@ -175,30 +194,46 @@ void UGameFlowNode::ValidateAsset()
 {
 	TArray<FName> InputKeys;
 	Inputs.GetKeys(InputKeys);
-	for(const FName& InputPinKey : InputKeys)
+	for(const auto& PinPair : Inputs)
 	{
+		FName InputPinName = PinPair.Key;
+		const FName ConnectedPinName = PinPair.Value.InputPinName;
+		UGameFlowNode* ConnectedNode = PinPair.Value.Node;
+		
 		// If there's a mismatch between the input keys
 		// and input pins array, correct it.
-		if(!InputPins.Contains(InputPinKey))
+		if(!InputPins.Contains(InputPinName))
 		{
-			Inputs.Remove(InputPinKey);
+			RemoveInputPin(InputPinName);
+			if(ConnectedNode != nullptr)
+			{
+				ConnectedNode->RemoveOutputPin(ConnectedPinName);
+			}
 		}
 	}
 	
 	TArray<FName> OutputKeys;
 	Outputs.GenerateKeyArray(OutputKeys);
-	for(const FName& OutputPinKey : OutputKeys)
+	for(const auto& PinPair : Outputs)
 	{
-		// If there's a mismatch between the output keys
-		// and output pins array, correct it.
-		if(!OutputPins.Contains(OutputPinKey))
+		FName InputPinName = PinPair.Key;
+		const FName ConnectedPinName = PinPair.Value.InputPinName;
+		UGameFlowNode* ConnectedNode = PinPair.Value.Node;
+		
+		// If there's a mismatch between the input keys
+		// and input pins array, correct it.
+		if(!InputPins.Contains(InputPinName))
 		{
-			Outputs.Remove(OutputPinKey);
+			RemoveOutputPin(InputPinName);
+			if(ConnectedNode != nullptr)
+			{
+				ConnectedNode->RemoveInputPin(ConnectedPinName);
+			}
 		}
 	}
 }
 
-void UGameFlowNode::AddInput(const FName PinName, const FGameFlowPinNodePair Input)
+void UGameFlowNode::AddInputPin(const FName PinName, const FGameFlowPinNodePair Input)
 {
 	// Add input pin if not already present.
 	InputPins.AddUnique(PinName);
@@ -228,7 +263,7 @@ void UGameFlowNode::RemoveInputPort(FName PinName)
 	Inputs.Remove(PinName);
 }
 
-void UGameFlowNode::AddOutput(const FName PinName, const FGameFlowPinNodePair Output)
+void UGameFlowNode::AddOutputPin(const FName PinName, const FGameFlowPinNodePair Output)
 {
 	// Add output pin if not already present.
 	OutputPins.AddUnique(PinName);
@@ -247,7 +282,7 @@ void UGameFlowNode::AddOutputPort(const FName PinName, const FGameFlowPinNodePai
 	}
 }
 
-void UGameFlowNode::RemoveOutput(const FName PinName)
+void UGameFlowNode::RemoveOutputPin(const FName PinName)
 {
 	OutputPins.Remove(PinName);
 	RemoveOutputPort(PinName);

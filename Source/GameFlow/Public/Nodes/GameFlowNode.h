@@ -131,7 +131,7 @@ public:
 	 * @param PinName The nome of the pin to create.
 	 * @param Input The node and pin we want to connect to.
 	 */
-	void AddInput(const FName PinName, const FGameFlowPinNodePair Input);
+	void AddInputPin(const FName PinName, const FGameFlowPinNodePair Input);
 	
 	/**
 	 * @brief Remove an input pin from this node.
@@ -144,13 +144,13 @@ public:
 	 * @param PinName The name of the output pin which connects this node, to the next.
 	 * @param Output The node and pin we want to connect to.
 	 */
-	void AddOutput(const FName PinName, const FGameFlowPinNodePair Output);
+	void AddOutputPin(const FName PinName, const FGameFlowPinNodePair Output);
 
 	/**
 	 * @brief Disconnect this node from the other node connected through the supplied pin.
 	 * @param PinName The name of the pin which holds the connection.
 	 */
-	void RemoveOutput(const FName PinName);
+	void RemoveOutputPin(const FName PinName);
 	
 	/**
 	 * @brief Get all the registered Game Flow node types
@@ -164,7 +164,6 @@ protected:
     virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
    
 private:
-
 	/**
 	 * Add a new logical input pin port.
 	 * @remark Input ports are used to establish a connections between one of this
@@ -196,7 +195,6 @@ private:
 	void RemoveOutputPort(FName PinName);
 #endif
 };
-
 
 
 
