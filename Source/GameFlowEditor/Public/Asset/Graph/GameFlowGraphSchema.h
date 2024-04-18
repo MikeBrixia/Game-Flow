@@ -3,11 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFlowAsset.h"
 #include "GameFlowGraph.h"
 #include "Nodes/GameFlowNode_Dummy.h"
-#include "Nodes/GameFlowNode_Input.h"
-#include "Nodes/GameFlowNode_Output.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphSchema.generated.h"
 
@@ -28,14 +25,7 @@ public:
 	 * @return True if connection was allowed, false otherwise.
 	 */
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
-
-	/**
-	 * @brief Connect pin A to pin B. Game Flow schema override supports
-	 *        live compilation features for game flow assets.
-	 * @return True if connection was successful, false otherwise.
-	 */
-	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
-
+	
 	/**
 	* Connect a pin to another node default pin.
 	* @remark Default pin are the "Exec" or "Out" pins of each node. In case of missing
@@ -46,19 +36,6 @@ public:
 	*/
 	void ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode, const UGameFlowGraph* Graph) const;
 	
-	/**
-	* @brief Break a single connection between two pins. Game Flow schema
-	*        override supports live compilation features for game flow assets.
-	 */
-	virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
-
-	/**
-	* @brief Break all connections of a target pin. Game Flow schema
-	*        override supports live compilation features for game flow assets.
-	 * @param TargetPin The target pin that will break all it's connections
-	 */
-	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
-
 	/**
 	 * @brief Populate target graph with Game Flow default nodes.
 	 * @param Graph The graph in which the operation takes place.

@@ -46,41 +46,6 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 	return ConnectionResponse;
 }
 
-bool UGameFlowGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
-{
-	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "TryCreateConnection", "Create Pin Connection"));
-	A->Modify();
-	B->Modify();
-	
-	return Super::TryCreateConnection(A, B);
-}
-
-void UGameFlowGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
-{
-	UGameFlowNode* A_NodeAsset = CastChecked<UGameFlowGraphNode>(SourcePin->GetOwningNode())->GetNodeAsset();
-	UGameFlowNode* B_NodeAsset = CastChecked<UGameFlowGraphNode>(TargetPin->GetOwningNode())->GetNodeAsset();
-	
-	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "BreakSinglePinLink", "Break Single Pin Link"));
-	SourcePin->Modify();
-	TargetPin->Modify();
-	A_NodeAsset->Modify();
-	B_NodeAsset->Modify();
-}
-
-void UGameFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
-{
-	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "BreakSinglePinLink", "Break Pin Links"));
-	TargetPin.Modify();
-	
-	// Break all target pin connections.
-	for(UEdGraphPin* LinkedPin : TargetPin.LinkedTo)
-	{
-		BreakSinglePinLink(&TargetPin, LinkedPin);
-	}
-
-	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
-}
-
 void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode,
 	const UGameFlowGraph* Graph) const
 {
