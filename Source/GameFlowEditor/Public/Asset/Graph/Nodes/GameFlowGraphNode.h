@@ -105,6 +105,7 @@ public:
 	FORCEINLINE FGameFlowNodeInfo& GetNodeInfo() { return Info; }
 	FORCEINLINE void SetNodeInfo(FGameFlowNodeInfo NewInfo) { this->Info = NewInfo; }
 
+	virtual void PostPlacedNewNode() override;
 	virtual void OnRenameNode(const FString& NewName) override;
 	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override { return Info.TitleBarColor; }
 	
@@ -128,11 +129,11 @@ protected:
 	///////  GRAPH NODE CONTEXT ACTIONS EVENTS  ///////////
     void OnReplacementRequest();
 	void OnValidationRequest();
+	void OnAddBreakpointRequest();
+	void OnRemoveBreakpointRequest();
 	///////////////////////////////////////////////////////
-	///
 private:
 	void ConfigureContextMenuAction();
-	void InitNode();
 };
 
 

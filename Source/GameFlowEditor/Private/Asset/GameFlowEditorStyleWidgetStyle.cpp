@@ -15,28 +15,52 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 	// Set style set content root filepath.
 	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 
-	// Initialize style brushes...
+#if ENGINE_MAJOR_VERSION < 5
+	// Unreal Engine 4 Debug features styling
+	{
+		// Breakpoints.
+		StyleSet->Set("GameFlow.Editor.Debug.EnabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Valid"),
+				   CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Debug.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled"),
+						   CoreStyleConstants::Icon22x22));
+	}
+
+#elif ENGINE_MAJOR_VERSION >= 5
+	// Common Unreal Engine 5 styling
+	{
+		StyleSet->Set("GameFlow.Editor.Common.Blueprint", new IMAGE_BRUSH_SVG(TEXT("Starship/Common/blueprint"),
+								   CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Common.Apply", new IMAGE_BRUSH_SVG(TEXT("Starship/Common/Apply"),
+								   CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Common.Adjust", new IMAGE_BRUSH_SVG(TEXT("Starship/Common/Adjust"),
+								   CoreStyleConstants::Icon22x22));
+	}
 	
-// Unreal Engine 5 style.	
-#if ENGINE_MAJOR_VERSION >= 5
-	
-	// Compile icons.
-	StyleSet->Set("GameFlow.Editor.CompileIcon", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/CompileStatus_Background"),
-	              CoreStyleConstants::Icon22x22));
-	StyleSet->Set("GameFlow.Editor.CompileIcon.Fail", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/CompileStatus_Fail_Badge"),
-				  CoreStyleConstants::Icon22x22));
-	StyleSet->Set("GameFlow.Editor.CompileIcon.Success", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/CompileStatus_Good_Badge"),
-				  CoreStyleConstants::Icon22x22));
-	StyleSet->Set("GameFlow.Editor.CompileIcon.Warning", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/CompileStatus_Warning_Badge"),
-				  CoreStyleConstants::Icon22x22));
-	StyleSet->Set("GameFlow.Editor.CompileIcon.Unknown", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/CompileStatus_Unknown_Badge"),
-				  CoreStyleConstants::Icon22x22));
-	
-// Unreal Engine 4 style
-#elif ENGINE_MAJOR_VERSION == 4
-    
+	// Unreal Engine 5 Debug features styling
+	{
+		// Breakpoints.
+		StyleSet->Set("GameFlow.Editor.Debug.EnabledBreakpoint", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/Breakpoint_Valid"),
+								   CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Debug.DisabledBreakpoint", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/Breakpoint_Disabled"),
+								   CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Debug.InvalidBreakpoint", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/Breakpoint_Invalid"),
+								   CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Debug", new IMAGE_BRUSH_SVG(TEXT("Starship/Common/Bug"),
+								   CoreStyleConstants::Icon22x22));
+
+		// Debugging tools styling
+		StyleSet->Set("GameFlow.Editor.Debug.BlueprintDebugger", new IMAGE_BRUSH_SVG(TEXT("Starship/Blueprints/Common/BlueprintDebugger"),
+								   CoreStyleConstants::Icon22x22));
+	}
 #endif
-	
+
+	// Engine version independent styling.
+	{
+		StyleSet->Set("GameFlow.Editor.Debug.Icon.EnabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Valid_Small"),
+								  CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Debug.Icon.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled_Small"),
+								  CoreStyleConstants::Icon22x22));
+	}
 }
 
 FGameFlowEditorStyle::~FGameFlowEditorStyle()

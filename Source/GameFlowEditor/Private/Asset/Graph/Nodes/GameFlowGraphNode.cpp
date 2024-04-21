@@ -16,6 +16,41 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 	ContextMenuCommands = MakeShared<FUICommandList>();
 }
 
+void UGameFlowGraphNode::ConfigureContextMenuAction()
+{
+	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
+	
+	ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnReplacementRequest));
+	ContextMenuCommands->MapAction(GraphNodeCommands.ValidateNode,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
+	ContextMenuCommands->MapAction(GraphNodeCommands.AddBreakpoint,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnAddBreakpointRequest));
+	ContextMenuCommands->MapAction(GraphNodeCommands.RemoveBreakpoint,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnRemoveBreakpointRequest));
+}
+
+void UGameFlowGraphNode::PostPlacedNewNode()
+{
+	Super::PostPlacedNewNode();
+
+	// Initialize node.
+	CreateNodePins(false);
+	
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	// Get node asset info from config.
+	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+
+	// Listen to game flow assets events.
+	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
+	
+	// Listen to Unreal Editor blueprint compilation events.
+	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
+	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
+
+	ConfigureContextMenuAction();
+}
+
 void UGameFlowGraphNode::OnReplacementRequest()
 {
 	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
@@ -37,37 +72,18 @@ void UGameFlowGraphNode::OnValidationRequest()
 	Schema->ValidateNodeAsset(this);
 }
 
-void UGameFlowGraphNode::ConfigureContextMenuAction()
+void UGameFlowGraphNode::OnAddBreakpointRequest()
 {
-	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
+	NodeAsset->bBreakpointEnabled = true;
 	
-	ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
-		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnReplacementRequest));
-
-	ContextMenuCommands->MapAction(GraphNodeCommands.ValidateNode,
-		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
+	// TODO Add UI image to indicate breakpoint
 }
 
-void UGameFlowGraphNode::InitNode()
+void UGameFlowGraphNode::OnRemoveBreakpointRequest()
 {
-	// Vital assertions.
-	checkf(NodeAsset != nullptr, TEXT("Node asset is invalid(nullptr)"));
-
-	// Initialize node.
-	CreateNodePins(false);
+	NodeAsset->bBreakpointEnabled = false;
 	
-	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
-	// Get node asset info from config.
-	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-
-	// Listen to game flow assets events.
-	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
-	
-	// Listen to Unreal Editor blueprint compilation events.
-	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
-	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
-
-	ConfigureContextMenuAction();
+	// TODO Remove UI image which indicates a breakpoint
 }
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
@@ -105,7 +121,7 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 		NodeAsset->RemoveOutputPort(Pin->PinName);
 	}
 
-	// Recreate logical connections between game flow nodes using graph data.
+	// Recreate logical connections between game flow nodes using graph pin data.
 	for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
 	{
 		UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
@@ -118,8 +134,6 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 			NodeAsset->AddOutputPort(Pin->PinName, {ConnectedPin->PinName, ConnectedNodeAsset});
 		}
 	}
-
-	UE_LOG(LogGameFlow, Display, TEXT("%s connection list changed"), *NodeAsset->GetName())
 }
 
 void UGameFlowGraphNode::DestroyNode()
@@ -198,7 +212,7 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 		
 		// Pin debug actions
 		{
-			// TODO Should implement pin debug context actions.
+			// TODO Should implement pin debug actions.
 		}
 	}
 	else if(Context->Node != nullptr)
@@ -215,7 +229,9 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 
 		// Debug actions
 		{
-			// TODO Should implement debug context actions.
+			FToolMenuSection& DebugSection = Menu->AddSection("DebugSection", NSLOCTEXT("FGameFlowNode", "NodeDebugContextAction", "Debug"));
+			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.AddBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveBreakpoint, ContextMenuCommands);
 		}
 	} 
 }

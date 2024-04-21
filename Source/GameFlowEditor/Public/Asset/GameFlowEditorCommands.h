@@ -7,9 +7,8 @@ public:
 	
 	FGameFlowEditorCommands();
 	
-	TSharedPtr<FUICommandInfo> CompileAsset;
-    TSharedPtr<FUICommandInfo> CompileOnSave;
-	TSharedPtr<FUICommandInfo> LiveCompile;
+	TSharedPtr<FUICommandInfo> ValidateAsset;
+	TSharedPtr<FUICommandInfo> DebugAsset;
 	
 	/** Register Game Flow editor input commands. */
 	virtual void RegisterCommands() override;

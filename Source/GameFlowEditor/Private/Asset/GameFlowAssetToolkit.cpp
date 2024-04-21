@@ -138,11 +138,8 @@ void GameFlowAssetToolkit::CreateAssetMenu()
 		// If true, Create a new Game Flow section inside the Asset tool menu.
 		FToolMenuSection& Section = AssetMenu->FindOrAddSection("AssetFlow");
 		Section.Label = INVTEXT("Game Flow");
-		
-		// Add compile command to Asset tool menu, inside 'Game Flow' section.
-		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileAsset, ToolkitCommands);
-		Section.AddMenuEntryWithCommandList(GameFlowCommands.CompileOnSave, ToolkitCommands);
-		Section.AddMenuEntryWithCommandList(GameFlowCommands.LiveCompile, ToolkitCommands);
+
+		Section.AddMenuEntryWithCommandList(GameFlowCommands.ValidateAsset, ToolkitCommands);
 	}
 }
 
@@ -160,8 +157,9 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 	{
 		// If true, Create a new Game Flow section inside the Asset tool menu.
 		FToolMenuSection& GameFlowSection = AssetToolbar->FindOrAddSection("Game_flow");
-		GameFlowSection.AddEntry(FToolMenuEntry::InitToolBarButton(GameFlowCommands.CompileAsset));
-
+		GameFlowSection.AddEntry(FToolMenuEntry::InitToolBarButton(GameFlowCommands.ValidateAsset));
+		GameFlowSection.AddEntry(FToolMenuEntry::InitToolBarButton(GameFlowCommands.DebugAsset));
+		
 		// Create toolbar play section(Play section is the part of the toolbar of Unreal which
 		// contains actions to start the editor game application).
 		FToolMenuSection& PlaySection = AssetToolbar->FindOrAddSection("Play");

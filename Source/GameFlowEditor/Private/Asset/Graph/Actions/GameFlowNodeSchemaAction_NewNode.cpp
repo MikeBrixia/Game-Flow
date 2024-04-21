@@ -88,7 +88,6 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 	
 	// Create asset and respective graph node
 	GraphNode->SetNodeAsset(NewNode);
-	GraphNode->InitNode();
 	
 	// Add the graph node to the outer graph.
 	GameFlowGraph->AddNode(GraphNode, false, false);
@@ -118,7 +117,6 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UG
 	
 	// Create asset and respective graph node
 	GraphNode->SetNodeAsset(NodeAsset);
-	GraphNode->InitNode();
 	
 	// Add the graph node to the outer graph.
 	GameFlowGraph->AddNode(GraphNode, false, false);

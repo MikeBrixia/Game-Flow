@@ -10,4 +10,6 @@ public:
 
 	TSharedPtr<FUICommandInfo> ReplaceNode;
 	TSharedPtr<FUICommandInfo> ValidateNode;
+	TSharedPtr<FUICommandInfo> AddBreakpoint;
+	TSharedPtr<FUICommandInfo> RemoveBreakpoint;
 };

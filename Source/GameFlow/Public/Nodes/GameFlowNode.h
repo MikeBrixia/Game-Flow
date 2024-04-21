@@ -32,10 +32,10 @@ DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default")
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
-	
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	friend class UGameFlowGraphNode;
+	
 	GENERATED_BODY()
 
 #if WITH_EDITORONLY_DATA
@@ -49,25 +49,32 @@ public:
 	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
 
+	/** True if user has placed a breakpoint on this specific node, false otherwise.
+	 * When true, execution of the game flow asset will be paused on this node and
+	 * should be resumed manually by the user.
+	 */
+	bool bBreakpointEnabled;
+	
 	/** Called when this asset gets deleted and replaced or hot-reloaded(C++ compilation) */
 	FOnAssetRedirected OnAssetRedirected;
 	
 protected:
+
+	/** All the input pins of the node */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
 	
-	/* All the possible output pins for this node. */
+	/** All the output pins of the node */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     TArray<FName> OutputPins;
 
-	/* True if this node should have a variable amount of input pins */
+	/** True if this node should have a variable amount of input pins */
     UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     bool bCanAddInputPin;
 
-	/* True if this node should have a variable amount of input pins */
+	/** True if this node should have a variable amount of input pins */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
-
 #endif
 	
 private:
