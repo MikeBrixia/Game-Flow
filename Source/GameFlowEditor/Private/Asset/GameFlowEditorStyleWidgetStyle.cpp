@@ -56,6 +56,14 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 
 	// Engine version independent styling.
 	{
+		StyleSet->Set("GameFlow.Editor.Default.Add", new IMAGE_BRUSH(TEXT("Icons/icon_add_40x"),
+								  CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Default.RemoveNode", new IMAGE_BRUSH(TEXT("Icons/Edit/icon_Edit_Delete_40x"),
+								  CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Default.BreakpointDelete", new IMAGE_BRUSH(TEXT("Icons/GenericDelete_Hovered"),
+								  CoreStyleConstants::Icon22x22));
+		StyleSet->Set("GameFlow.Editor.Default.Node", new IMAGE_BRUSH(TEXT("Graph/Icons/Node"),
+								  CoreStyleConstants::Icon22x22));
 		StyleSet->Set("GameFlow.Editor.Debug.Icon.EnabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Valid_Small"),
 								  CoreStyleConstants::Icon22x22));
 		StyleSet->Set("GameFlow.Editor.Debug.Icon.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled_Small"),

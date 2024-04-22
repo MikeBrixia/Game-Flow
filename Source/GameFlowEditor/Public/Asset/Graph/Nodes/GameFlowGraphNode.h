@@ -125,14 +125,20 @@ public:
 		return OutputPinInfo;
 	}
 
-protected:
+private:
 	///////  GRAPH NODE CONTEXT ACTIONS EVENTS  ///////////
-    void OnReplacementRequest();
+	void OnReplacementRequest();
 	void OnValidationRequest();
 	void OnAddBreakpointRequest();
 	void OnRemoveBreakpointRequest();
-	///////////////////////////////////////////////////////
-private:
+	void OnDisableBreakpointRequest();
+	void OnEnableBreakpointRequest();
+	//////// GRAPH NODE CONTEXT ACTIONS STATE CONDITIONS ///
+	FORCEINLINE bool CanAddBreakpoint() const { return !NodeAsset->bBreakpointEnabled; }
+	FORCEINLINE bool CanRemoveBreakpoint() const { return NodeAsset->bBreakpointEnabled; }
+	FORCEINLINE bool CanEnableBreakpoint() const { return !NodeAsset->bBreakpointEnabled; }
+	FORCEINLINE bool CanDisableBreakpoint() const { return NodeAsset->bBreakpointEnabled; }
+	////////////////////////////////////////////////////////
 	void ConfigureContextMenuAction();
 };
 

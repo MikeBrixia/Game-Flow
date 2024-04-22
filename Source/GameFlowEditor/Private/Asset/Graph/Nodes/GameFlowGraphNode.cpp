@@ -19,15 +19,51 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 void UGameFlowGraphNode::ConfigureContextMenuAction()
 {
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
+    
+	// Configure core commands
+	{
+		ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnReplacementRequest),
+								   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanBeReplaced),
+								   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanBeReplaced),
+								   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanBeReplaced));
+		
+		ContextMenuCommands->MapAction(GraphNodeCommands.RemoveNode,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::DestroyNode),
+								   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanUserDeleteNode),
+								   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanUserDeleteNode),
+								   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanUserDeleteNode));
+		
+		ContextMenuCommands->MapAction(GraphNodeCommands.ValidateNode,
+		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
+	}
+
+	// Configure debug commands
+	{
+		ContextMenuCommands->MapAction(GraphNodeCommands.AddBreakpoint,
+								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnAddBreakpointRequest),
+								   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanAddBreakpoint),
+								   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanAddBreakpoint),
+								   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanAddBreakpoint));
 	
-	ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
-								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnReplacementRequest));
-	ContextMenuCommands->MapAction(GraphNodeCommands.ValidateNode,
-								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
-	ContextMenuCommands->MapAction(GraphNodeCommands.AddBreakpoint,
-								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnAddBreakpointRequest));
-	ContextMenuCommands->MapAction(GraphNodeCommands.RemoveBreakpoint,
-								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnRemoveBreakpointRequest));
+		ContextMenuCommands->MapAction(GraphNodeCommands.RemoveBreakpoint,
+									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnRemoveBreakpointRequest),
+									   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanRemoveBreakpoint),
+									   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanRemoveBreakpoint),
+									   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanRemoveBreakpoint));
+		
+		ContextMenuCommands->MapAction(GraphNodeCommands.EnableBreakpoint,
+									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnEnableBreakpointRequest),
+									   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanEnableBreakpoint),
+									   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanEnableBreakpoint),
+									   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanEnableBreakpoint));
+
+		ContextMenuCommands->MapAction(GraphNodeCommands.DisableBreakpoint,
+									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnDisableBreakpointRequest),
+									   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanDisableBreakpoint),
+									   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanDisableBreakpoint),
+									   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanDisableBreakpoint));
+	}
 }
 
 void UGameFlowGraphNode::PostPlacedNewNode()
@@ -84,6 +120,18 @@ void UGameFlowGraphNode::OnRemoveBreakpointRequest()
 	NodeAsset->bBreakpointEnabled = false;
 	
 	// TODO Remove UI image which indicates a breakpoint
+}
+
+void UGameFlowGraphNode::OnDisableBreakpointRequest()
+{
+	NodeAsset->bBreakpointEnabled = false;
+	// TODO Implement breakpoint disabling logic.
+}
+
+void UGameFlowGraphNode::OnEnableBreakpointRequest()
+{
+	NodeAsset->bBreakpointEnabled = true;
+	// TODO Implement breakpoint enabling logic.
 }
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
@@ -221,10 +269,8 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 		{
 			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
-			if(CanBeReplaced())
-			{
-				GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
-			}
+			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
+			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveNode, ContextMenuCommands);
 		}
 
 		// Debug actions
@@ -232,6 +278,8 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 			FToolMenuSection& DebugSection = Menu->AddSection("DebugSection", NSLOCTEXT("FGameFlowNode", "NodeDebugContextAction", "Debug"));
 			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.AddBreakpoint, ContextMenuCommands);
 			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.EnableBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.DisableBreakpoint, ContextMenuCommands);
 		}
 	} 
 }
