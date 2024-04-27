@@ -68,6 +68,12 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 								  CoreStyleConstants::Icon22x22));
 		StyleSet->Set("GameFlow.Editor.Debug.Icon.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled_Small"),
 								  CoreStyleConstants::Icon22x22));
+
+		// Editor assets icons
+		{
+			StyleSet->Set("GameFlow.Editor.Default.AssetIcon", new IMAGE_BRUSH(TEXT("Icons/icon_Blueprint_AddGraph_512px"),
+								  CoreStyleConstants::Icon22x22));
+		}
 	}
 }
 

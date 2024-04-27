@@ -144,11 +144,6 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 	return SubstituteNode;
 }
 
-void UGameFlowGraphSchema::AlignNodeAssetToGraphNode(UGameFlowGraphNode* GraphNode) const
-{
-    // TODO: Node alignement logic to fixup differences between graph nodes and assets.
-}
-
 void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
 	Super::GetGraphContextActions(ContextMenuBuilder);
@@ -199,8 +194,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	const FString ClassName = NodeClass->GetName();
 	
 	GraphNode->bHasCompilerMessage = false;
-	NodeAsset->ValidateAsset();
-	AlignNodeAssetToGraphNode(GraphNode);
+	GraphNode->ErrorType = 0;
 	
 	// When a node is of a class which has been marked as 'Abstract', proceed
 	// by replacing all associated instances of this class from the Game Flow asset.
@@ -209,7 +203,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 		UE_LOG(LogGameFlow, Error, TEXT( "%s class is abstract! all instances of this class will be invalidated and should be replaced."), *ClassName);
 		GraphNode->ReportError(EMessageSeverity::Error);
 	}
-
+	
 	// When a node has been marked as deprecated, log a warning to the console
 	// and inform users they should replace or remove that node in the near future.
 	if (NodeClass->HasAnyClassFlags(CLASS_Deprecated))

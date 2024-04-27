@@ -22,19 +22,15 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	// The asset being edited.
 	Asset = CastChecked<UGameFlowAsset>(InObjects[0]);
 	
-	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
-	// Mark this editor as an active by registering it inside GameFlow editor subsystem.
-	EditorSubsystem->RegisterActiveEditor(this);
-	
-	// Create the graph.
-	UGameFlowGraph* Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
-	GraphWidget = SNew(SGameFlowGraph, SharedThis(this))
-			       .GraphToEdit(Graph);
+	// Create logical and graphical game flow graph.
+	CreateGraph();
 	
 	// Initialize all different components of the Game Flow editor.
 	EditorLayout = CreateEditorLayout();
 	InitAssetEditor(EToolkitMode::Standalone, {}, "GameFlowAssetEditor",
 				   EditorLayout->AsShared(), true, true, InObjects);
+
+	// Create editor interaction components.
 	ConfigureInputs();
 	CreateAssetMenu();
 	CreateAssetToolbar();
@@ -42,10 +38,6 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 
 bool GameFlowAssetToolkit::OnRequestClose()
 {
-	UGameFlowEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
-	// Mark this editor as an inactive by unregistering it from GameFlow editor subsystem.
-	EditorSubsystem->UnregisterActiveEditor(this);
-	
 	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
 	return true;
 }
@@ -119,9 +111,24 @@ void GameFlowAssetToolkit::ConfigureInputs()
 {
 	// Get all Game Flow editor commands.
 	const FGameFlowEditorCommands& GameFlowCommands = FGameFlowEditorCommands::Get();
-	
+
+	ToolkitCommands->MapAction(GameFlowCommands.ValidateAsset,
+		FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::OnValidateRequest));
 	// Engine's Play commands.
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+}
+
+void GameFlowAssetToolkit::CreateGraph()
+{
+	// Create the graph.
+	UGameFlowGraph* Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
+
+	// Listen for game flow graph events.
+	Graph->OnGraphNodesSelected.BindRaw(this, &GameFlowAssetToolkit::DisplaySelectedNodes);
+
+	// Create UI widget from logical graph.
+	GraphWidget = SNew(SGameFlowGraph, SharedThis(this))
+				   .GraphToEdit(Graph);
 }
 
 void GameFlowAssetToolkit::CreateAssetMenu()
@@ -169,13 +176,27 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 
 void GameFlowAssetToolkit::SaveAsset_Execute()
 {
-	// If there's at least one listener, broadcast save asset event.
-	if(OnAssetSavedCallback.IsBound())
-	{
-		OnAssetSavedCallback.Broadcast();
-	}
-
 	FAssetEditorToolkit::SaveAsset_Execute();
+	
+	// If there's at least one listener, broadcast save asset event.
+	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
+    Graph->OnSaveGraph();
+    
+	UE_LOG(LogGameFlow, Display, TEXT("%s asset saved successfully!"), *Graph->GameFlowAsset->GetName())
+}
+
+void GameFlowAssetToolkit::OnValidateRequest()
+{
+	// If there's at least one listener, broadcast save asset event.
+	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
+    Graph->OnValidateGraph();
+
+	UE_LOG(LogGameFlow, Display, TEXT("%s asset validated successfully!"), *Asset->GetName())
+}
+
+void GameFlowAssetToolkit::OnDebugRequest()
+{
+	// TODO implement debug mode.
 }
 
 void GameFlowAssetToolkit::PostUndo(bool bSuccess)
@@ -195,6 +216,22 @@ void GameFlowAssetToolkit::ExecuteUndoRedo()
 	GraphWidget->ClearSelectionSet();
 	GraphWidget->NotifyGraphChanged();
 	FSlateApplication::Get().DismissAllMenus();
+}
+
+void GameFlowAssetToolkit::DisplaySelectedNodes(TSet<UGameFlowGraphNode*> Nodes)
+{
+	// Array of selected nodes assets.
+	TArray<UObject*> SelectedAssets;
+	
+	// Build selected nodes assets array.
+	for(const UGameFlowGraphNode* SelectedNode : Nodes)
+	{
+		UGameFlowNode* NodeAsset = SelectedNode->GetNodeAsset();
+		SelectedAssets.Add(NodeAsset);
+	}
+
+	// Inspect selected nodes inside editor nodes details view.
+	NodesDetailsView->SetObjects(SelectedAssets);
 }
 
 void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)

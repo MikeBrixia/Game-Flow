@@ -20,10 +20,9 @@ void UGameFlowGraph::InitGraph()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	
-	const UGameFlowEditorSubsystem* GameFlowEditorSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
-	GameFlowEditor = GameFlowEditorSubsystem->GetActiveEditorByAssetName(GameFlowAsset->GetFName());
-	// Register to Game Flow editor commands.
-	SubscribeToEditorCallbacks(GameFlowEditor);
+	// Listen to editor events.
+	FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
+	FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
 	
 	// Create default nodes only on first-time asset editor opening.
 	if(!GameFlowAsset->bHasAlreadyBeenOpened)
@@ -35,24 +34,6 @@ void UGameFlowGraph::InitGraph()
 	else
 	{
 		RebuildGraphFromAsset();
-	}
-}
-
-void UGameFlowGraph::SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor)
-{
-	if(Editor != nullptr)
-	{
-		// Cpp compilation callbacks, both for Live Coding and Hot Reload.
-		FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
-		FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
-		
-		FOnAssetSaved& SaveCallback = Editor->GetAssetSavedCallback();
-		SaveCallback.AddUObject(this, &UGameFlowGraph::OnSaveGraph);
-	}
-	else
-	{
-		UE_LOG(LogGameFlow, Warning, TEXT("Warning: %s Asset Editor could not be found! This may prevent graph from reacting to editor events/commands"),
-			*GameFlowAsset->GetName());
 	}
 }
 
@@ -105,6 +86,12 @@ void UGameFlowGraph::OnSaveGraph()
 	}
 }
 
+void UGameFlowGraph::OnValidateGraph()
+{
+	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	GraphSchema->ValidateAsset(*this);
+}
+
 #if WITH_HOT_RELOAD
 
 void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
@@ -134,14 +121,14 @@ void UGameFlowGraph::OnLiveCompile(FName Name)
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
 	Super::NotifyGraphChanged(Action);
+	// We want to use a set of UGameFlowGraphNode type.
 	const TSet<UGameFlowGraphNode*> ModifiedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(Action.Nodes);
 	
-	// We want to use a set of UGameFlowGraphNode type.
 	switch(Action.Action)
 	{
 		case GRAPHACTION_SelectNode:
 			{
-				OnNodesSelected(ModifiedNodes);
+				OnGraphNodesSelected.ExecuteIfBound(ModifiedNodes);
 				break;
 			}
 	    case GRAPHACTION_AddNode:
@@ -159,7 +146,7 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	}
 }
 
-void UGameFlowGraph::OnDummyReplacementRequest()
+void UGameFlowGraph::OnReplaceGraphNode()
 {
 	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);
 	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
@@ -175,22 +162,6 @@ void UGameFlowGraph::OnDummyReplacementRequest()
 		ReplaceNodeAction.PerformAction_ReplaceAll(GraphNodes, this);
 	}
 	
-}
-
-void UGameFlowGraph::OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes)
-{
-	// Array of selected nodes assets.
-	TArray<UObject*> SelectedAssets;
-	
-	// Build selected nodes assets array.
-	for(const UGameFlowGraphNode* SelectedNode : SelectedNodes)
-	{
-		UGameFlowNode* NodeAsset = SelectedNode->GetNodeAsset();
-		SelectedAssets.Add(NodeAsset);
-	}
-				
-	// Inspect selected nodes inside editor nodes details view.
-	GameFlowEditor->NodesDetailsView->SetObjects(SelectedAssets);
 }
 
 void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes)
@@ -220,7 +191,9 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	// e.g. their input pins have no links.
 	for(UGameFlowNode* NodeAsset : GameFlowAsset->Nodes)
 	{
-		FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this);
+		UGameFlowGraphNode* GraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this);
+		GraphNode->NodePosX = NodeAsset->GraphPosition.X;
+		GraphNode->NodePosY = NodeAsset->GraphPosition.Y;
 	}
 	 
 	// Recreate all graph node connections.

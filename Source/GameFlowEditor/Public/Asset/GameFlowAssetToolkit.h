@@ -34,6 +34,7 @@ protected:
 	
 	virtual bool OnRequestClose() override;
 	virtual void ConfigureInputs();
+	virtual void CreateGraph();
 	virtual void CreateAssetMenu();
 	virtual void CreateAssetToolbar();
     
@@ -43,7 +44,8 @@ protected:
 	FOnAssetSaved OnAssetSavedCallback;
 	
 	virtual void SaveAsset_Execute() override;
-
+    void OnValidateRequest();
+	void OnDebugRequest();
 public:
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
@@ -53,6 +55,8 @@ public:
 private:
     /** Apply undo/redo registered actions to game flow editor. */
 	void ExecuteUndoRedo();
+	/** Display selected nodes inside node details panel. */
+	void DisplaySelectedNodes(TSet<UGameFlowGraphNode*> Nodes);
 	
 	// ---------------------- EDITOR LAYOUT -------------------------------------------------------
 

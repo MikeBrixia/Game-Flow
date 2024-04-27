@@ -190,49 +190,6 @@ void UGameFlowNode::OnPinRemoved(FName PinName)
 	}
 }
 
-void UGameFlowNode::ValidateAsset()
-{
-	TArray<FName> InputKeys;
-	Inputs.GetKeys(InputKeys);
-	for(const auto& PinPair : Inputs)
-	{
-		FName InputPinName = PinPair.Key;
-		const FName ConnectedPinName = PinPair.Value.InputPinName;
-		UGameFlowNode* ConnectedNode = PinPair.Value.Node;
-		
-		// If there's a mismatch between the input keys
-		// and input pins array, correct it.
-		if(!InputPins.Contains(InputPinName))
-		{
-			RemoveInputPin(InputPinName);
-			if(ConnectedNode != nullptr)
-			{
-				ConnectedNode->RemoveOutputPin(ConnectedPinName);
-			}
-		}
-	}
-	
-	TArray<FName> OutputKeys;
-	Outputs.GenerateKeyArray(OutputKeys);
-	for(const auto& PinPair : Outputs)
-	{
-		FName InputPinName = PinPair.Key;
-		const FName ConnectedPinName = PinPair.Value.InputPinName;
-		UGameFlowNode* ConnectedNode = PinPair.Value.Node;
-		
-		// If there's a mismatch between the input keys
-		// and input pins array, correct it.
-		if(!InputPins.Contains(InputPinName))
-		{
-			RemoveOutputPin(InputPinName);
-			if(ConnectedNode != nullptr)
-			{
-				ConnectedNode->RemoveInputPin(ConnectedPinName);
-			}
-		}
-	}
-}
-
 void UGameFlowNode::AddInputPin(const FName PinName, const FGameFlowPinNodePair Input)
 {
 	// Add input pin if not already present.

@@ -3,7 +3,8 @@
 #include "GameFlowAsset.h"
 #include "GameFlowEditor.h"
 #include "Asset/GameFlowAssetToolkit.h"
-#include "Utils/GameFlowEditorSubsystem.h"
+#include "Asset/GameFlowEditorStyleWidgetStyle.h"
+#include "Styling/SlateStyleRegistry.h"
 
 FGameFlowAssetTypeAction::FGameFlowAssetTypeAction()
 {
@@ -29,18 +30,23 @@ FColor FGameFlowAssetTypeAction::GetTypeColor() const
 	return FColor::Orange;
 }
 
+const FSlateBrush* FGameFlowAssetTypeAction::GetIconBrush(const FAssetData& InAssetData, const FName InClassName) const
+{
+	const ISlateStyle* Style = FSlateStyleRegistry::FindSlateStyle(FGameFlowEditorStyle::TypeName);
+	return Style->GetBrush("GameFlow.Editor.Default.AssetIcon");
+}
+
+const FSlateBrush* FGameFlowAssetTypeAction::GetThumbnailBrush(const FAssetData& InAssetData,
+	const FName InClassName) const
+{
+	const ISlateStyle* Style = FSlateStyleRegistry::FindSlateStyle(FGameFlowEditorStyle::TypeName);
+	return Style->GetBrush("GameFlow.Editor.Default.AssetIcon");
+}
+
 void FGameFlowAssetTypeAction::OpenAssetEditor(const TArray<UObject*>& InObjects,
-	TSharedPtr<IToolkitHost> EditWithinLevelEditor)
+                                               TSharedPtr<IToolkitHost> EditWithinLevelEditor)
 {
 	// Create and initialize game flow asset editor.
 	const TSharedPtr<GameFlowAssetToolkit> Editor = MakeShared<GameFlowAssetToolkit>();
 	Editor->InitEditor(InObjects);
-	
-	// Is the global engine pointer valid?
-	if(GEditor)
-	{
-		// If true, then register the new asset editor as an active editor inside game flow editor subsystem.
-		UGameFlowEditorSubsystem* GameFlowSubsystem = GEditor->GetEditorSubsystem<UGameFlowEditorSubsystem>();
-		GameFlowSubsystem->RegisterActiveEditor(Editor.Get());
-	}
 }

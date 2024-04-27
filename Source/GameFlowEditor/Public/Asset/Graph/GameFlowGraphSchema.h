@@ -103,14 +103,4 @@ public:
 	 * @return The substituted graph node.
 	 */
 	virtual UEdGraphNode* CreateSubstituteNode(UEdGraphNode* Node, const UEdGraph* Graph, FObjectInstancingGraph* InstanceGraph, TSet<FName>& InOutExtraNames) const override;
-
-protected:
-	
-	/**
-	 * Ensure that the graph node and it's contained node asset data are not different.
-	 * @remarks This is mainly used to avoid situations where the graph node pins and connections
-	 *          do not match the node asset ones.
-	 * @param GraphNode The graph node to check and align.
-	 */
-	void AlignNodeAssetToGraphNode(UGameFlowGraphNode* GraphNode) const;
 };

@@ -10,6 +10,8 @@
 
 class GameFlowAssetToolkit;
 
+DECLARE_DELEGATE_OneParam(FOnGraphNodesSelected, TSet<UGameFlowGraphNode*>)
+
 /**
  * Class representing a Game Flow graph.
  * The graph is responsible for managing and containing
@@ -25,6 +27,9 @@ public:
 	UPROPERTY()
 	TObjectPtr<UGameFlowAsset> GameFlowAsset;
 
+	/** Called when graph nodes gets selected*/
+	FOnGraphNodesSelected OnGraphNodesSelected;
+	
 private:
 	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 	
@@ -32,8 +37,7 @@ public:
 	UGameFlowGraph();
 	
 	void InitGraph();
-	virtual void SubscribeToEditorCallbacks(GameFlowAssetToolkit* Editor);
-    
+	
 	/**
 	 * @brief Find all graph nodes with an asset of requested type inside the graph.
 	 * @param NodeClass The requested type.
@@ -47,7 +51,7 @@ public:
 	 * @return Associated graph node.
 	 */
 	UGameFlowGraphNode* GetGraphNodeByAsset(const UGameFlowNode* NodeAsset) const;
-
+	
 	/**
 	 * @brief Find all orphan nodes inside the graph.
 	 * @return An array of orphan graph nodes.
@@ -55,7 +59,8 @@ public:
 	TArray<UGameFlowGraphNode*> GetOrphanNodes() const;
 	
 	void OnSaveGraph();
-	void OnDummyReplacementRequest();
+	void OnValidateGraph();
+	void OnReplaceGraphNode();
     
 #if WITH_HOT_RELOAD
 	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
@@ -69,7 +74,6 @@ public:
 protected:
 	virtual void OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes);
 	virtual void OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes);
-	virtual void OnNodesSelected(const TSet<UGameFlowGraphNode*> SelectedNodes);
 };
 
 

@@ -144,10 +144,14 @@ void SGameFlowNode::AddButton_CreatePin(EEdGraphPinDirection PinDirection)
 void SGameFlowNode::UpdateErrorInfo()
 {
 	SGraphNode::UpdateErrorInfo();
-	// If node presents an error, render it transparent.
+	// Change render opacity based on error state.
 	if(GraphNode->ErrorType == EMessageSeverity::Error)
 	{
 		this->RenderOpacity = .5f;
+	}
+	else
+	{
+		this->RenderOpacity = 1.f;
 	}
 }
 

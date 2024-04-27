@@ -131,7 +131,6 @@ public:
 	void OnInputPinValueSet(FName PinName, int PinArrayIndex);
 	void OnOutputPinValueSet(FName PinName, int PinArrayIndex);
 	void OnPinRemoved(FName PinName);
-	void ValidateAsset();
 	
 	/**
 	 * @brief Add a new output pin to this node.

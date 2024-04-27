@@ -69,9 +69,6 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 void UGameFlowGraphNode::PostPlacedNewNode()
 {
 	Super::PostPlacedNewNode();
-
-	// Initialize node.
-	CreateNodePins(false);
 	
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
@@ -84,6 +81,8 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 
+	// Initialize node.
+	AllocateDefaultPins();
 	ConfigureContextMenuAction();
 }
 
@@ -112,26 +111,26 @@ void UGameFlowGraphNode::OnAddBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = true;
 	
-	// TODO Add UI image to indicate breakpoint
+	// TODO Implement debug features
 }
 
 void UGameFlowGraphNode::OnRemoveBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = false;
 	
-	// TODO Remove UI image which indicates a breakpoint
+	// TODO Implement debug features
 }
 
 void UGameFlowGraphNode::OnDisableBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = false;
-	// TODO Implement breakpoint disabling logic.
+	// TODO Implement debug features
 }
 
 void UGameFlowGraphNode::OnEnableBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = true;
-	// TODO Implement breakpoint enabling logic.
+	// TODO Implement debug features
 }
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
@@ -241,7 +240,17 @@ void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
-	CreateNodePins(false);
+	// Read input pins names from node asset and create graph pins.
+	for(const FName& PinName : NodeAsset->GetInputPins())
+	{
+		CreateNodePin(EGPD_Input, PinName, false);
+	}
+
+	// Read output pins names from node asset and create graph pins.
+	for(const FName& PinName : NodeAsset->GetOutputPins())
+	{
+		CreateNodePin(EGPD_Output, PinName, false);
+	}
 }
 
 void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
@@ -357,7 +366,7 @@ void UGameFlowGraphNode::ReconstructNode()
 	
 	BreakAllNodeLinks();
 	Pins.Empty();
-	CreateNodePins(false);
+	AllocateDefaultPins();
 	
 	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
 	// Recompile node and recreate it's node connections.
@@ -413,21 +422,6 @@ void UGameFlowGraphNode::OnRenameNode(const FString& NewName)
 	{
 		// Notify the user there has been an error with node renaming.
 		UE_LOG(LogGameFlow, Error, TEXT("Object name '%s' is already in use inside '%s' asset!"), *NewName, *GameFlowAsset->GetName())
-	}
-}
-
-void UGameFlowGraphNode::CreateNodePins(bool bAddToAsset)
-{
-	// Read input pins names from node asset and create graph pins.
-	for(const FName& PinName : NodeAsset->GetInputPins())
-	{
-		CreateNodePin(EGPD_Input, PinName, bAddToAsset);
-	}
-
-	// Read output pins names from node asset and create graph pins.
-	for(const FName& PinName : NodeAsset->GetOutputPins())
-	{
-		CreateNodePin(EGPD_Output, PinName, bAddToAsset);
 	}
 }
 
