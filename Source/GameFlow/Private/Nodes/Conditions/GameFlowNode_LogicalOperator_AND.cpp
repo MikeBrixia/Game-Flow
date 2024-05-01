@@ -32,13 +32,13 @@ void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName& PinN
 	// numerical input pin ports.
 	if(PinText.IsNumeric())
 	{
-		const int32 PinNameIndex = UKismetStringLibrary::Conv_StringToInt(PinName.ToString());
+		const int32 PinNameIndex = UKismetStringLibrary::Conv_StringToInt(PinName.ToString()) - 1;
 		const bool bPortValue = ConditionalPorts[PinNameIndex];
 		// Is this port false(Has not been executed yet).
 		if(!bPortValue)
 		{
 			// Update node conditional ports state.
-			ConditionalPorts[PinNameIndex - 1] = true;
+			ConditionalPorts[PinNameIndex] = true;
 			TruePortsNum++;
 		}
 	}
