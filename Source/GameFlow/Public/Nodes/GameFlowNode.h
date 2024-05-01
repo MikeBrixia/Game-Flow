@@ -93,9 +93,9 @@ private:
 public:
 	UGameFlowNode();
 	
-	/* Execute GameFlow blueprint. */
+	/* Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	void Execute(const FName& PinName);
+	void Execute(const FName& PinName = "Exec");
 	virtual void Execute_Implementation(const FName& PinName);
 	
 	FORCEINLINE virtual FGameFlowPinNodePair GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }

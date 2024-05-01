@@ -24,23 +24,26 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 	{
 		const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
 		const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
+
+		const bool bValidDirection = bFromInputToOutput || bFromOutputToInput;
+		const bool bAlreadyHasConnection = A->Direction == EGPD_Output && A->LinkedTo.Num() > 0;
 		// Allow only connections between one output and input pins.
-		if (bFromInputToOutput || bFromOutputToInput)
+		if (bValidDirection && !bAlreadyHasConnection)
 		{
 			ConnectionResponse.Response = CONNECT_RESPONSE_MAKE;
-			ConnectionResponse.Message = INVTEXT("Node connection allowed");
+			ConnectionResponse.Message = INVTEXT("Connection allowed");
 		}
 		else
 		{
 			ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
-			ConnectionResponse.Message = INVTEXT("Node connection is not allowed");
+			ConnectionResponse.Message = INVTEXT("Connection not allowed");
 		}
 	}
 	// Otherwise, just reject it.
 	else
 	{
 		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
-		ConnectionResponse.Message = INVTEXT("Connections refused: one or both pins are invalid(nullptr)");
+		ConnectionResponse.Message = INVTEXT("Recursion detected: connection not allowed");
 	}
 	
 	return ConnectionResponse;

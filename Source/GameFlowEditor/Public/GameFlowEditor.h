@@ -22,6 +22,10 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	/* Called each time the user deletes an asset from the editor. */
-	void OnGameFlowAssetsRemoved(TArray<UClass*>& AssetsRemoved);
+private:
+	void InitializeCppScriptTemplates();
+	void RemoveCppScriptTemplates();
+	
+	FORCEINLINE FString GetScriptTemplatesPath() const { return FPaths::ProjectPluginsDir() / "GameFlow/Config/ScriptTemplates/"; }
+	FORCEINLINE FString GetEngineScriptTemplatesPath() const { return FPaths::EngineContentDir() / "Editor/Templates/"; }
 };

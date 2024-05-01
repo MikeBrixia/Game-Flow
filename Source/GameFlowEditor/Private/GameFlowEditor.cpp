@@ -7,7 +7,6 @@
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
 
@@ -36,8 +35,8 @@ void FGameFlowEditorModule::StartupModule()
 		// Register Game Flow assets.
 		GameFlowAsset = MakeShared<FGameFlowAssetTypeAction>();
 		AssetToolModule.Get().RegisterAssetTypeActions(GameFlowAsset.ToSharedRef());
-        
-		// Register game flow stylesheets.
+		
+		// Register Game Flow stylesheets.
 		const FFlowNodeStyle& GameFlowNodeStyle = FFlowNodeStyle::GetDefault();
 		FSlateStyleRegistry::RegisterSlateStyle(GameFlowNodeStyle.GetStyle());
         const FGameFlowEditorStyle& AssetEditorStyle = FGameFlowEditorStyle::GetDefault();
@@ -47,7 +46,7 @@ void FGameFlowEditorModule::StartupModule()
 		// strategy to instantiate all the involved items.
 		FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FGraphPanelPinConnectionFactory));
 	}
-
+	
 	// Add GameFlow to project settings.
 	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
@@ -55,6 +54,9 @@ void FGameFlowEditorModule::StartupModule()
 			LOCTEXT("RuntimeSettingsName", "Game Flow"), LOCTEXT("RuntimeSettingsDescription", "Configure Game Flow editor properties"),
 			 GetMutableDefault<UGameFlowEditorSettings>());
 	}
+	
+	// Add Game Flow script templates to the engine.
+	InitializeCppScriptTemplates();
 }
 
 // This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
@@ -69,16 +71,42 @@ void FGameFlowEditorModule::ShutdownModule()
 		const FFlowNodeStyle& GameFlowNodeStyle = FFlowNodeStyle::GetDefault();
 		FSlateStyleRegistry::UnRegisterSlateStyle(GameFlowNodeStyle.GetStyle());
 	}
-
+	
 	// Remove GameFlow from project settings.
 	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		SettingsModule->UnregisterSettings("Project", "Plugins", "Game Flow");
 	}
+
+	// Remove all game flow cpp script templates from the engine.
+	RemoveCppScriptTemplates();
 }
 
-void FGameFlowEditorModule::OnGameFlowAssetsRemoved(TArray<UClass*>& AssetsRemoved)
+void FGameFlowEditorModule::InitializeCppScriptTemplates()
 {
+	const FString ScriptTemplatesPath = GetScriptTemplatesPath();
+	const FString EngineEditorScriptTemplatesPath = GetEngineScriptTemplatesPath();
+	
+	IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
+	const bool bCopyResult = FileManager.CopyDirectoryTree(*EngineEditorScriptTemplatesPath, *ScriptTemplatesPath, false);
+	
+	const TCHAR* CopyMsg = bCopyResult? TEXT("Script templates copied succesfully to engine template folder!") :
+										TEXT("Script templates could not be copied to engine template folder");
+	// Log copy operation result to unreal engine console.
+	UE_LOG(LogGameFlow, Display, TEXT("%s"), CopyMsg);
+}
+
+void FGameFlowEditorModule::RemoveCppScriptTemplates()
+{
+	IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
+	
+	const FString EngineScriptTemplatesPath = GetEngineScriptTemplatesPath();
+	TArray<FString> TemplateFilesToRemove = {EngineScriptTemplatesPath / "UGameFlowNodeClass.h.template",
+	                                         EngineScriptTemplatesPath / "UGameFlowNodeClass.cpp.template"};
+	for(const FString& TemplateFile : TemplateFilesToRemove)
+	{
+		FileManager.DeleteFile(*TemplateFile);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

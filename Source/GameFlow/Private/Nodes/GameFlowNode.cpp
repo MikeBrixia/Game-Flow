@@ -22,6 +22,8 @@ UGameFlowNode::UGameFlowNode()
 
 void UGameFlowNode::Execute_Implementation(const FName& PinName)
 {
+	// By default, directly execute default output pin
+	FinishExecute("Out", true);
 }
 
 void UGameFlowNode::OnFinishExecute_Implementation()
@@ -43,10 +45,13 @@ void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
 		OwnerAsset->RemoveActiveNode(this);
 		OnFinishExecute();
 	}
-	
-	// Execute the next node.
-	OwnerAsset->AddActiveNode(NextNode);
-	NextNode->Execute(ConnectionPinName);
+
+	if(NextNode != nullptr)
+	{
+		// Execute the next node.
+		OwnerAsset->AddActiveNode(NextNode);
+		NextNode->Execute(ConnectionPinName);
+	}
 }
 
 #if WITH_EDITOR
@@ -60,28 +65,24 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 	// in particular if pins connections are different between deleted and replacement nodes.
 	if(PropertyChangedEvent.Property != nullptr)
 	{
-		const bool bIsArray = PropertyChangedEvent.Property->ArrayDim == 1;
 		const FName& PropertyName = PropertyChangedEvent.GetPropertyName();
 		const int32 ArrayIndex = PropertyChangedEvent.GetArrayIndex(PropertyName.ToString());
-	
+	    
 		switch(PropertyChangedEvent.ChangeType)
 		{
 		default: break;
 		
 		case EPropertyChangeType::ValueSet:
 			{
-				// Is the modified property inside a TArray?
-				if(bIsArray)
+				if (PropertyName.IsEqual("InputPins"))
 				{
 					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-					if(PropertyName.IsEqual("InputPins"))
-					{
-						OnInputPinValueSet(OldPropertyValue, ArrayIndex);
-					}
-					else if(PropertyName.IsEqual("OutputPins"))
-					{
-						OnOutputPinValueSet(OldPropertyValue, ArrayIndex);
-					}
+					OnInputPinValueSet(OldPropertyValue, ArrayIndex);
+				}
+				else if (PropertyName.IsEqual("OutputPins"))
+				{
+					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
+					OnOutputPinValueSet(OldPropertyValue, ArrayIndex);
 				}
 				break;
 			}
@@ -109,11 +110,15 @@ void UGameFlowNode::PreEditChange(FProperty* PropertyAboutToChange)
 	
 	if(PropertyAboutToChange != nullptr)
 	{
+		const FName PropertyName = PropertyAboutToChange->GetFName();
+		const bool bIsPinArray = PropertyAboutToChange->ArrayDim == 1 && (PropertyName.IsEqual("InputPins")
+		                         || PropertyName.IsEqual("OutputPins"));
+		
 		const UClass* OwnerClass = PropertyAboutToChange->GetOwner<UClass>();
 		const bool bIsValidOwnerClass = OwnerClass != nullptr
 									    && PropertyAboutToChange->GetOwner<UClass>() != UBlueprintCore::StaticClass();
-		const bool bIsValidArrayProperty = PropertyAboutToChange->ArrayDim == 1;
-		if(bIsValidArrayProperty && bIsValidOwnerClass)
+		
+		if(bIsPinArray && bIsValidOwnerClass)
 		{
 			Temp_OldPinArray = *PropertyAboutToChange->ContainerPtrToValuePtr<TArray<FName>>(this);
 		}

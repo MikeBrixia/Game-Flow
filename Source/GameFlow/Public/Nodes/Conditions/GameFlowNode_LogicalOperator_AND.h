@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "Nodes/GameFlowNode.h"
 #include "UObject/Object.h"
-#include "LogicalGameFlowNode_AND.generated.h"
+#include "GameFlowNode_LogicalOperator_AND.generated.h"
 
 /**
- * Game Flow logical AND boolean operator.
+ * Game Flow AND logical operator.
  */
-UCLASS(DisplayName="AND", meta=(Category="Logical operators"))
-class GAMEFLOW_API ULogicalGameFlowNode_AND final : public UGameFlowNode
+UCLASS(NotBlueprintable, NotBlueprintType, DisplayName="AND", meta=(Category="Logical operators"))
+class GAMEFLOW_API UGameFlowNode_LogicalOperator_AND final : public UGameFlowNode
 {
 	GENERATED_BODY()
 
 public:
-	ULogicalGameFlowNode_AND();
+	UGameFlowNode_LogicalOperator_AND();
 	
 	virtual void Execute_Implementation(const FName& PinName) override;
 	virtual void OnFinishExecute_Implementation() override;
@@ -25,5 +25,8 @@ private:
 	
 	/* All the ports which should evaluate to true for the AND operator to execute it's output. */
 	UPROPERTY()
-	TArray<bool> ConditionsPorts;
+	TArray<bool> ConditionalPorts;
+
+	/** The number of ports which are currently evaluated to true. */
+	int TruePortsNum;
 };

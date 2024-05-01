@@ -37,7 +37,7 @@ public class GameFlowEditor : ModuleRules
 				"ToolMenus",
 				"DeveloperSettings", 
 				"PropertyEditor", 
-				"EditorFramework"
+				"EditorFramework",
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -54,7 +54,7 @@ public class GameFlowEditor : ModuleRules
 				"UMG",
 				"UMGEditor",
 				"ToolWidgets",
-				"InputCore"
+				"InputCore",
 				// .. add private dependencies that you statically link with here ...	
 			}
 		);

@@ -55,8 +55,8 @@ public:
 	 * @brief Execute the asset from a selected entry point.
 	 * @param EntryPointName The selected entry point.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void Execute(FName EntryPointName);
+	UFUNCTION(BlueprintCallable, Category="Game Flow", meta=(AdvancedDisplay="EntryPointName"))
+	void Execute(FName EntryPointName = "Start");
 	
 	/**
 	 * @brief Get the nodes which are currently being executed
