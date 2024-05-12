@@ -29,5 +29,5 @@ void UGameFlowNode_Debug_Log::Execute_Implementation(const FName& PinName)
 		UE_LOG(LogGameSession, Display, TEXT("%s"), *DebugMessage)
 	}
 
-	FinishExecute("Out", true);
+	FinishExecute(true);
 }

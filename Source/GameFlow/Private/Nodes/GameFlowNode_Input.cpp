@@ -8,4 +8,11 @@ UGameFlowNode_Input::UGameFlowNode_Input()
 	AddOutputPin("Out", {});
 }
 
+void UGameFlowNode_Input::Execute_Implementation(const FName& PinName)
+{
+	Super::Execute_Implementation(PinName);
+
+	ExecuteOutputPin("Out");
+}
+
 

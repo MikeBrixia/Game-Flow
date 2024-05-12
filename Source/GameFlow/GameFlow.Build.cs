@@ -25,7 +25,8 @@ public class GameFlow : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core"
+				"Core",
+				"GameplayTags"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,7 +39,7 @@ public class GameFlow : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"DeveloperSettings"
+				"DeveloperSettings",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

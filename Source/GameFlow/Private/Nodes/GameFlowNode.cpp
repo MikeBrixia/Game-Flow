@@ -22,30 +22,32 @@ UGameFlowNode::UGameFlowNode()
 
 void UGameFlowNode::Execute_Implementation(const FName& PinName)
 {
-	// By default, directly execute default output pin
-	FinishExecute("Out", true);
 }
 
 void UGameFlowNode::OnFinishExecute_Implementation()
 {
 }
 
-void UGameFlowNode::FinishExecute(const FName OutputPin, bool bFinish)
+void UGameFlowNode::FinishExecute(bool bFinish)
 {
-	// Find and mark as active the next node.
-	const auto Pair = GetNextNode(OutputPin);
-	UGameFlowNode* NextNode = Pair.Node;
-	const FName ConnectionPinName = Pair.InputPinName;
-	
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
 	
 	// If node has finished executing, remove it from asset active nodes.
 	if(bFinish && OwnerAsset != nullptr)
 	{
-		OwnerAsset->RemoveActiveNode(this);
 		OnFinishExecute();
+		OwnerAsset->RemoveActiveNode(this);
 	}
+}
 
+void UGameFlowNode::ExecuteOutputPin(FName PinName)
+{
+	// Find and mark as active the next node.
+	const auto Pair = GetNextNode(PinName);
+	UGameFlowNode* NextNode = Pair.Node;
+	const FName ConnectionPinName = Pair.InputPinName;
+
+	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
 	if(NextNode != nullptr)
 	{
 		// Execute the next node.

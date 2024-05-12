@@ -20,4 +20,6 @@ class GAMEFLOW_API UGameFlowNode_Input final : public UGameFlowNode
 public:
 
 	UGameFlowNode_Input();
+
+	virtual void Execute_Implementation(const FName& PinName) override;
 };

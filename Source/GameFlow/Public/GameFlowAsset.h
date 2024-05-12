@@ -9,12 +9,14 @@
 #include "Nodes/GameFlowNode_Output.h"
 #include "GameFlowAsset.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnFinish, UGameFlowAsset*)
 
 /**
- * Game Flow asset, stores events flow in a tree
- * data structures.
+ * Game Flow Asset are designed to help designer create their
+ * own scripts to handle world and game events in a node-based
+ * editor
  */
-UCLASS(Blueprintable, BlueprintType)
+UCLASS(Blueprintable, BlueprintType, ClassGroup=(GameFlow))
 class GAMEFLOW_API UGameFlowAsset : public UObject
 {
 	friend class UGameFlowGraphSchema;
@@ -32,6 +34,10 @@ public:
 	UPROPERTY()
 	bool bHasAlreadyBeenOpened;
 #endif
+
+	/** If true, game flow subsystem will not be allowed to create more than one instance of this asset.*/
+	UPROPERTY(EditDefaultsOnly, Category="Config")
+	bool bShouldBeSingleton;
 	
 	/** All the user-defined entry points of the asset. */
 	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
@@ -40,7 +46,9 @@ public:
 	/** All the user-defined exit points of the asset. */
 	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
 	TMap<FName, UGameFlowNode_Output*> CustomOutputs;
-	
+
+	/** Called when this asset finishes executing. */
+	FOnFinish OnFinish;
 private:
 	
 	/* The nodes currently being executed. */
@@ -64,10 +72,7 @@ public:
 	 * @return The currently executed node
 	 */
 	UFUNCTION(BlueprintGetter, Category="Game Flow")
-	FORCEINLINE TArray<UGameFlowNode*> GetActiveNodes() const
-	{
-		return ActiveNodes;
-	}
+	FORCEINLINE TArray<UGameFlowNode*> GetActiveNodes() const { return ActiveNodes; }
 
 	/**
 	 * @brief Mark a game flow node as active(currently being executed).
@@ -87,6 +92,11 @@ public:
 	 * the execution of this GameFlow object.
 	 */
 	void TerminateExecution();
+
+	/**
+	 * Create an instance from this game flow asset.
+	 */
+    UGameFlowAsset* CreateInstance(UObject* Context) const;
 
 #if WITH_EDITOR
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

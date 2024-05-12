@@ -1,22 +1,22 @@
-%COPYRIGHT_LINE%
+$COPYRIGHT_LINE$
 
 #pragma once
 
 #include "CoreMinimal.h"
-%BASE_CLASS_INCLUDE_DIRECTIVE%
-#include "%UNPREFIXED_CLASS_NAME%.generated.h"
+$BASE_CLASS_INCLUDE_DIRECTIVE$
+#include "$UNPREFIXED_CLASS_NAME$.generated.h"
 
 /**
- * %CURSORFOCUSLOCATION%
+ * $CURSORFOCUSLOCATION$
  */
 UCLASS(NotBlueprintType, NotBlueprintable, meta=(Category="Default"))
-class %CLASS_MODULE_API_MACRO%%PREFIXED_CLASS_NAME% final : public UGameFlowNode
+class $CLASS_MODULE_API_MACRO$ $PREFIXED_CLASS_NAME$ final : public UGameFlowNode
 {
 	GENERATED_BODY()
 	
 public:
-	%EVENTUAL_CONSTRUCTOR_DECLARATION%
-	%CLASS_PROPERTIES%
+	$EVENTUAL_CONSTRUCTOR_DECLARATION$
+	$CLASS_PROPERTIES$
 	
 	/** Called when this node needs to be executed. */
 	virtual void Execute_Implementation(const FName& PinName) override;

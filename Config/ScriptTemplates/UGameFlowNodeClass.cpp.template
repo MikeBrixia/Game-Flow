@@ -1,18 +1,18 @@
-﻿%COPYRIGHT_LINE%
+﻿$COPYRIGHT_LINE$
 
-%PCH_INCLUDE_DIRECTIVE%
-%MY_HEADER_INCLUDE_DIRECTIVE%
-%ADDITIONAL_INCLUDE_DIRECTIVES%
+$PCH_INCLUDE_DIRECTIVE$
+$MY_HEADER_INCLUDE_DIRECTIVE$
+$ADDITIONAL_INCLUDE_DIRECTIVES$
 
-%EVENTUAL_CONSTRUCTOR_DEFINITION%
-%ADDITIONAL_MEMBER_DEFINITIONS%
+$EVENTUAL_CONSTRUCTOR_DEFINITION$
+$ADDITIONAL_MEMBER_DEFINITIONS$
 
-void %PREFIXED_CLASS_NAME%::Execute_Implementation(const FName& PinName)
+void $PREFIXED_CLASS_NAME$::Execute_Implementation(const FName& PinName)
 {
      // TODO Core node functionality should be implemented here...
 }
 
-void ULogicalGameFlowNode_AND::OnFinishExecute_Implementation()
+void $PREFIXED_CLASS_NAME$::OnFinishExecute_Implementation()
 {
 	// TODO All logic which should be executed when this node gets terminated should be implemented here...
 }

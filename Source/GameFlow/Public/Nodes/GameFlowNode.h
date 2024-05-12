@@ -25,11 +25,10 @@ struct GAMEFLOW_API FGameFlowPinNodePair
 	TObjectPtr<UGameFlowNode> Node;
 };
 
-
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 
-/* Base interface for all GameFlow nodes. */
-UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default")
+/** Base class of all Game Flow nodes. */
+UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default", ClassGroup=(GameFlow))
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
 	friend class UGameFlowGraphSchema;
@@ -41,12 +40,12 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 #if WITH_EDITORONLY_DATA
 	
 public:
-	/* The last tracked position of the node inside the graph.*/
+	/** The last tracked position of the node inside the graph.*/
 	UPROPERTY()
 	FVector2D GraphPosition;
 
-	/* The type of this node(Latent, Event ecc.)*/
-	UPROPERTY(EditAnywhere, meta=(GetOptions = "GetNodeTypeOptions"))
+	/** The type of this node(Latent, Event ecc.)*/
+	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
 
 	/** True if user has placed a breakpoint on this specific node, false otherwise.
@@ -59,7 +58,6 @@ public:
 	FOnAssetRedirected OnAssetRedirected;
 	
 protected:
-
 	/** All the input pins of the node */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TArray<FName> InputPins;
@@ -113,18 +111,20 @@ protected:
 	
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
-	 * @param OutputPin Name of the pin to which the next node has been mapped.
 	 * @param bFinish If true, this node will be the only output and node will be unloaded.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void FinishExecute(FName OutputPin, bool bFinish);
+	void FinishExecute(bool bFinish);
 
+	UFUNCTION(BlueprintCallable, Category="Game Flow")
+	void ExecuteOutputPin(FName PinName);
+	
 // Editor-only functionality of game flow node.
 #if WITH_EDITOR
 	
 public:
-	FORCEINLINE virtual TArray<FName>& GetInputPins() { return InputPins; }
-	FORCEINLINE virtual TArray<FName>& GetOutputPins() { return OutputPins; }
+	FORCEINLINE TArray<FName>& GetInputPins() { return InputPins; }
+	FORCEINLINE TArray<FName>& GetOutputPins() { return OutputPins; }
 	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
 	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
 
