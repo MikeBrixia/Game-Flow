@@ -27,7 +27,7 @@ private:
 	/** All the currently executing game flow assets inside this world. */
 	UPROPERTY()
 	TMap<UObject*, UGameFlowAsset*> InstancedAssets;
-
+	
 	/** Instanced assets which shares the lifetime of the world. */
 	UPROPERTY()
 	TArray<UGameFlowAsset*> WorldInstancedAssets;

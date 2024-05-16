@@ -144,6 +144,9 @@ public:
 	 * @param PinName The name of the pin to remove.
 	 */
 	void RemoveInputPin(const FName PinName);
+
+	void ResetInputPins();
+	void ResetOutputPins();
 	
 	/**
 	 * @brief Connect this node to another graph node.

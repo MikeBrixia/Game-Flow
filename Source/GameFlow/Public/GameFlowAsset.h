@@ -9,10 +9,11 @@
 #include "Nodes/GameFlowNode_Output.h"
 #include "GameFlowAsset.generated.h"
 
+class UGameFlowNode_FlowControl_Subgraph;
 DECLARE_DELEGATE_OneParam(FOnFinish, UGameFlowAsset*)
 
 /**
- * Game Flow Asset are designed to help designer create their
+ * Game Flow InstancedAsset are designed to help designer create their
  * own scripts to handle world and game events in a node-based
  * editor
  */
@@ -46,7 +47,7 @@ public:
 	/** All the user-defined exit points of the asset. */
 	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
 	TMap<FName, UGameFlowNode_Output*> CustomOutputs;
-
+	
 	/** Called when this asset finishes executing. */
 	FOnFinish OnFinish;
 private:
@@ -73,7 +74,7 @@ public:
 	 */
 	UFUNCTION(BlueprintGetter, Category="Game Flow")
 	FORCEINLINE TArray<UGameFlowNode*> GetActiveNodes() const { return ActiveNodes; }
-
+	
 	/**
 	 * @brief Mark a game flow node as active(currently being executed).
 	 * @param Node The new current executed node.
@@ -86,7 +87,7 @@ public:
 	 * @param Node The node to deactivate(Mark as finished).
 	 */
 	void RemoveActiveNode(UGameFlowNode* Node);
-
+	
 	/**
 	 * @brief Call this method when you need to terminate
 	 * the execution of this GameFlow object.

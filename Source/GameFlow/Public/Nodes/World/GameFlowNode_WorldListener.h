@@ -12,7 +12,7 @@
 /**
  * Base class for all nodes which needs to listen for world events.
  */
-UCLASS(Abstract)
+UCLASS(Abstract, Blueprintable, BlueprintType)
 class GAMEFLOW_API UGameFlowNode_WorldListener : public UGameFlowNode
 {
 	GENERATED_BODY()
@@ -39,49 +39,63 @@ public:
 	uint32 Count;
 	
 	UGameFlowNode_WorldListener();
-
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
+	
 	virtual void Execute_Implementation(const FName& PinName) override;
-
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
     virtual void OnFinishExecute_Implementation() override;
 
+	void TryTriggeringEvent();
+	
 protected:
 	
 	void StartListening();
 	void StopListening();
-	void TriggerEvent();
 
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void OnTriggerEvent();
+	virtual void OnTriggerEvent_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void OnCompleted();
+	virtual void OnCompleted_Implementation();
+	
 	/**
 	 * Called when you want this node to start listening to an actor component listener events.
 	 * @param ListenerComponent The actor game flow component you want this node to start listening to.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
-	virtual void ListenToComponent(UGameFlowListener* ListenerComponent);
-
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void ListenToComponent(UGameFlowListener* ListenerComponent);
+	virtual void ListenToComponent_Implementation(UGameFlowListener* ListenerComponent);
+	
 	/**
 	 * Called when you want this node to stop listening to an an actor component listener events.
 	 * @param ListenerComponent The actor game flow component you want to stop listening to.
 	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
-	virtual void StopListeningToComponent(UGameFlowListener* ListenerComponent);
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void StopListeningToComponent(UGameFlowListener* ListenerComponent);
+	virtual void StopListeningToComponent_Implementation(UGameFlowListener* ListenerComponent);
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void OnComponentRegistered(UGameFlowListener* ListenerComponent);
+	virtual void OnComponentRegistered_Implementation(UGameFlowListener* ListenerComponent);
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void OnComponentUnregistered(UGameFlowListener* ListenerComponent);
+	virtual void OnComponentUnregistered_Implementation(UGameFlowListener* ListenerComponent);
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void OnComponentGameplayTagAdded(UGameFlowListener* ListenerComponent, FGameplayTag AddedTag);
+	virtual void OnComponentGameplayTagAdded_Implementation(UGameFlowListener* ListenerComponent, FGameplayTag AddedTag);
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow|World Listener")
+	void OnComponentGameplayTagRemoved(UGameFlowListener* ListenerComponent, FGameplayTag RemovedTag);
+	virtual void OnComponentGameplayTagRemoved_Implementation(UGameFlowListener* ListenerComponent, FGameplayTag RemovedTag);
 
 	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
-	virtual void OnComponentRegistered(UGameFlowListener* ListenerComponent);
-
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
-	virtual void OnComponentUnregistered(UGameFlowListener* ListenerComponent);
-
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
-	virtual void OnComponentGameplayTagAdded(UGameFlowListener* ListenerComponent, FGameplayTag AddedTag);
-
-	UFUNCTION(BlueprintCallable, Category="Game Flow|World Listener")
-	virtual void OnComponentGameplayTagRemoved(UGameFlowListener* ListenerComponent, FGameplayTag RemovedTag);
-
+	bool DoGameplayTagsMatch(FGameplayTagContainer OtherTags);
+	
 private:
 
 	void UpdateComponentListener(UGameFlowListener* ListenerComponent);
-	bool DoGameplayTagsMatch(FGameplayTagContainer OtherTags);
 };
 
 

@@ -10,7 +10,7 @@
 /**
  * Send a game flow event to all listeners with matching identity tag inside the world.
  */
-UCLASS(NotBlueprintable, NotBlueprintType, DisplayName="Notify Listeners", Category="World")
+UCLASS(NotBlueprintable, NotBlueprintType, DisplayName="Notify Listeners", meta=(Category="World"))
 class GAMEFLOW_API UGameFlowNode_WorldListener_NotifyListeners final : public UGameFlowNode
 {
 	GENERATED_BODY()

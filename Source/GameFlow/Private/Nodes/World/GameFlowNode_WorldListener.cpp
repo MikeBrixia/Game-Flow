@@ -13,6 +13,9 @@ UGameFlowNode_WorldListener::UGameFlowNode_WorldListener()
 	AddOutputPin("Trigger Event", {});
 	AddOutputPin("Completed", {});
 	AddOutputPin("Stopped", {});
+
+	Limit = 0;
+	Count = 0;
 }
 
 void UGameFlowNode_WorldListener::Execute_Implementation(const FName& PinName)
@@ -65,45 +68,51 @@ void UGameFlowNode_WorldListener::StopListening()
 	ExecuteOutputPin("Stopped");
 }
 
-void UGameFlowNode_WorldListener::TriggerEvent()
+void UGameFlowNode_WorldListener::TryTriggeringEvent()
 {
 	if(Count < Limit)
 	{
 		Count++;
-		ExecuteOutputPin("Trigger Event");
+		OnTriggerEvent();
 	}
 	else
 	{
-		FinishExecute(true);
-		ExecuteOutputPin("Completed");
+		OnCompleted();
 	}
 }
 
-void UGameFlowNode_WorldListener::ListenToComponent(UGameFlowListener* ListenerComponent)
+void UGameFlowNode_WorldListener::OnTriggerEvent_Implementation()
 {
-	ListenerComponent->OnNotifyGameFlowListener.AddDynamic(this, &UGameFlowNode_WorldListener::TriggerEvent);
-	
-	// TODO Subclasses of WorldListener should implement this function...
+	ExecuteOutputPin("Trigger Event");
 }
 
-void UGameFlowNode_WorldListener::StopListeningToComponent(UGameFlowListener* ListenerComponent)
+void UGameFlowNode_WorldListener::OnCompleted_Implementation()
 {
-	ListenerComponent->OnNotifyGameFlowListener.RemoveAll(this);
-	
-	// TODO Subclasses of WorldListener should implement this function...
+	FinishExecute(true);
+	ExecuteOutputPin("Completed");
 }
 
-void UGameFlowNode_WorldListener::OnComponentRegistered(UGameFlowListener* ListenerComponent)
+void UGameFlowNode_WorldListener::ListenToComponent_Implementation(UGameFlowListener* ListenerComponent)
 {
 	// TODO Subclasses of WorldListener should implement this function...
 }
 
-void UGameFlowNode_WorldListener::OnComponentUnregistered(UGameFlowListener* ListenerComponent)
+void UGameFlowNode_WorldListener::StopListeningToComponent_Implementation(UGameFlowListener* ListenerComponent)
 {
 	// TODO Subclasses of WorldListener should implement this function...
 }
 
-void UGameFlowNode_WorldListener::OnComponentGameplayTagAdded(UGameFlowListener* ListenerComponent,
+void UGameFlowNode_WorldListener::OnComponentRegistered_Implementation(UGameFlowListener* ListenerComponent)
+{
+	// TODO Subclasses of WorldListener should implement this function...
+}
+
+void UGameFlowNode_WorldListener::OnComponentUnregistered_Implementation(UGameFlowListener* ListenerComponent)
+{
+	// TODO Subclasses of WorldListener should implement this function...
+}
+
+void UGameFlowNode_WorldListener::OnComponentGameplayTagAdded_Implementation(UGameFlowListener* ListenerComponent,
    FGameplayTag AddedTag)
 {
 	// We only care if the tag which was added is part of the identity of this node.
@@ -113,7 +122,7 @@ void UGameFlowNode_WorldListener::OnComponentGameplayTagAdded(UGameFlowListener*
 	}
 }
 
-void UGameFlowNode_WorldListener::OnComponentGameplayTagRemoved(UGameFlowListener* ListenerComponent,
+void UGameFlowNode_WorldListener::OnComponentGameplayTagRemoved_Implementation(UGameFlowListener* ListenerComponent,
 	FGameplayTag RemovedTag)
 {
 	// We only care if the tag which was removed is part of the identity of this node.

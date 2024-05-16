@@ -8,7 +8,7 @@
 #include "GameFlowListener.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNotifyGameFlowListener);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReceiveGameFlowEvent, FGameplayTagContainer&, GameplayTags);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReceiveGameFlowEvent, FGameplayTagContainer, GameplayTags);
 
 UCLASS(ClassGroup=(GameFlow), meta=(BlueprintSpawnableComponent))
 class GAMEFLOW_API UGameFlowListener : public UActorComponent

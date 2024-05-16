@@ -222,6 +222,22 @@ void UGameFlowNode::RemoveInputPin(const FName PinName)
 	RemoveInputPort(PinName);
 }
 
+void UGameFlowNode::ResetInputPins()
+{
+	for(const FName& PinName : InputPins)
+	{
+		RemoveInputPin(PinName);
+	}
+}
+
+void UGameFlowNode::ResetOutputPins()
+{
+	for(const FName& PinName : OutputPins)
+	{
+		RemoveOutputPin(PinName);
+	}
+}
+
 void UGameFlowNode::RemoveInputPort(FName PinName)
 {
 	Inputs.Remove(PinName);

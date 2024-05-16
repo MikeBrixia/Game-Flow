@@ -10,7 +10,7 @@
 /**
  * Game Flow AND logical operator.
  */
-UCLASS(NotBlueprintable, NotBlueprintType, DisplayName="AND", meta=(Category="Logical operators"))
+UCLASS(NotBlueprintable, NotBlueprintType, DisplayName="AND", meta=(Category="Flow Control"))
 class GAMEFLOW_API UGameFlowNode_LogicalOperator_AND final : public UGameFlowNode
 {
 	GENERATED_BODY()
