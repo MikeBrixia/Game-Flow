@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PinHandle.h"
 #include "Config/GameFlowSettings.h"
 #include "GameFlowNode.generated.h"
 
@@ -60,11 +61,11 @@ public:
 protected:
 	/** All the input pins of the node */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
-	TArray<FName> InputPins;
+	TArray<FPinHandle> InputPins;
 	
 	/** All the output pins of the node */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
-    TArray<FName> OutputPins;
+    TArray<FPinHandle> OutputPins;
 
 	/** True if this node should have a variable amount of input pins */
     UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
@@ -79,14 +80,14 @@ private:
 
 #if WITH_EDITORONLY_DATA
     UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
-    TMap<FName, FGameFlowPinNodePair> Inputs;
+    TMap<FName, FPinHandle> Inputs;
 	
     TArray<FName> Temp_OldPinArray;
 #endif
 	
 	/* All the possible outputs of this node. */
 	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
-	TMap<FName, FGameFlowPinNodePair> Outputs;
+	TMap<FName, FPinHandle> Outputs;
 	
 public:
 	UGameFlowNode();
@@ -96,10 +97,10 @@ public:
 	void Execute(const FName& PinName = "Exec");
 	virtual void Execute_Implementation(const FName& PinName);
 	
-	FORCEINLINE virtual FGameFlowPinNodePair GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
-	FORCEINLINE virtual TArray<FGameFlowPinNodePair> GetChildren() const
+	FORCEINLINE virtual FPinHandle GetNextNode(FName PinName) const { return Outputs.FindRef(PinName); }
+	FORCEINLINE virtual TArray<FPinHandle> GetChildren() const
 	{
-		TArray<FGameFlowPinNodePair> Children;
+		TArray<FPinHandle> Children;
 		Outputs.GenerateValueArray(Children);
 		return Children;
 	}
@@ -166,7 +167,7 @@ public:
 	 * @return An array of node types.
 	 */
 	UFUNCTION(CallInEditor)
-    static FORCEINLINE TArray<FName> GetNodeTypeOptions() { return UGameFlowSettings::Get()->Options; }
+    FORCEINLINE TArray<FName> GetNodeTypeOptions() { return UGameFlowSettings::Get()->Options; }
 	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
