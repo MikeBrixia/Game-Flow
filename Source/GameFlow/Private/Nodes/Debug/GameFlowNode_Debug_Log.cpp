@@ -5,8 +5,8 @@
 
 UGameFlowNode_Debug_Log::UGameFlowNode_Debug_Log()
 {
-	AddInputPin("Exec", {});
-	AddOutputPin("Out", {});
+	AddInputPin("Exec");
+	AddOutputPin("Out");
 	
 	bShouldLogToConsole = false;
 	DebugMessage = "Hello!";

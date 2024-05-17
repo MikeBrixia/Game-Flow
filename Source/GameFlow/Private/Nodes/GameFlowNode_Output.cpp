@@ -6,7 +6,7 @@
 UGameFlowNode_Output::UGameFlowNode_Output()
 {
 	TypeName = "Output";
-	AddInputPin("Exec", {});
+	AddInputPin("Exec");
 }
 
 void UGameFlowNode_Output::Execute_Implementation(const FName& PinName)

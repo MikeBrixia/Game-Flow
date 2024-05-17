@@ -5,11 +5,11 @@
 UGameFlowNode_FlowControl_DoN::UGameFlowNode_FlowControl_DoN()
 {
 	// Initialize input pins.
-	AddInputPin("Enter", {});
-	AddInputPin("Reset", {});
+	AddInputPin("Enter");
+	AddInputPin("Reset");
 	
     // Initialize output pins.
-	AddOutputPin("Exit", {});
+	AddOutputPin("Exit");
 
 	TypeName = "Conditional";
 	N = 1;

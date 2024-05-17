@@ -7,8 +7,8 @@ UGameFlowNode_WorldListener_NotifyListeners::UGameFlowNode_WorldListener_NotifyL
 {
 	TypeName = "Event";
 
-	AddInputPin("Exec", {});
-	AddOutputPin("Out", {});
+	AddInputPin("Exec");
+	AddOutputPin("Out");
 }
 
 void UGameFlowNode_WorldListener_NotifyListeners::Execute_Implementation(const FName& PinName)

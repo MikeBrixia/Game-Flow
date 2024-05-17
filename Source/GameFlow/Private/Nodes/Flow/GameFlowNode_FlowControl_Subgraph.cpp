@@ -41,8 +41,8 @@ void UGameFlowNode_FlowControl_Subgraph::PostEditChangeProperty(FPropertyChanged
 
 void UGameFlowNode_FlowControl_Subgraph::ReconstructSubgraph()
 {
-	ResetInputPins();
-	ResetOutputPins();
+	Inputs.Empty();
+	Outputs.Empty();
 	ConstructInputPins();
 	ConstructOutputPins();
 }
@@ -55,7 +55,7 @@ void UGameFlowNode_FlowControl_Subgraph::ConstructInputPins()
 		InstancedAsset->CustomInputs.GenerateKeyArray(SubgraphInputPins);
 		for(const FName& PinName : SubgraphInputPins)
 		{
-			AddInputPin(PinName, {});
+			AddInputPin(PinName);
 		}
 	}
 }
@@ -68,7 +68,7 @@ void UGameFlowNode_FlowControl_Subgraph::ConstructOutputPins()
 		InstancedAsset->CustomOutputs.GenerateKeyArray(SubgraphOutputPins);
 		for(const FName& PinName : SubgraphOutputPins)
 		{
-			AddOutputPin(PinName, {});
+			AddOutputPin(PinName);
 		}
 	}
 }

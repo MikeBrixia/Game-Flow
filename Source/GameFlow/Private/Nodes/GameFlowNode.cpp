@@ -3,18 +3,6 @@
 #include "Nodes/GameFlowNode.h"
 #include "GameFlowAsset.h"
 
-FGameFlowPinNodePair::FGameFlowPinNodePair()
-{
-	this->InputPinName = EName::None;
-	this->Node = nullptr;
-}
-
-FGameFlowPinNodePair::FGameFlowPinNodePair(const FName& InputPinName, UGameFlowNode* Node)
-{
-	this->InputPinName = InputPinName;
-	this->Node = Node;
-}
-
 UGameFlowNode::UGameFlowNode()
 {
 	TypeName = "Event";
@@ -42,21 +30,101 @@ void UGameFlowNode::FinishExecute(bool bFinish)
 
 void UGameFlowNode::ExecuteOutputPin(FName PinName)
 {
-	// Find and mark as active the next node.
-	const auto Pair = GetNextNode(PinName);
-	UGameFlowNode* NextNode = Pair.Node;
-	const FName ConnectionPinName = Pair.InputPinName;
-
+	const FPinHandle OutputPinHandle = Outputs.FindRef(PinName);
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
-	if(NextNode != nullptr)
+
+	for(const auto& ConnectionInfo: OutputPinHandle.Connections)
 	{
-		// Execute the next node.
-		OwnerAsset->AddActiveNode(NextNode);
-		NextNode->Execute(ConnectionPinName);
+		UGameFlowNode* NextNode = ConnectionInfo.Node;
+		// If valid, activate next node and start executing it.
+		if(NextNode != nullptr)
+		{
+			// Execute the next node.
+			OwnerAsset->AddActiveNode(NextNode);
+
+			FName PinToExecute = ConnectionInfo.OtherPinName;
+			NextNode->Execute(PinToExecute);
+		}
 	}
 }
 
+TArray<FName> UGameFlowNode::GetInputPinsNames() const
+{
+	TArray<FName> InputPins;
+	Inputs.GenerateKeyArray(InputPins);
+	return InputPins;
+}
+
+TArray<FName> UGameFlowNode::GetOutputPinsNames() const
+{
+	TArray<FName> OutputPins;
+	Outputs.GenerateKeyArray(OutputPins);
+	return OutputPins;
+}
+
 #if WITH_EDITOR
+
+void UGameFlowNode::AddInputPin(FName PinName)
+{
+	if(!PinName.IsNone() && PinName.IsValid())
+	{
+		Inputs.Add(PinName, {PinName});
+	}
+}
+
+void UGameFlowNode::RemoveInputPin(FName PinName)
+{
+	Inputs.Remove(PinName);
+}
+
+void UGameFlowNode::AddOutputPin(FName PinName)
+{
+	if(!PinName.IsNone() && PinName.IsValid())
+	{
+		Outputs.Add(PinName, {PinName});
+	}
+}
+
+void UGameFlowNode::RemoveOutputPin(FName PinName)
+{
+	Outputs.Remove(PinName);
+}
+
+void UGameFlowNode::UpdatePinHandle(const FPinHandle& UpdatedPinHandle)
+{
+	switch(UpdatedPinHandle.PinDirection)
+	{
+	default: break;
+
+	case EGPD_Input:
+		Inputs[UpdatedPinHandle.PinName] = UpdatedPinHandle;
+		break;
+
+	case EGPD_Output:
+		Outputs[UpdatedPinHandle.PinName] = UpdatedPinHandle;
+		break;
+	}
+}
+
+FPinHandle UGameFlowNode::GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const
+{
+	FPinHandle PinHandle;
+	
+	switch(Direction)
+	{
+	default: break;
+
+	case EGPD_Input:
+		PinHandle = Inputs.FindRef(PinName);
+		break;
+
+	case EGPD_Output:
+		PinHandle = Outputs.FindRef(PinName);
+		break;
+	}
+
+	return PinHandle;
+}
 
 void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -67,35 +135,9 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 	// in particular if pins connections are different between deleted and replacement nodes.
 	if(PropertyChangedEvent.Property != nullptr)
 	{
-		const FName& PropertyName = PropertyChangedEvent.GetPropertyName();
-		const int32 ArrayIndex = PropertyChangedEvent.GetArrayIndex(PropertyName.ToString());
-	    
 		switch(PropertyChangedEvent.ChangeType)
 		{
 		default: break;
-		
-		case EPropertyChangeType::ValueSet:
-			{
-				if (PropertyName.IsEqual("InputPins"))
-				{
-					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-					OnInputPinValueSet(OldPropertyValue, ArrayIndex);
-				}
-				else if (PropertyName.IsEqual("OutputPins"))
-				{
-					const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-					OnOutputPinValueSet(OldPropertyValue, ArrayIndex);
-				}
-				break;
-			}
-    
-		case EPropertyChangeType::ArrayRemove:
-			{
-				const FName OldPropertyValue = Temp_OldPinArray[ArrayIndex];
-				OnPinRemoved(OldPropertyValue);
-				break;
-			}
-
 			// Notify listeners this asset has been redirected.
 		case EPropertyChangeType::Redirected:
 			{
@@ -104,173 +146,6 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 			}
 		}
 	}
-}
-
-void UGameFlowNode::PreEditChange(FProperty* PropertyAboutToChange)
-{
-	UObject::PreEditChange(PropertyAboutToChange);
-	
-	if(PropertyAboutToChange != nullptr)
-	{
-		const FName PropertyName = PropertyAboutToChange->GetFName();
-		const bool bIsPinArray = PropertyAboutToChange->ArrayDim == 1 && (PropertyName.IsEqual("InputPins")
-		                         || PropertyName.IsEqual("OutputPins"));
-		
-		const UClass* OwnerClass = PropertyAboutToChange->GetOwner<UClass>();
-		const bool bIsValidOwnerClass = OwnerClass != nullptr
-									    && PropertyAboutToChange->GetOwner<UClass>() != UBlueprintCore::StaticClass();
-		
-		if(bIsPinArray && bIsValidOwnerClass)
-		{
-			Temp_OldPinArray = *PropertyAboutToChange->ContainerPtrToValuePtr<TArray<FName>>(this);
-		}
-	}
-}
-
-void UGameFlowNode::OnInputPinValueSet(FName PinName, int PinArrayIndex)
-{
-	const FGameFlowPinNodePair Connection = Inputs.FindRef(PinName);
-	FName NewPropertyValue = InputPins[PinArrayIndex];
-	const bool bIsChanged = !NewPropertyValue.IsEqual(PinName);
-	if(bIsChanged)
-	{
-		const FGameFlowPinNodePair InputPair = Inputs.FindRef(PinName);
-		
-		RemoveInputPort(PinName);
-		AddInputPort(NewPropertyValue, Connection);
-
-		UGameFlowNode* ConnectedNode = InputPair.Node;
-		// Update connected node pins accordingly.
-		if(ConnectedNode != nullptr)
-		{
-			const FName ConnectedPinName = InputPair.InputPinName;
-			ConnectedNode->AddOutputPort(ConnectedPinName, {NewPropertyValue, this});
-		}
-	}
-}
-
-void UGameFlowNode::OnOutputPinValueSet(FName PinName, int PinArrayIndex)
-{
-	const FGameFlowPinNodePair Connection = Outputs.FindRef(PinName);
-	FName NewPropertyValue = OutputPins[PinArrayIndex];
-	const bool bIsChanged = !NewPropertyValue.IsEqual(PinName);
-	if(bIsChanged)
-	{
-		const FGameFlowPinNodePair OutputPair = Inputs.FindRef(PinName);
-		
-		RemoveOutputPort(PinName);
-		AddOutputPort(NewPropertyValue, Connection);
-
-		UGameFlowNode* ConnectedNode = OutputPair.Node;
-		// Update connected node pin accordingly.
-		if(ConnectedNode != nullptr)
-		{
-			const FName ConnectedPinName = OutputPair.InputPinName;
-			ConnectedNode->AddInputPort(ConnectedPinName, {NewPropertyValue, this});
-		}
-	}
-}
-
-void UGameFlowNode::OnPinRemoved(FName PinName)
-{
-	if(Inputs.Contains(PinName))
-	{
-		const FGameFlowPinNodePair PinNodePair = Inputs.FindRef(PinName);
-		RemoveInputPin(PinName);
-
-		UGameFlowNode* ConnectedNode = PinNodePair.Node;
-		if(ConnectedNode != nullptr)
-		{
-			ConnectedNode->RemoveOutputPort(PinNodePair.InputPinName);
-		}
-	}
-	else if(Outputs.Contains(PinName))
-	{
-		const FGameFlowPinNodePair PinNodePair = Outputs.FindRef(PinName);
-		RemoveOutputPin(PinName);
-
-		UGameFlowNode* ConnectedNode = PinNodePair.Node;
-		if(ConnectedNode != nullptr)
-		{
-			ConnectedNode->RemoveInputPort(PinNodePair.InputPinName);
-		}
-	}
-}
-
-void UGameFlowNode::AddInputPin(const FName PinName, const FGameFlowPinNodePair Input)
-{
-	// Add input pin if not already present.
-	InputPins.AddUnique(PinName);
-	AddInputPort(PinName, Input);
-}
-
-void UGameFlowNode::AddInputPort(const FName PinName, const FGameFlowPinNodePair Input)
-{
-	const bool bValidOutput = Input.Node != nullptr && !Input.InputPinName.IsNone();
-	const bool bRecursiveOutput = Input.Node == this;
-	// Map pins only if the input is valid and non-recursive, otherwise ignore mapping.
-	if(bValidOutput && !bRecursiveOutput)
-	{
-		Inputs.Add(PinName, Input);
-	}
-}
-
-void UGameFlowNode::RemoveInputPin(const FName PinName)
-{
-	// Remove from this node.
-	InputPins.Remove(PinName);
-	RemoveInputPort(PinName);
-}
-
-void UGameFlowNode::ResetInputPins()
-{
-	for(const FName& PinName : InputPins)
-	{
-		RemoveInputPin(PinName);
-	}
-}
-
-void UGameFlowNode::ResetOutputPins()
-{
-	for(const FName& PinName : OutputPins)
-	{
-		RemoveOutputPin(PinName);
-	}
-}
-
-void UGameFlowNode::RemoveInputPort(FName PinName)
-{
-	Inputs.Remove(PinName);
-}
-
-void UGameFlowNode::AddOutputPin(const FName PinName, const FGameFlowPinNodePair Output)
-{
-	// Add output pin if not already present.
-	OutputPins.AddUnique(PinName);
-	AddOutputPort(PinName, Output);
-}
-
-void UGameFlowNode::AddOutputPort(const FName PinName, const FGameFlowPinNodePair Output)
-{
-	const bool bValidOutput = Output.Node != nullptr && !Output.InputPinName.IsNone();
-	const bool bRecursiveOutput = Output.Node == this;
-	// Map pins only if the output is valid and non-recursive, otherwise ignore mapping.
-	if(bValidOutput && !bRecursiveOutput)
-	{
-		// Connect this node output port port to the other node input port.
-		Outputs.Add(PinName, Output);
-	}
-}
-
-void UGameFlowNode::RemoveOutputPin(const FName PinName)
-{
-	OutputPins.Remove(PinName);
-	RemoveOutputPort(PinName);
-}
-
-void UGameFlowNode::RemoveOutputPort(FName PinName)
-{
-	Outputs.Remove(PinName);
 }
 
 #endif

@@ -157,29 +157,17 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 
 	Pin->Modify();
 	NodeAsset->Modify();
-	
-	// Break this pin logical connection, we need to rebuild them.
-	if(Pin->Direction == EGPD_Input)
-	{
-		NodeAsset->RemoveInputPort(Pin->PinName);
-	}
-	else if(Pin->Direction == EGPD_Output)
-	{
-		NodeAsset->RemoveOutputPort(Pin->PinName);
-	}
+
+	FPinHandle PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
+	PinHandle.CutAllConnections();
 
 	// Recreate logical connections between game flow nodes using graph pin data.
-	for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+	for(const UEdGraphPin* ConnectedPin : Pin->LinkedTo)
 	{
-		UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
-		if(Pin->Direction == EGPD_Input)
-		{
-			NodeAsset->AddInputPort(Pin->PinName, {ConnectedPin->PinName, ConnectedNodeAsset});
-		}
-		else if(Pin->Direction == EGPD_Output)
-		{
-			NodeAsset->AddOutputPort(Pin->PinName, {ConnectedPin->PinName, ConnectedNodeAsset});
-		}
+		const UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
+		FPinHandle ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, Pin->Direction);
+		PinHandle.CreateConnection(ConnectedPinHandle);
+		NodeAsset->UpdatePinHandle(PinHandle);
 	}
 }
 
@@ -241,13 +229,13 @@ void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
 	// Read input pins names from node asset and create graph pins.
-	for(const FName& PinName : NodeAsset->GetInputPins())
+	for(const FName& PinName : NodeAsset->GetInputPinsNames())
 	{
 		CreateNodePin(EGPD_Input, PinName, false);
 	}
 
 	// Read output pins names from node asset and create graph pins.
-	for(const FName& PinName : NodeAsset->GetOutputPins())
+	for(const FName& PinName : NodeAsset->GetOutputPinsNames())
 	{
 		CreateNodePin(EGPD_Output, PinName, false);
 	}
@@ -437,19 +425,19 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 			// Add input pin to node asset.
 			case EGPD_Input:
 				{
-					TArray<FName> InputPins = NodeAsset->GetInputPins();
+					TArray<FName> InputPins = NodeAsset->GetInputPinsNames();
 					const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddInputPin(PinName, {});
+					NodeAsset->Inputs.Add(PinName, {});
 					break;
 				}
 			// Add output pin to node asset.	
 			case EGPD_Output:
 				{
-					TArray<FName> OutputPins = NodeAsset->GetOutputPins();
+					TArray<FName> OutputPins = NodeAsset->GetOutputPinsNames();
 					const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddOutputPin(PinName, {});
+					NodeAsset->Outputs.Add(PinName, {});
 					break;
 				}
 		}

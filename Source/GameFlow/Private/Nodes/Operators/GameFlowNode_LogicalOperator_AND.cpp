@@ -16,13 +16,12 @@ UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
 		const int PortNumber = i + 1;
 		const FName PortName = FName(FString::FromInt(PortNumber));
 		// Initialize input pins.
-		AddInputPin(PortName, {});
+		AddInputPin(PortName);
 	}
 	bCanAddInputPin = true;
 	TruePortsNum = 0;
 	
-	// Initialize output pins.
-	OutputPins.Add("Out");
+	AddOutputPin("Out");
 }
 
 void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName& PinName)
