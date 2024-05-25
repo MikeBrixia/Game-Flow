@@ -227,10 +227,9 @@ bool UGameFlowGraphSchema::CanCreateGraphNodeForClass(UClass* Class) const
 	// True only if this class is a child of UGameFlowNode, otherwise false.
 	const bool bIsChildClass = Class->IsChildOf(UGameFlowNode::StaticClass()) && Class != UGameFlowNode::StaticClass();
 	// True if this class is or derives from game flow dummy nodes.
-	const bool bIsDummyClass = Class->IsChildOf(UGameFlowNode_Dummy::StaticClass()) && Class == UGameFlowNode_Dummy::StaticClass();
 	const bool bIsInputOrOutputClass = Class == UGameFlowNode_Input::StaticClass() || Class == UGameFlowNode_Output::StaticClass();
     // True if the given class does not belong to a category of classes which could not be directly instanced by the user.
-	const bool bUserInstancedAllowed = bIsChildClass && !bIsDummyClass && !bIsInputOrOutputClass;
+	const bool bUserInstancedAllowed = bIsChildClass && !bIsInputOrOutputClass;
 
 	return bUserInstancedAllowed && !bNotInstanceable;
 }
@@ -270,22 +269,25 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 		{
 			// Find the node and pin to which the current node is connected to.
 			FPinHandle OutputPinHandle = CurrentNodeAsset->GetPinByName(OutPinName, EGPD_Output);
-			const FName& InPinName = OutputPinHandle.PinName;
 
 			// If pin is not valid skip to next iteration, it cannot be processed.
 			if(!OutputPinHandle.IsValidHandle()) continue;
 			
-			for(const auto& ConnectionInfo : OutputPinHandle.Connections)
+			for(const auto& Pair : OutputPinHandle.Connections)
 			{
-				const UGameFlowNode* ConnectedNode = ConnectionInfo.Node;
+				const UGameFlowNode* ConnectedNode = Pair.Value.DestinationObject;
+				const FName& InPinName = Pair.Key;
+				
 				// If next node is invalid or input pin name is None, skip this iteration.
 				if(ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
-			
+				
 				// Create the graph node for the connected node.
 				UGameFlowGraphNode* GraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
 				
 				UEdGraphPin* InPin = GraphNode->FindPin(InPinName);
 				UEdGraphPin* OutPin = CurrentNode->FindPin(OutPinName);
+				UE_LOG(LogGameFlow, Display, TEXT("Connect %s to %s"),
+					*InPin->PinName.ToString(), *OutPin->PinName.ToString())
 				// After finding the current node output pin and the next node input pin,
 				// create a connection between the two.
 				TryCreateConnection(OutPin, InPin);
@@ -317,13 +319,13 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		// If pin is not valid skip to next iteration, it cannot be processed.
 		if(!PinHandle.IsValidHandle()) continue;
 		
-		for(const auto& ConnectionInfo : PinHandle.Connections)
+		for(const auto& Pair : PinHandle.Connections)
 		{
-			const UGameFlowNode* ConnectedNode = ConnectionInfo.Node;
+			const UGameFlowNode* ConnectedNode = Pair.Value.DestinationObject;
 			const FName& InPinName = PinHandle.PinName;
 			// If next node is invalid or input pin name is None, skip the iteration.
 			if (ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
-		
+			
 			const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
 			UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
 		

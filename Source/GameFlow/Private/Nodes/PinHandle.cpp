@@ -1,79 +1,68 @@
 ﻿
 #include "Nodes/PinHandle.h"
+#include "Nodes/GameFlowNode.h"
 
-FGameFlowPinNodePair::FGameFlowPinNodePair()
+FPinConnectionInfo::FPinConnectionInfo()
 {
-	this->OtherPinName = EName::None;
-	this->Node = nullptr;
 }
 
-FGameFlowPinNodePair::FGameFlowPinNodePair(const FName& InputPinName, UGameFlowNode* Node)
+FPinConnectionInfo::FPinConnectionInfo(const FName& InputPinName, UGameFlowNode* Node)
 {
-	this->OtherPinName = InputPinName;
-	this->Node = Node;
+	this->DestinationPinName = InputPinName;
+	this->DestinationObject = Node;
 }
+
 
 
 FPinHandle::FPinHandle()
 {
-	PinName = EName::None;
-	bIsBreakpointEnabled = true;
 	PinDirection = EGPD_MAX;
+	bIsBreakpointEnabled = false;
 }
 
-FPinHandle::FPinHandle(FName PinName) : FPinHandle()
+FPinHandle::FPinHandle(FName PinName, UGameFlowNode* PinOwner, TEnumAsByte<EEdGraphPinDirection> PinDirection) : FPinHandle()
 {
 	this->PinName = PinName;
+	this->PinOwner = PinOwner;
+	this->PinDirection = PinDirection;
 }
 
 FPinHandle::FPinHandle(const FPinHandle& Other) : FPinHandle()
 {
-	this->Connections = Other.Connections;
 	this->PinName = Other.PinName;
-}
-
-FPinHandle::FPinHandle(TArray<FGameFlowPinNodePair> Connections, FName PinName) : FPinHandle()
-{
-	this->Connections = Connections;
-	this->PinName = PinName;
+	this->PinDirection = Other.PinDirection;
+	this->PinOwner = Other.PinOwner;
+	this->Connections = Other.Connections;
 }
 
 #if WITH_EDITOR
 
 void FPinHandle::CreateConnection(FPinHandle& OtherPinHandle)
 {
-	// Do we have the permission to connect this two handles?
 	if(CanCreateConnection(OtherPinHandle))
 	{
-		// First create a connection from this handle to the other...
-		Connections.Add({OtherPinHandle.PinName, OtherPinHandle.PinOwner});
-		// ... then create a connection in the opposite direction.
-		OtherPinHandle.Connections.Add({PinName, PinOwner});
+		Connections.Add(OtherPinHandle.PinName, {OtherPinHandle.PinName, OtherPinHandle.PinOwner});
+		OtherPinHandle.Connections.Add(PinName, {PinName, PinOwner});
 	}
 }
 
 void FPinHandle::CutConnection(FPinHandle& OtherPinHandle)
 {
-	Connections.Remove({OtherPinHandle.PinName, OtherPinHandle.PinOwner});
-	OtherPinHandle.Connections.Remove({PinName, PinOwner});
+	Connections.Remove(OtherPinHandle.PinName);
+	OtherPinHandle.Connections.Remove(PinName);
 }
 
 void FPinHandle::CutAllConnections()
 {
-	Connections.Empty();
-}
-
-void FPinHandle::RenamePin(FName NewPinName)
-{
-	switch(PinDirection)
+	for(const auto& Pair : Connections)
 	{
-	case EGPD_Input:
-		break;
-		
-	case EGPD_Output:
-		break;
-		
-	default: break;
+		const FPinConnectionInfo& ConnectionInfo = Pair.Value;
+		// The opposite direction of this pin.
+		const EEdGraphPinDirection Direction = this->PinDirection == EGPD_Input? EGPD_Output : EGPD_Input;
+		FPinHandle ConnectedPin = ConnectionInfo.DestinationObject->GetPinByName(ConnectionInfo.DestinationPinName, Direction);
+        // After having found the connected pin, cut the connection.
+		CutConnection(ConnectedPin);
+		ConnectionInfo.DestinationObject->UpdatePinHandle(ConnectedPin);
 	}
 }
 
@@ -92,9 +81,15 @@ bool FPinHandle::IsValidPinName() const
 bool FPinHandle::CanCreateConnection(const FPinHandle& OtherPinHandle) const
 {
 	const bool bValidHandles = IsValidHandle() && OtherPinHandle.IsValidHandle();
+	// Do both handles have a valid game flow node owner?
 	const bool bValidOwners = PinOwner != nullptr && OtherPinHandle.PinOwner != nullptr;
+	// Do not allow a connection between two pins on the same node.
 	const bool bRecursiveConnection = PinOwner == OtherPinHandle.PinOwner;
-	return bValidHandles && bValidOwners && !bRecursiveConnection;
+	// True if the two handles do not have the same direction(e.g. Input pins can only connect to output pins and vice-versa).
+	const bool bHaveDifferentDirections = PinDirection != OtherPinHandle.PinDirection;
+	
+	return bValidHandles && bValidOwners && !bRecursiveConnection && bHaveDifferentDirections;
 }
 
 #endif
+

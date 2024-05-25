@@ -33,16 +33,17 @@ void UGameFlowNode::ExecuteOutputPin(FName PinName)
 	const FPinHandle OutputPinHandle = Outputs.FindRef(PinName);
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
 
-	for(const auto& ConnectionInfo: OutputPinHandle.Connections)
+	for(const auto& Pair: OutputPinHandle.Connections)
 	{
-		UGameFlowNode* NextNode = ConnectionInfo.Node;
+		const FPinConnectionInfo& ConnectionInfo = Pair.Value;
+		UGameFlowNode* NextNode = ConnectionInfo.DestinationObject;
 		// If valid, activate next node and start executing it.
 		if(NextNode != nullptr)
 		{
 			// Execute the next node.
 			OwnerAsset->AddActiveNode(NextNode);
 
-			FName PinToExecute = ConnectionInfo.OtherPinName;
+			FName PinToExecute = ConnectionInfo.DestinationPinName;
 			NextNode->Execute(PinToExecute);
 		}
 	}
@@ -68,7 +69,7 @@ void UGameFlowNode::AddInputPin(FName PinName)
 {
 	if(!PinName.IsNone() && PinName.IsValid())
 	{
-		Inputs.Add(PinName, {PinName});
+		Inputs.Add(PinName, {PinName, this, EGPD_Input});
 	}
 }
 
@@ -81,7 +82,7 @@ void UGameFlowNode::AddOutputPin(FName PinName)
 {
 	if(!PinName.IsNone() && PinName.IsValid())
 	{
-		Outputs.Add(PinName, {PinName});
+		Outputs.Add(PinName, {PinName, this, EGPD_Output});
 	}
 }
 
@@ -135,9 +136,46 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 	// in particular if pins connections are different between deleted and replacement nodes.
 	if(PropertyChangedEvent.Property != nullptr)
 	{
+		FName PinName = PropertyChangedEvent.GetPropertyName();
+		
+		TMap<FName, FPinHandle> Pins;
+		if(PinName.IsEqual("Inputs"))
+		{
+			Pins = Inputs;
+		}
+		else if(PinName.IsEqual("Outputs"))
+		{
+			Pins = Outputs;
+		}
+		
 		switch(PropertyChangedEvent.ChangeType)
 		{
 		default: break;
+
+		case EPropertyChangeType::ArrayAdd:
+			{
+				for(const auto& Pair : Pins)
+				{
+					FPinHandle PinHandle = Pair.Value;
+					PinHandle.PinName = Pair.Key;
+					PinHandle.PinOwner = this;
+					UpdatePinHandle(PinHandle);
+				}
+				break;
+			}
+			
+		case EPropertyChangeType::ValueSet:
+			{
+				for(const auto& Pair : Pins)
+				{
+					FPinHandle PinHandle = Pair.Value;
+					PinHandle.PinName = Pair.Key;
+					PinHandle.PinOwner = this;
+					UpdatePinHandle(PinHandle);
+				}
+				break;
+			}
+			
 			// Notify listeners this asset has been redirected.
 		case EPropertyChangeType::Redirected:
 			{

@@ -22,7 +22,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	
 public:
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
 	TMap<FName, FPinHandle> Inputs;
 	
 	/** The last tracked position of the node inside the graph.*/
@@ -56,7 +56,7 @@ protected:
 public:
 	
 	/** All node output pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
 	TMap<FName, FPinHandle> Outputs;
 	
 	UGameFlowNode();

@@ -160,12 +160,11 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 
 	FPinHandle PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
 	PinHandle.CutAllConnections();
-
 	// Recreate logical connections between game flow nodes using graph pin data.
 	for(const UEdGraphPin* ConnectedPin : Pin->LinkedTo)
 	{
 		const UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
-		FPinHandle ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, Pin->Direction);
+		FPinHandle ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, ConnectedPin->Direction);
 		PinHandle.CreateConnection(ConnectedPinHandle);
 		NodeAsset->UpdatePinHandle(PinHandle);
 	}
@@ -428,16 +427,17 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 					TArray<FName> InputPins = NodeAsset->GetInputPinsNames();
 					const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->Inputs.Add(PinName, {});
+					NodeAsset->AddInputPin(PinName);
 					break;
 				}
+			
 			// Add output pin to node asset.	
 			case EGPD_Output:
 				{
 					TArray<FName> OutputPins = NodeAsset->GetOutputPinsNames();
 					const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->Outputs.Add(PinName, {});
+					NodeAsset->AddOutputPin(PinName);
 					break;
 				}
 		}
