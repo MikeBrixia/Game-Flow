@@ -17,40 +17,47 @@ FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(in
 const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
 {
 	FPinConnectionResponse ConnectionResponse;
+	
+	FText ConnectionMessage;
+    
+	const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
+	const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
 
-	// True if both pins are valid and requested connection is not recursive, false otherwise.
 	const bool bValidAndNotRecursive = A != nullptr && B != nullptr && A->GetOwningNode() != B->GetOwningNode();
-	if(bValidAndNotRecursive)
-	{
-		const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
-		const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
+	const bool bValidDirection = bFromInputToOutput || bFromOutputToInput;
+	const bool bAlreadyHasConnection = A->Direction == EGPD_Output && A->LinkedTo.Num() > 0;
 
-		const bool bValidDirection = bFromInputToOutput || bFromOutputToInput;
-		const bool bAlreadyHasConnection = A->Direction == EGPD_Output && A->LinkedTo.Num() > 0;
-		// Allow only connections between one output and input pins.
-		if (bValidDirection && !bAlreadyHasConnection)
-		{
-			ConnectionResponse.Response = CONNECT_RESPONSE_MAKE;
-			ConnectionResponse.Message = INVTEXT("Connection allowed");
-		}
-		else
-		{
-			ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
-			ConnectionResponse.Message = INVTEXT("Connection not allowed");
-		}
+	// Allow only connections between one output and input pins.
+	if (bValidDirection && !bAlreadyHasConnection && bValidAndNotRecursive)
+	{
+		ConnectionResponse.Response = CONNECT_RESPONSE_MAKE;
+		ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "Connection allowed");
 	}
-	// Otherwise, just reject it.
 	else
 	{
 		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
-		ConnectionResponse.Message = INVTEXT("Recursion detected: connection not allowed");
+		if(!bValidDirection)
+		{
+			ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage",
+			                                       "Output pins can only be connected to input pins and vice-versa");
+		}
+		else if(bAlreadyHasConnection)
+		{
+			ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage",
+			                              "Output pins can only have one connection");
+		}
+		else if(!bValidAndNotRecursive)
+		{
+			ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage",
+										  "Recursion not allowed");
+		}
 	}
-	
+	ConnectionResponse.Message = ConnectionMessage;
+
 	return ConnectionResponse;
 }
 
-void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode,
-	const UGameFlowGraph* Graph) const
+void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode) const
 {
 	UEdGraphPin* NewNodeTargetPin = nullptr;
 	// Depending on the direction, find a different target pin.
@@ -204,7 +211,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	if (NodeClass->HasAnyClassFlags(CLASS_Abstract))
 	{
 		UE_LOG(LogGameFlow, Error, TEXT( "%s class is abstract! all instances of this class will be invalidated and should be replaced."), *ClassName);
-		GraphNode->ReportError(EMessageSeverity::Error);
+		GraphNode->ReportError(EMessageSeverity::Error, "Abstract nodes cannot be instanced");
 	}
 	
 	// When a node has been marked as deprecated, log a warning to the console
@@ -213,7 +220,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	{
 		const FString DeprecationMessage = NodeClass->GetMetaData("DeprecationMessage");
 		UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
-		GraphNode->ReportError(EMessageSeverity::Warning);
+		GraphNode->ReportError(EMessageSeverity::Warning, "Node should be replaced with new version if available");
 	}
 	
 }
@@ -294,7 +301,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 
 				// TODO | Need to implement some system to avoid multiple rebuild of the
 				// TODO | same node. Right now it works with no issues because game flow
-				// TODO | does not allow output pins to have more than one connection.
+				// TODO | schema does not allow output pins to have more than one connection.
 				
 				// Enqueue next node, we'll need to rebuild it.
 				ToRebuild.Enqueue(GraphNode);

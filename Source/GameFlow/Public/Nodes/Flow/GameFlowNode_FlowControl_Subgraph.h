@@ -37,5 +37,7 @@ private:
 	void ReconstructSubgraph();
     void ConstructInputPins();
     void ConstructOutputPins();
+	
+    bool CanInstanceAssetFromSource(const UGameFlowAsset* LoadedAsset) const;
 #endif 
 };

@@ -2,18 +2,11 @@
 
 #include "Nodes/GameFlowNode.h"
 #include "GameFlowAsset.h"
+#include "Config/GameFlowSettings.h"
 
 UGameFlowNode::UGameFlowNode()
 {
 	TypeName = "Event";
-}
-
-void UGameFlowNode::Execute_Implementation(const FName& PinName)
-{
-}
-
-void UGameFlowNode::OnFinishExecute_Implementation()
-{
 }
 
 void UGameFlowNode::FinishExecute(bool bFinish)
@@ -49,6 +42,8 @@ void UGameFlowNode::ExecuteOutputPin(FName PinName)
 	}
 }
 
+#if WITH_EDITOR
+
 TArray<FName> UGameFlowNode::GetInputPinsNames() const
 {
 	TArray<FName> InputPins;
@@ -63,7 +58,20 @@ TArray<FName> UGameFlowNode::GetOutputPinsNames() const
 	return OutputPins;
 }
 
-#if WITH_EDITOR
+TArray<FName> UGameFlowNode::GetNodeTypeOptions() const
+{
+	return UGameFlowSettings::Get()->Options; 
+}
+
+bool UGameFlowNode::CanAddInputPin() const
+{
+	return bCanAddInputPin;
+}
+
+bool UGameFlowNode::CanAddOutputPin() const
+{
+	return bCanAddOutputPin; 
+}
 
 void UGameFlowNode::AddInputPin(FName PinName)
 {

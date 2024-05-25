@@ -66,6 +66,26 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 	}
 }
 
+void UGameFlowGraphNode::SetNodeInfo(FGameFlowNodeInfo NewInfo)
+{
+	this->Info = NewInfo; 
+}
+
+FText UGameFlowGraphNode::GetTooltipText() const
+{
+	return NodeAsset->GetClass()->GetToolTipText();
+}
+
+FGameFlowNodeInfo& UGameFlowGraphNode::GetNodeInfo()
+{
+	return Info;
+}
+
+UGameFlowNode* UGameFlowGraphNode::GetNodeAsset() const
+{
+	return NodeAsset; 
+}
+
 void UGameFlowGraphNode::PostPlacedNewNode()
 {
 	Super::PostPlacedNewNode();
@@ -76,6 +96,7 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 
 	// Listen to game flow assets events.
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
+	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
 	
 	// Listen to Unreal Editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
@@ -131,6 +152,26 @@ void UGameFlowGraphNode::OnEnableBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = true;
 	// TODO Implement debug features
+}
+
+bool UGameFlowGraphNode::CanAddBreakpoint() const
+{
+	return !NodeAsset->bBreakpointEnabled; 
+}
+
+bool UGameFlowGraphNode::CanRemoveBreakpoint() const
+{
+	return NodeAsset->bBreakpointEnabled; 
+}
+
+bool UGameFlowGraphNode::CanEnableBreakpoint() const
+{
+	return !NodeAsset->bBreakpointEnabled; 
+}
+
+bool UGameFlowGraphNode::CanDisableBreakpoint() const
+{
+	return NodeAsset->bBreakpointEnabled; 
 }
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
@@ -280,6 +321,13 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	} 
 }
 
+FEdGraphPinType UGameFlowGraphNode::GetGraphPinType() const
+{
+	FEdGraphPinType OutputPinInfo = {};
+	OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
+	return OutputPinInfo;
+}
+
 FName UGameFlowGraphNode::CreateUniquePinName(FName SourcePinName) const
 {
 	FString GeneratedName = SourcePinName.ToString();
@@ -318,6 +366,11 @@ FText UGameFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	return bIsInputOrOutputNode? FText::FromString(NodeAsset->GetName()) : NodeAsset->GetClass()->GetDisplayNameText();
 }
 
+FLinearColor UGameFlowGraphNode::GetNodeTitleColor() const
+{
+	return Info.TitleBarColor; 
+}
+
 bool UGameFlowGraphNode::IsOrphan() const
 {
 	// Find all input pins which have a connection.
@@ -344,6 +397,15 @@ bool UGameFlowGraphNode::CanBeReplaced() const
 	       && !NodeAsset->IsA(UGameFlowNode_Output::StaticClass());
 }
 
+bool UGameFlowGraphNode::GetCanRenameNode() const
+{
+	const bool bIsInputOrOutputNode = UGameFlowNode_Input::StaticClass() || UGameFlowNode_Output::StaticClass();
+		
+	const FString NodeName = NodeAsset->GetName();
+	const bool bIsDefaultInputOrOutput = NodeName.Equals("Start") || NodeName.Equals("Finish");
+	return bIsInputOrOutputNode && !bIsDefaultInputOrOutput;
+}
+
 void UGameFlowGraphNode::ReconstructNode()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
@@ -360,13 +422,19 @@ void UGameFlowGraphNode::ReconstructNode()
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
 }
 
-void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity)
+bool UGameFlowGraphNode::IsRoot() const
+{
+	return NodeAsset->IsA(UGameFlowNode_Input::StaticClass()); 
+}
+
+void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity, FString ErrorMessage)
 {
 	bHasCompilerMessage = MessageSeverity == EMessageSeverity::Error ||
 		    MessageSeverity == EMessageSeverity::Warning ||
 		    MessageSeverity == EMessageSeverity::Info ||
 			MessageSeverity == EMessageSeverity::PerformanceWarning;
 	ErrorType = MessageSeverity;
+	ErrorMsg = ErrorMessage;
 }
 
 void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)

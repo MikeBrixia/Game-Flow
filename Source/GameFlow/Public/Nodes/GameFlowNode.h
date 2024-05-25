@@ -3,10 +3,10 @@
 
 #include "CoreMinimal.h"
 #include "PinHandle.h"
-#include "Config/GameFlowSettings.h"
 #include "GameFlowNode.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type, FString);
 
 /** Base class for all Game Flow nodes. */
 UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default", ClassGroup=(GameFlow))
@@ -41,7 +41,8 @@ public:
 	
 	/** Called when this asset gets deleted and replaced or hot-reloaded(C++ compilation) */
 	FOnAssetRedirected OnAssetRedirected;
-	
+	/** Use this delegate to notify error events on this node to all listeners. */
+	FOnAssetErrorEvent OnErrorEvent;
 protected:
 
 	/** True if this node should have a variable amount of input pins */
@@ -64,12 +65,12 @@ public:
 	/* Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void Execute(const FName& PinName = "Exec");
-	virtual void Execute_Implementation(const FName& PinName);
+	virtual void Execute_Implementation(const FName& PinName) {};
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	void OnFinishExecute();
-	virtual void OnFinishExecute_Implementation();
+	virtual void OnFinishExecute_Implementation() {};
 	
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
@@ -91,7 +92,7 @@ public:
 	 * @return An array of node types.
 	 */
 	UFUNCTION(CallInEditor)
-    FORCEINLINE TArray<FName> GetNodeTypeOptions() { return UGameFlowSettings::Get()->Options; }
+    TArray<FName> GetNodeTypeOptions() const;
 
 	void AddInputPin(FName PinName);
 	void RemoveInputPin(FName PinName);
@@ -102,8 +103,8 @@ public:
 	FPinHandle GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<FName> GetInputPinsNames() const;
 	TArray<FName> GetOutputPinsNames() const;
-	FORCEINLINE bool CanAddInputPin() const { return bCanAddInputPin; }
-	FORCEINLINE bool CanAddOutputPin() const { return bCanAddOutputPin; }
+	bool CanAddInputPin() const;
+	bool CanAddOutputPin() const;
 	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

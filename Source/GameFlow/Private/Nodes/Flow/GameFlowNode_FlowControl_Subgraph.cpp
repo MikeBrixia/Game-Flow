@@ -27,15 +27,23 @@ void UGameFlowNode_FlowControl_Subgraph::PostEditChangeProperty(FPropertyChanged
 		// Load asset from soft reference.
 		const UGameFlowAsset* LoadedAsset = StreamableManager.LoadSynchronous(Asset);
 		
-		// Create an instance of the loaded asset and register it inside game flow.
-		InstancedAsset = LoadedAsset->CreateInstance(this);
-        
-		// Once we've done initializing the instance, it is time to
-		// rebuild modified subgraph to match instanced asset I/O pins.
-		ReconstructSubgraph();
+		// Loaded asset should be of a different class.
+		if(CanInstanceAssetFromSource(LoadedAsset))
+		{
+			// Create an instance of the loaded asset and register it inside game flow.
+			InstancedAsset = LoadedAsset->CreateInstance(this);
+		
+			// Once we've done initializing the instance, it is time to
+			// rebuild modified subgraph to match instanced asset I/O pins.
+			ReconstructSubgraph();
 
-		// Call this to update graph node look.
-		OnAssetRedirected.Broadcast();
+			// Call this to update graph node look.
+			OnAssetRedirected.Broadcast();
+		}
+		else
+		{
+			OnErrorEvent.Broadcast(EMessageSeverity::Error, "Subgraph recursion not allowed");
+		}
 	}
 }
 
@@ -71,6 +79,11 @@ void UGameFlowNode_FlowControl_Subgraph::ConstructOutputPins()
 			AddOutputPin(PinName);
 		}
 	}
+}
+
+bool UGameFlowNode_FlowControl_Subgraph::CanInstanceAssetFromSource(const UGameFlowAsset* LoadedAsset) const
+{
+	return LoadedAsset != nullptr && LoadedAsset != GetTypedOuter<UGameFlowAsset>();
 }
 
 #endif

@@ -80,7 +80,7 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 	if(FromPin != nullptr)
 	{
 		// Connect the dragged pin to the new graph node default pin.
-		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode, GameFlowGraph);
+		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode);
 	}
 	
 	// Initialize UedGraphNode properties.
@@ -109,7 +109,7 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UG
 	if(FromPin != nullptr)
 	{
 		// Connect the dragged pin to the new graph node default pin.
-		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode, GameFlowGraph);
+		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode);
 	}
 	
 	// Initialize UedGraphNode properties.

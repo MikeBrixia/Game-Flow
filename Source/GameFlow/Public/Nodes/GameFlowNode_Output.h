@@ -8,10 +8,9 @@
 #include "GameFlowNode_Output.generated.h"
 
 /**
- * The exit node of the GameFlow asset. This nodes are used
- * to terminate the execution of a GameFlow asset.
+ * Terminates the execution of a game flow asset
  */
-UCLASS(DisplayName="Finish")
+UCLASS(DisplayName="Finish", NotBlueprintable, NotBlueprintType, Category="I/0")
 class GAMEFLOW_API UGameFlowNode_Output final : public UGameFlowNode
 {
 	GENERATED_BODY()

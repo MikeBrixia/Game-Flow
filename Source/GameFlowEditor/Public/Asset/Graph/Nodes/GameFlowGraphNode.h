@@ -14,6 +14,8 @@
 DECLARE_MULTICAST_DELEGATE(FOnNodeAssetChanged)
 DECLARE_MULTICAST_DELEGATE(FOnValidationEnd)
 
+#define LOCTEXT_NAMESPACE "FGameFlowEditor"
+
 /**
  * A node used inside Game Flow graphs.
  */
@@ -49,32 +51,13 @@ private:
 public:
 	UGameFlowGraphNode();
 	
-	/**
-	 * @brief Create a brand new pin for a Game Flow node.
-	 * @param PinDirection The direction of the new pin.
-	 * @param PinName The name of the new pin. Pins with name "None" will be ignored.
-	 * @param bAddToAsset should we add this new pin to the Game Flow node asset? 
-	 * @return The new pin.
-	 */
 	UEdGraphPin* CreateNodePin(const EEdGraphPinDirection PinDirection, FName PinName = EName::None, bool bAddToAsset = true);
-
-	/**
-	 * @brief Generate a unique pin name.
-	 * @param SourcePinName The name of the previous pin, will be used
-	 *                      to generate a new name with a predictable pattern.
-	 * @return The generated pin name.
-	 */
 	virtual FName CreateUniquePinName(FName SourcePinName) const override;
 	virtual void AllocateDefaultPins() override;
     virtual void OnPinRemoved(UEdGraphPin* InRemovedPin) override;
 	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
-	FORCEINLINE static FEdGraphPinType GetGraphPinType()
-	{
-		FEdGraphPinType OutputPinInfo = {};
-		OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
-		return OutputPinInfo;
-	}
+	FEdGraphPinType GetGraphPinType() const;
 	
 	void OnLiveOrHotReloadCompile();
 	void OnAssetCompiled();
@@ -84,47 +67,41 @@ public:
 
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
-	FORCEINLINE virtual FLinearColor GetNodeTitleColor() const override { return Info.TitleBarColor; }
-	void ReportError(EMessageSeverity::Type MessageSeverity);
+	virtual FLinearColor GetNodeTitleColor() const override;
+	void ReportError(EMessageSeverity::Type MessageSeverity, FString ErrorMessage);
 	
-	/* Get the asset contained inside this graph node. */
-	FORCEINLINE UGameFlowNode* GetNodeAsset() const { return NodeAsset; }
+	UGameFlowNode* GetNodeAsset() const;
     void SetNodeAsset(UGameFlowNode* Node);
-	FORCEINLINE FGameFlowNodeInfo& GetNodeInfo() { return Info; }
-	FORCEINLINE void SetNodeInfo(FGameFlowNodeInfo NewInfo) { this->Info = NewInfo; }
+	FGameFlowNodeInfo& GetNodeInfo();
+	void SetNodeInfo(FGameFlowNodeInfo NewInfo);
+	virtual FText GetTooltipText() const override;
+	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;
 	virtual void OnRenameNode(const FString& NewName) override;
 	virtual void ReconstructNode() override;
-	FORCEINLINE bool IsRoot() const { return NodeAsset->IsA(UGameFlowNode_Input::StaticClass()); }
+	
+	bool IsRoot() const;
 	bool IsOrphan() const;
 	virtual bool CanUserDeleteNode() const override;
 	virtual bool CanBeReplaced() const;
-	
-	FORCEINLINE virtual bool GetCanRenameNode() const override
-	{
-		const bool bIsInputOrOutputNode = UGameFlowNode_Input::StaticClass() || UGameFlowNode_Output::StaticClass();
-		
-		const FString NodeName = NodeAsset->GetName();
-		const bool bIsDefaultInputOrOutput = NodeName.Equals("Start") || NodeName.Equals("Finish");
-		return bIsInputOrOutputNode && !bIsDefaultInputOrOutput;
-	}
+	virtual bool GetCanRenameNode() const override;
 
 private:
-	///////  GRAPH NODE CONTEXT ACTIONS EVENTS  ///////////
+	
 	void OnReplacementRequest();
 	void OnValidationRequest();
 	void OnAddBreakpointRequest();
 	void OnRemoveBreakpointRequest();
 	void OnDisableBreakpointRequest();
 	void OnEnableBreakpointRequest();
-	//////// GRAPH NODE CONTEXT ACTIONS STATE CONDITIONS ///
-	FORCEINLINE bool CanAddBreakpoint() const { return !NodeAsset->bBreakpointEnabled; }
-	FORCEINLINE bool CanRemoveBreakpoint() const { return NodeAsset->bBreakpointEnabled; }
-	FORCEINLINE bool CanEnableBreakpoint() const { return !NodeAsset->bBreakpointEnabled; }
-	FORCEINLINE bool CanDisableBreakpoint() const { return NodeAsset->bBreakpointEnabled; }
-	////////////////////////////////////////////////////////
+	
+	bool CanAddBreakpoint() const;
+	bool CanRemoveBreakpoint() const;
+	bool CanEnableBreakpoint() const;
+	bool CanDisableBreakpoint() const;
+	
 	void ConfigureContextMenuAction();
 };
 
-
+#undef LOCTEXT_NAMESPACE 

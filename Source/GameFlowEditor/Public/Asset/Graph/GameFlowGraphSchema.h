@@ -31,9 +31,8 @@ public:
 	*         default pins, first node pin will be considered the default pin.
 	* @param FromPin The pin trying to connect to a default pin.
 	* @param GraphNode The target graph node for the connection.
-	* @param Graph The graph in which the operation takes place.
 	*/
-	void ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode, const UGameFlowGraph* Graph) const;
+	void ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode) const;
 	
 	/**
 	 * @brief Populate target graph with Game Flow default nodes.

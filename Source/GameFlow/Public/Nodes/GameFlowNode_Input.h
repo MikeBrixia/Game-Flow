@@ -8,11 +8,9 @@
 #include "GameFlowNode_Input.generated.h"
 
 /**
- * GameFlow input are nodes which represents entry points
- * inside the GameFlow graph. This type of node doesn't have any input
- * pins, only single outputs.
+ * Entry point for the execution of a game flow asset.
  */
-UCLASS(DisplayName="Start", NotBlueprintable, NotBlueprintType)
+UCLASS(DisplayName="Start", NotBlueprintable, NotBlueprintType, Category="I/0")
 class GAMEFLOW_API UGameFlowNode_Input final : public UGameFlowNode
 {
 	GENERATED_BODY()
