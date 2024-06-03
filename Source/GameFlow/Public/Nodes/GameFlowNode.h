@@ -22,7 +22,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	
 public:
 	/** All the node input pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TMap<FName, FPinHandle> Inputs;
 	
 	/** The last tracked position of the node inside the graph.*/
@@ -64,39 +64,34 @@ public:
 	
 	/* Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	void Execute(const FName& PinName = "Exec");
-	virtual void Execute_Implementation(const FName& PinName) {};
+	FORCEINLINE void Execute(const FName& PinName = "Exec");
+	FORCEINLINE virtual void Execute_Implementation(const FName& PinName) {};
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	void OnFinishExecute();
-	virtual void OnFinishExecute_Implementation() {};
+	FORCEINLINE void OnFinishExecute();
+	FORCEINLINE virtual void OnFinishExecute_Implementation() {};
 	
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
 	 * @param bFinish If true, this node will be the only output and node will be unloaded.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void FinishExecute(bool bFinish);
+	FORCEINLINE void FinishExecute(bool bFinish);
 
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	void ExecuteOutputPin(FName PinName);
+	FORCEINLINE void ExecuteOutputPin(FName PinName);
 	
 // Editor-only functionality of game flow node.
 #if WITH_EDITOR
 	
 public:
-	
-	/**
-	 * @brief Get all the registered Game Flow node types
-	 * @return An array of node types.
-	 */
 	UFUNCTION(CallInEditor)
     TArray<FName> GetNodeTypeOptions() const;
 
-	void AddInputPin(FName PinName);
+	FORCEINLINE void AddInputPin(FName PinName);
 	void RemoveInputPin(FName PinName);
-	void AddOutputPin(FName PinName);
+	FORCEINLINE void AddOutputPin(FName PinName);
     void RemoveOutputPin(FName PinName);
     void UpdatePinHandle(const FPinHandle& UpdatedPinHandle);
 	
@@ -110,6 +105,7 @@ protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 };
+
 
 
 

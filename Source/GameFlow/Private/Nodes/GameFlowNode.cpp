@@ -4,6 +4,7 @@
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 
+
 UGameFlowNode::UGameFlowNode()
 {
 	TypeName = "Event";
@@ -141,50 +142,56 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 
 	// Check if modified property is valid.
 	// FProperty could be null when replacing game flow node references,
-	// in particular if pins connections are different between deleted and replacement nodes.
+	// in particular if pins connections differs between deleted and replacement nodes.
 	if(PropertyChangedEvent.Property != nullptr)
 	{
-		FName PinName = PropertyChangedEvent.GetPropertyName();
-		
+		const FName PinName = PropertyChangedEvent.GetPropertyName();
 		TMap<FName, FPinHandle> Pins;
+		TArray<FName> PinsNames;
+		EEdGraphPinDirection PinDirection = EGPD_MAX;
+		
 		if(PinName.IsEqual("Inputs"))
 		{
+			PinsNames = GetInputPinsNames();
 			Pins = Inputs;
+			PinDirection = EGPD_Input;
 		}
 		else if(PinName.IsEqual("Outputs"))
 		{
+			PinsNames = GetOutputPinsNames();
 			Pins = Outputs;
+			PinDirection = EGPD_Output;
 		}
 		
 		switch(PropertyChangedEvent.ChangeType)
 		{
 		default: break;
 
+			// Handle details panel input/output pins addition.
 		case EPropertyChangeType::ArrayAdd:
 			{
-				for(const auto& Pair : Pins)
-				{
-					FPinHandle PinHandle = Pair.Value;
-					PinHandle.PinName = Pair.Key;
-					PinHandle.PinOwner = this;
-					UpdatePinHandle(PinHandle);
-				}
+				const int KeyIndex = PropertyChangedEvent.GetArrayIndex(PinName.ToString());
+				const FName ModifiedPinName = PinsNames[KeyIndex];
+				FPinHandle& Handle = Pins[ModifiedPinName];
+				// Initialize pin handle properties
+				Handle.PinName = ModifiedPinName;
+				Handle.PinDirection = PinDirection;
 				break;
 			}
-			
+
+			// Handle pins renames in details panel.
 		case EPropertyChangeType::ValueSet:
 			{
 				for(const auto& Pair : Pins)
 				{
 					FPinHandle PinHandle = Pair.Value;
 					PinHandle.PinName = Pair.Key;
-					PinHandle.PinOwner = this;
 					UpdatePinHandle(PinHandle);
 				}
 				break;
 			}
 			
-			// Notify listeners this asset has been redirected.
+			// Notify listeners(usually the associated graph node) this asset has been compiled/redirected.
 		case EPropertyChangeType::Redirected:
 			{
 				OnAssetRedirected.Broadcast();

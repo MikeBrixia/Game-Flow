@@ -56,23 +56,54 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 
 	// Engine version independent styling.
 	{
-		StyleSet->Set("GameFlow.Editor.Default.Add", new IMAGE_BRUSH(TEXT("Icons/icon_add_40x"),
+		// Context actions.
+		{
+			StyleSet->Set("GameFlow.Editor.Default.Add", new IMAGE_BRUSH(TEXT("Icons/icon_add_40x"),
 								  CoreStyleConstants::Icon22x22));
-		StyleSet->Set("GameFlow.Editor.Default.RemoveNode", new IMAGE_BRUSH(TEXT("Icons/Edit/icon_Edit_Delete_40x"),
-								  CoreStyleConstants::Icon22x22));
-		StyleSet->Set("GameFlow.Editor.Default.BreakpointDelete", new IMAGE_BRUSH(TEXT("Icons/GenericDelete_Hovered"),
-								  CoreStyleConstants::Icon22x22));
-		StyleSet->Set("GameFlow.Editor.Default.Node", new IMAGE_BRUSH(TEXT("Graph/Icons/Node"),
-								  CoreStyleConstants::Icon22x22));
-		StyleSet->Set("GameFlow.Editor.Debug.Icon.EnabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Valid_Small"),
-								  CoreStyleConstants::Icon22x22));
-		StyleSet->Set("GameFlow.Editor.Debug.Icon.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled_Small"),
-								  CoreStyleConstants::Icon22x22));
+			StyleSet->Set("GameFlow.Editor.Default.RemoveNode", new IMAGE_BRUSH(TEXT("Icons/Edit/icon_Edit_Delete_40x"),
+									  CoreStyleConstants::Icon22x22));
+			StyleSet->Set("GameFlow.Editor.Default.BreakpointDelete", new IMAGE_BRUSH(TEXT("Icons/GenericDelete_Hovered"),
+									  CoreStyleConstants::Icon22x22));
+			StyleSet->Set("GameFlow.Editor.Default.Node", new IMAGE_BRUSH(TEXT("Graph/Icons/Node"),
+									  CoreStyleConstants::Icon22x22));
+			StyleSet->Set("GameFlow.Editor.Debug.Icon.EnabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Valid_Small"),
+									  CoreStyleConstants::Icon22x22));
+			StyleSet->Set("GameFlow.Editor.Debug.Icon.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled_Small"),
+									  CoreStyleConstants::Icon22x22));
+		}
 
-		// Editor assets icons
+		// Editor assets icons.
 		{
 			StyleSet->Set("GameFlow.Editor.Default.AssetIcon", new IMAGE_BRUSH(TEXT("Icons/icon_Blueprint_AddGraph_512px"),
 								  CoreStyleConstants::Icon22x22));
+		}
+
+		// Nodes types icons
+		{
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Input", new IMAGE_BRUSH(TEXT("Graph/Icons/Event"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Output", new IMAGE_BRUSH(TEXT("Graph/Icons/Event"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Event", new IMAGE_BRUSH(TEXT("Graph/Event_Custom"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Latent", new IMAGE_BRUSH(TEXT("Graph/LatentIcon"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Conditional.Subgraph", new IMAGE_BRUSH(TEXT("Graph/Icons/Subgraph"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Conditional", new IMAGE_BRUSH(TEXT("Icons/icon_Blueprint_Sequence_16x"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Event.Notify", new IMAGE_BRUSH(TEXT("Graph/MessageIcon"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Debug.EditorOnly", new IMAGE_BRUSH(TEXT("Graph/EditorOnly"),
+								  CoreStyleConstants::Icon16x16));
+		}
+
+		// Network icons
+		{
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Network.Replicated", new IMAGE_BRUSH(TEXT("Graph/Replicated"),
+								  CoreStyleConstants::Icon16x16));
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Network.Authoritative", new IMAGE_BRUSH(TEXT("Graph/AuthorityOnly"),
+								  CoreStyleConstants::Icon16x16));
 		}
 	}
 }

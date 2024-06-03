@@ -3,13 +3,17 @@
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
+#include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Nodes/Flow/GameFlowNode_FlowControl_Subgraph.h"
 #include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
+
+#define LOCTEXT_NAMESPACE "FGameFlowEditor"
 
 UGameFlowGraphNode::UGameFlowGraphNode()
 {
@@ -74,6 +78,19 @@ void UGameFlowGraphNode::SetNodeInfo(FGameFlowNodeInfo NewInfo)
 FText UGameFlowGraphNode::GetTooltipText() const
 {
 	return NodeAsset->GetClass()->GetToolTipText();
+}
+
+FSlateIcon UGameFlowGraphNode::GetIconAndTint(FLinearColor& OutColor) const
+{
+	const FString StylePathPrefix = "GameFlow.Editor.Default.Nodes.Icons";
+	FString StyleKey = StylePathPrefix + "." + NodeAsset->TypeName.ToString();
+	if(NodeAsset->IsA(UGameFlowNode_FlowControl_Subgraph::StaticClass()))
+	{
+		StyleKey = StyleKey + ".Subgraph";
+	}
+	const FSlateIcon NodeIcon { FGameFlowEditorStyle::TypeName,FName(StyleKey) };
+	
+	return NodeIcon;
 }
 
 FGameFlowNodeInfo& UGameFlowGraphNode::GetNodeInfo()
@@ -406,6 +423,11 @@ bool UGameFlowGraphNode::GetCanRenameNode() const
 	return bIsInputOrOutputNode && !bIsDefaultInputOrOutput;
 }
 
+bool UGameFlowGraphNode::ShowPaletteIconOnNode() const
+{
+	return true;
+}
+
 void UGameFlowGraphNode::ReconstructNode()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
@@ -524,4 +546,4 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 	return Pin;
 }
 
-
+#undef LOCTEXT_NAMESPACE

@@ -17,18 +17,31 @@ FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(in
 const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
 {
 	FPinConnectionResponse ConnectionResponse;
-	
 	FText ConnectionMessage;
-    
-	const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
-	const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
+	
+    // If one of the two pins is invalid, do not allow connection and return.
+	if(A == nullptr || B == nullptr)
+	{
+		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
+		ConnectionResponse.Message = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "One or both of the pins are invalid!");
+		return ConnectionResponse;
+	}
 
-	const bool bValidAndNotRecursive = A != nullptr && B != nullptr && A->GetOwningNode() != B->GetOwningNode();
+	// Are we trying to establish a connection from an input pin source to an output pin destination?
+	const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
+	// Are we trying to establish a connection from an output pin source to an input pin destination?
+	const bool bFromOutputToInput = A->Direction == EGPD_Output && B->Direction == EGPD_Input;
 	const bool bValidDirection = bFromInputToOutput || bFromOutputToInput;
+	
+	// Are we trying to connect two pins which are on the same node?
+	const bool bIsRecursive = A->GetOwningNode() == B->GetOwningNode();
+	// Is the source pin already connected to another pin?
 	const bool bAlreadyHasConnection = A->Direction == EGPD_Output && A->LinkedTo.Num() > 0;
 
-	// Allow only connections between one output and input pins.
-	if (bValidDirection && !bAlreadyHasConnection && bValidAndNotRecursive)
+	// Allow only connections between one output and input pins. To be eligible for connections,
+	// the source pin must have 0 connections and should not try to create a recursive connection
+	// on the owning node.
+	if (bValidDirection && !bAlreadyHasConnection && !bIsRecursive)
 	{
 		ConnectionResponse.Response = CONNECT_RESPONSE_MAKE;
 		ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "Connection allowed");
@@ -46,7 +59,7 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 			ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage",
 			                              "Output pins can only have one connection");
 		}
-		else if(!bValidAndNotRecursive)
+		else if(bIsRecursive)
 		{
 			ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage",
 										  "Recursion not allowed");

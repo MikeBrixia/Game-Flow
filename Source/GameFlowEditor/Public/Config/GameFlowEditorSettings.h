@@ -17,12 +17,6 @@ class GAMEFLOWEDITOR_API UGameFlowEditorSettings : public UDeveloperSettings
 
 public:
 	
-	FORCEINLINE static UGameFlowEditorSettings* Get()
-	{
-		UObject* DefaultObject = StaticClass()->GetDefaultObject();
-		return CastChecked<UGameFlowEditorSettings>(DefaultObject);
-	}
-	
 	UPROPERTY(Config, EditAnywhere, Category="Nodes")
 	bool bEditNodesStyles;
 
@@ -33,10 +27,12 @@ public:
 	/* The color of the execution pin. */
 	UPROPERTY(Config, EditAnywhere, Category="Nodes|Style", meta=(EditCondition="bEditNodesStyles"))
 	FLinearColor ExecPinColor;
-
-	/* This nodes will not be displayed inside the palette tab. */
-	UPROPERTY(Config, EditAnywhere, Category="Nodes")
-	TArray<TSubclassOf<UGameFlowNode>> HiddenFromPalette;
-
+	
+	FORCEINLINE static UGameFlowEditorSettings* Get()
+	{
+		UObject* DefaultObject = StaticClass()->GetDefaultObject();
+		return CastChecked<UGameFlowEditorSettings>(DefaultObject);
+	}
+	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 };

@@ -294,7 +294,6 @@ void GameFlowAssetToolkit::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	// Unregister editor menu and toolbar.
 	UToolMenus::UnRegisterStartupCallback(this);
 	UToolMenus::UnregisterOwner(this);
-	FGameFlowEditorCommands::Unregister();
 }
 
 

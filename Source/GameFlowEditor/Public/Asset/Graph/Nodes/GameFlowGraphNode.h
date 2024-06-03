@@ -14,8 +14,6 @@
 DECLARE_MULTICAST_DELEGATE(FOnNodeAssetChanged)
 DECLARE_MULTICAST_DELEGATE(FOnValidationEnd)
 
-#define LOCTEXT_NAMESPACE "FGameFlowEditor"
-
 /**
  * A node used inside Game Flow graphs.
  */
@@ -75,6 +73,7 @@ public:
 	FGameFlowNodeInfo& GetNodeInfo();
 	void SetNodeInfo(FGameFlowNodeInfo NewInfo);
 	virtual FText GetTooltipText() const override;
+	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
 	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;
@@ -86,6 +85,7 @@ public:
 	virtual bool CanUserDeleteNode() const override;
 	virtual bool CanBeReplaced() const;
 	virtual bool GetCanRenameNode() const override;
+	virtual bool ShowPaletteIconOnNode() const override;
 
 private:
 	
@@ -104,4 +104,3 @@ private:
 	void ConfigureContextMenuAction();
 };
 
-#undef LOCTEXT_NAMESPACE 
