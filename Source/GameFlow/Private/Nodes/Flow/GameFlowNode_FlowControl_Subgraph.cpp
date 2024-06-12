@@ -86,4 +86,10 @@ bool UGameFlowNode_FlowControl_Subgraph::CanInstanceAssetFromSource(const UGameF
 	return LoadedAsset != nullptr && LoadedAsset != GetTypedOuter<UGameFlowAsset>();
 }
 
+void UGameFlowNode_FlowControl_Subgraph::GetNodeIconInfo(FString& Key, FLinearColor& Color) const
+{
+	Super::GetNodeIconInfo(Key, Color);
+	Key = Key + ".Subgraph";
+}
+
 #endif

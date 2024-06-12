@@ -84,6 +84,7 @@ struct GAMEFLOW_API FPinHandle
     bool IsValidHandle() const;
 	bool IsValidPinName() const;
     bool CanCreateConnection(const FPinHandle& OtherPinHandle) const;
+    FName GetFullPinName() const;
 #endif
 };
 

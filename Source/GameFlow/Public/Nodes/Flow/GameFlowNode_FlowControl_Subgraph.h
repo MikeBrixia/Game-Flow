@@ -39,5 +39,6 @@ private:
     void ConstructOutputPins();
 	
     bool CanInstanceAssetFromSource(const UGameFlowAsset* LoadedAsset) const;
+    virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const override;
 #endif 
 };

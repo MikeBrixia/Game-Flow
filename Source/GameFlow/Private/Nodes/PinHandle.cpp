@@ -1,5 +1,6 @@
 ﻿
 #include "Nodes/PinHandle.h"
+#include "GameFlow.h"
 #include "Nodes/GameFlowNode.h"
 
 FPinConnectionInfo::FPinConnectionInfo()
@@ -11,8 +12,6 @@ FPinConnectionInfo::FPinConnectionInfo(const FName& InputPinName, UGameFlowNode*
 	this->DestinationPinName = InputPinName;
 	this->DestinationObject = Node;
 }
-
-
 
 FPinHandle::FPinHandle()
 {
@@ -41,15 +40,21 @@ void FPinHandle::CreateConnection(FPinHandle& OtherPinHandle)
 {
 	if(CanCreateConnection(OtherPinHandle))
 	{
-		Connections.Add(OtherPinHandle.PinName, {OtherPinHandle.PinName, OtherPinHandle.PinOwner});
-		OtherPinHandle.Connections.Add(PinName, {PinName, PinOwner});
+		const FName PinFullName = GetFullPinName();
+		const FName OtherPinFullName = OtherPinHandle.GetFullPinName();
+		
+		Connections.Add(OtherPinFullName, {OtherPinHandle.PinName, OtherPinHandle.PinOwner});
+		OtherPinHandle.Connections.Add(PinFullName, {PinName, PinOwner});
+
+		PinOwner->UpdatePinHandle(*this);
+		OtherPinHandle.PinOwner->UpdatePinHandle(OtherPinHandle);
 	}
 }
 
 void FPinHandle::CutConnection(FPinHandle& OtherPinHandle)
 {
-	Connections.Remove(OtherPinHandle.PinName);
-	OtherPinHandle.Connections.Remove(PinName);
+	Connections.Remove(OtherPinHandle.GetFullPinName());
+	OtherPinHandle.Connections.Remove(GetFullPinName());
 }
 
 void FPinHandle::CutAllConnections()
@@ -60,14 +65,19 @@ void FPinHandle::CutAllConnections()
 		// The opposite direction of this pin.
 		const EEdGraphPinDirection Direction = this->PinDirection == EGPD_Input? EGPD_Output : EGPD_Input;
 		FPinHandle ConnectedPin = ConnectionInfo.DestinationObject->GetPinByName(ConnectionInfo.DestinationPinName, Direction);
+		
         // After having found the connected pin, cut the connection.
 		CutConnection(ConnectedPin);
+		
+		// Finally we need to update both pins handle.
+		PinOwner->UpdatePinHandle(*this);
 		ConnectionInfo.DestinationObject->UpdatePinHandle(ConnectedPin);
 	}
 }
 
 bool FPinHandle::IsValidHandle() const
 {
+	
 	return IsValidPinName() && PinOwner != nullptr;
 }
 
@@ -81,14 +91,21 @@ bool FPinHandle::IsValidPinName() const
 bool FPinHandle::CanCreateConnection(const FPinHandle& OtherPinHandle) const
 {
 	const bool bValidHandles = IsValidHandle() && OtherPinHandle.IsValidHandle();
-	// Do both handles have a valid game flow node owner?
-	const bool bValidOwners = PinOwner != nullptr && OtherPinHandle.PinOwner != nullptr;
 	// Do not allow a connection between two pins on the same node.
 	const bool bRecursiveConnection = PinOwner == OtherPinHandle.PinOwner;
 	// True if the two handles do not have the same direction(e.g. Input pins can only connect to output pins and vice-versa).
 	const bool bHaveDifferentDirections = PinDirection != OtherPinHandle.PinDirection;
-	
-	return bValidHandles && bValidOwners && !bRecursiveConnection && bHaveDifferentDirections;
+	return bValidHandles && !bRecursiveConnection && bHaveDifferentDirections;
+}
+
+FName FPinHandle::GetFullPinName() const
+{
+	if(IsValidHandle())
+	{
+		const FString NodeName = PinOwner->GetName();
+		return FName(NodeName + "." + PinName.ToString());
+	}
+	return EName::None;
 }
 
 #endif

@@ -11,7 +11,6 @@ UEdGraphNode* FGameFlowSchemaAction_ReplaceNode::PerformAction(UEdGraph* ParentG
 	GameFlowGraph->Modify();
 	GameFlowGraph->GameFlowAsset->Modify();
 	NodeToReplace->Modify();
-	NodeToReplace->GetNodeAsset()->Modify();
 	
 	return ReplaceNode(NodeToReplace, NodeReplacementClass);
 }

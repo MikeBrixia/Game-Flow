@@ -64,6 +64,12 @@ TArray<FName> UGameFlowNode::GetNodeTypeOptions() const
 	return UGameFlowSettings::Get()->Options; 
 }
 
+void UGameFlowNode::GetNodeIconInfo(FString& Key, FLinearColor& Color) const
+{
+	Color = FLinearColor::White;
+	Key = "GameFlow.Editor.Default.Nodes.Icons." + TypeName.ToString();
+}
+
 bool UGameFlowNode::CanAddInputPin() const
 {
 	return bCanAddInputPin;
@@ -171,10 +177,10 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 		case EPropertyChangeType::ArrayAdd:
 			{
 				const int KeyIndex = PropertyChangedEvent.GetArrayIndex(PinName.ToString());
-				const FName ModifiedPinName = PinsNames[KeyIndex];
-				FPinHandle& Handle = Pins[ModifiedPinName];
+				const FName Name = PinsNames[KeyIndex];
+				FPinHandle& Handle = Pins[Name];
 				// Initialize pin handle properties
-				Handle.PinName = ModifiedPinName;
+				Handle.PinName = Name;
 				Handle.PinDirection = PinDirection;
 				break;
 			}

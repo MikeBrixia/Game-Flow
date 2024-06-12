@@ -22,7 +22,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	
 public:
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
 	TMap<FName, FPinHandle> Inputs;
 	
 	/** The last tracked position of the node inside the graph.*/
@@ -65,12 +65,12 @@ public:
 	/* Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void Execute(const FName& PinName = "Exec");
-	FORCEINLINE virtual void Execute_Implementation(const FName& PinName) {};
+	FORCEINLINE virtual void Execute_Implementation(const FName& PinName) {}
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void OnFinishExecute();
-	FORCEINLINE virtual void OnFinishExecute_Implementation() {};
+	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
 	
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
@@ -82,13 +82,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
 	FORCEINLINE void ExecuteOutputPin(FName PinName);
 	
-// Editor-only functionality of game flow node.
+// Editor-only functionality used by external editors to manipulate this node.
 #if WITH_EDITOR
 	
 public:
-	UFUNCTION(CallInEditor)
-    TArray<FName> GetNodeTypeOptions() const;
-
 	FORCEINLINE void AddInputPin(FName PinName);
 	void RemoveInputPin(FName PinName);
 	FORCEINLINE void AddOutputPin(FName PinName);
@@ -103,6 +100,16 @@ public:
 	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
+// Editor-only functionality used to define and communicate node look to the Game Flow editor.
+#if WITH_EDITOR
+	/** Returns a list of all types of nodes defined inside Project Setting at Plugins/GameFlow. */
+	UFUNCTION(CallInEditor)
+	TArray<FName> GetNodeTypeOptions() const;
+
+	/** Defines the tint and icon path for the node. */
+	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
 #endif
 };
 

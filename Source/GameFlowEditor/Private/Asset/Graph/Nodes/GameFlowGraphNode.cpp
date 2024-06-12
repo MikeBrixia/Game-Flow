@@ -9,7 +9,6 @@
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Nodes/Flow/GameFlowNode_FlowControl_Subgraph.h"
 #include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
@@ -82,14 +81,9 @@ FText UGameFlowGraphNode::GetTooltipText() const
 
 FSlateIcon UGameFlowGraphNode::GetIconAndTint(FLinearColor& OutColor) const
 {
-	const FString StylePathPrefix = "GameFlow.Editor.Default.Nodes.Icons";
-	FString StyleKey = StylePathPrefix + "." + NodeAsset->TypeName.ToString();
-	if(NodeAsset->IsA(UGameFlowNode_FlowControl_Subgraph::StaticClass()))
-	{
-		StyleKey = StyleKey + ".Subgraph";
-	}
+	FString StyleKey;
+	NodeAsset->GetNodeIconInfo(StyleKey, OutColor);
 	const FSlateIcon NodeIcon { FGameFlowEditorStyle::TypeName,FName(StyleKey) };
-	
 	return NodeIcon;
 }
 
@@ -209,22 +203,28 @@ void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
 
 void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 {
-	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "Pin Connection List changed", "Rebuild pin connections"));
-	
 	Super::PinConnectionListChanged(Pin);
-
+	
+	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "Pin Connection List changed", "Rebuild pin connections"));
 	Pin->Modify();
 	NodeAsset->Modify();
-
-	FPinHandle PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
-	PinHandle.CutAllConnections();
-	// Recreate logical connections between game flow nodes using graph pin data.
-	for(const UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+	
+	// We don't want to touch logical pin handles during graph node rebuild process,
+	// it could lead do data corruption.
+	if(!bIsRebuilding)
 	{
-		const UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
-		FPinHandle ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, ConnectedPin->Direction);
-		PinHandle.CreateConnection(ConnectedPinHandle);
-		NodeAsset->UpdatePinHandle(PinHandle);
+		FPinHandle PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
+		PinHandle.CutAllConnections();
+		// Recreate logical connections between game flow nodes using graph pin data.
+		for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+		{
+			ConnectedPin->Modify();
+			UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
+			ConnectedNodeAsset->Modify();
+			
+			FPinHandle ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, ConnectedPin->Direction);
+			PinHandle.CreateConnection(ConnectedPinHandle);
+		}
 	}
 }
 
@@ -442,6 +442,12 @@ void UGameFlowGraphNode::ReconstructNode()
 	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
 	// Recompile node and recreate it's node connections.
 	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
+}
+
+bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
+{
+	if(NodeAsset != nullptr) NodeAsset->Modify();
+	return Super::Modify(bAlwaysMarkDirty);
 }
 
 bool UGameFlowGraphNode::IsRoot() const

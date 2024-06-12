@@ -30,6 +30,9 @@ public:
 	FOnNodeAssetChanged OnNodeAssetChanged;
 	/** Callback for when this node has finished being validated. */
 	FOnValidationEnd OnValidationResult;
+
+	/** True if this node is currently inside a rebuild process. */
+	bool bIsRebuilding = false;
 private:
 	
 	/** The game flow node asset encapsulated inside this graph node. */
@@ -79,6 +82,7 @@ public:
 	virtual void DestroyNode() override;
 	virtual void OnRenameNode(const FString& NewName) override;
 	virtual void ReconstructNode() override;
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	
 	bool IsRoot() const;
 	bool IsOrphan() const;
