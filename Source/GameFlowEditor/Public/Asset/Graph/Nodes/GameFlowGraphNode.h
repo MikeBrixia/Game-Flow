@@ -85,6 +85,7 @@ public:
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	
 	bool IsRoot() const;
+	bool IsLeaf() const;
 	bool IsOrphan() const;
 	virtual bool CanUserDeleteNode() const override;
 	virtual bool CanBeReplaced() const;

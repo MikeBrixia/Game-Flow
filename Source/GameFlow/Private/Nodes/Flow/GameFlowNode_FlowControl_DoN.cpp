@@ -16,8 +16,10 @@ UGameFlowNode_FlowControl_DoN::UGameFlowNode_FlowControl_DoN()
 	Count = 0;
 }
 
-void UGameFlowNode_FlowControl_DoN::Execute_Implementation(const FName& PinName)
+void UGameFlowNode_FlowControl_DoN::Execute_Implementation(const FName PinName)
 {
+	Super::Execute_Implementation(PinName);
+	
 	// Reset the counter.
 	if(PinName.IsEqual("Reset"))
 	{

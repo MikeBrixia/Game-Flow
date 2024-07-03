@@ -19,5 +19,5 @@ public:
 
 	UGameFlowNode_Input();
 
-	virtual void Execute_Implementation(const FName& PinName) override;
+	virtual void Execute_Implementation(const FName PinName) override;
 };

@@ -62,6 +62,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Game Flow")
 	TArray<UGameFlowAsset*> GetRunningFlows() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Game Flow")
+	UGameFlowAsset* GetRunningFlowByArchetype(UObject* Archetype) const;
 	/**
 	 * Get all listeners with matching gameplay tags.
 	 * @param GameplayTag The tags used to search for the listeners.

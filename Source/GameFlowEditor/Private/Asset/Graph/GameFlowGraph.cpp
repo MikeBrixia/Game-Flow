@@ -99,7 +99,10 @@ void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
 	for(UGameFlowGraphNode* Node : ReloadedNodes)
 	{
-		Node->OnLiveOrHotReloadCompile();
+		if(Node != nullptr)
+		{
+			Node->OnLiveOrHotReloadCompile();
+		}
 	}
 }
 

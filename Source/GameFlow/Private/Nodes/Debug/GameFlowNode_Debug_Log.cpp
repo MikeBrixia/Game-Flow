@@ -15,7 +15,7 @@ UGameFlowNode_Debug_Log::UGameFlowNode_Debug_Log()
 	TypeName = "Debug";
 }
 
-void UGameFlowNode_Debug_Log::Execute_Implementation(const FName& PinName)
+void UGameFlowNode_Debug_Log::Execute_Implementation(const FName PinName)
 {
 	Super::Execute_Implementation(PinName);
 

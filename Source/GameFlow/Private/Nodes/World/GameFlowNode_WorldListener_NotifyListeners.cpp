@@ -11,7 +11,7 @@ UGameFlowNode_WorldListener_NotifyListeners::UGameFlowNode_WorldListener_NotifyL
 	AddOutputPin("Out");
 }
 
-void UGameFlowNode_WorldListener_NotifyListeners::Execute_Implementation(const FName& PinName)
+void UGameFlowNode_WorldListener_NotifyListeners::Execute_Implementation(const FName PinName)
 {
 	Super::Execute_Implementation(PinName);
 

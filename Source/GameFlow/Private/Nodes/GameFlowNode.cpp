@@ -4,10 +4,26 @@
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 
-
 UGameFlowNode::UGameFlowNode()
 {
 	TypeName = "Event";
+}
+
+void UGameFlowNode::Execute_Implementation(const FName PinName)
+{
+	// We only need to update the call stack in editor mode.
+#if WITH_EDITOR
+	UGameFlowAsset* ParentAsset = GetTypedOuter<UGameFlowAsset>();
+	// Special behavior because input nodes do not have input pins.
+	if(IsA(UGameFlowNode_Input::StaticClass()))
+	{
+		ParentAsset->CallStack.Add(FName(GetName() + ".Out"));
+	}
+	else // Default call stack behavior.
+	{
+		ParentAsset->CallStack.Add(Inputs[PinName].GetFullPinName());
+	}
+#endif
 }
 
 void UGameFlowNode::FinishExecute(bool bFinish)
@@ -78,6 +94,12 @@ bool UGameFlowNode::CanAddInputPin() const
 bool UGameFlowNode::CanAddOutputPin() const
 {
 	return bCanAddOutputPin; 
+}
+
+bool UGameFlowNode::IsActiveNode() const
+{
+	const UGameFlowAsset* ParentAsset = GetTypedOuter<UGameFlowAsset>();
+	return ParentAsset->GetActiveNodes().Contains(this);
 }
 
 void UGameFlowNode::AddInputPin(FName PinName)

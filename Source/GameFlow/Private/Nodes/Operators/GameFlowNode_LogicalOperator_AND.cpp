@@ -24,8 +24,10 @@ UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
 	AddOutputPin("Out");
 }
 
-void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName& PinName)
+void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName PinName)
 {
+	Super::Execute_Implementation(PinName);
+	
 	const FString PinText = PinName.ToString();
 	
 	// Conditional AND node can only have 

@@ -18,8 +18,10 @@ UGameFlowNode_WorldListener::UGameFlowNode_WorldListener()
 	Count = 0;
 }
 
-void UGameFlowNode_WorldListener::Execute_Implementation(const FName& PinName)
+void UGameFlowNode_WorldListener::Execute_Implementation(const FName PinName)
 {
+	Super::Execute_Implementation(PinName);
+	
 	if(PinName.IsEqual("Start"))
 	{
 		StartListening();

@@ -84,7 +84,7 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 								  CoreStyleConstants::Icon16x16));
 			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Output", new IMAGE_BRUSH(TEXT("Graph/Icons/Event"),
 								  CoreStyleConstants::Icon16x16));
-			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Event", new IMAGE_BRUSH(TEXT("Graph/Icons/Event"),
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Event", new IMAGE_BRUSH(TEXT("Graph/Icons/Event_Custom"),
 								  CoreStyleConstants::Icon16x16));
 			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Latent", new IMAGE_BRUSH(TEXT("Graph/LatentIcon"),
 								  CoreStyleConstants::Icon16x16));

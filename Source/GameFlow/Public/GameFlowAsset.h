@@ -30,6 +30,10 @@ public:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleAnywhere)
 	TArray<UGameFlowNode*> Nodes;
+
+	/** History of all nodes called for execution. */
+	UPROPERTY(Transient, VisibleAnywhere)
+	TArray<FName> CallStack;
 	
 	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
 	UPROPERTY()

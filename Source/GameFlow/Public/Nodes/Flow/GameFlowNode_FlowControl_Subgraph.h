@@ -25,7 +25,7 @@ public:
 
 	UGameFlowNode_FlowControl_Subgraph();
 	
-	virtual void Execute_Implementation(const FName& PinName) override;
+	virtual void Execute_Implementation(const FName PinName) override;
 
 #if WITH_EDITOR
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

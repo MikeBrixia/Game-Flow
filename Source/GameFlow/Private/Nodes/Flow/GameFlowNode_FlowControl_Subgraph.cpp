@@ -9,7 +9,7 @@ UGameFlowNode_FlowControl_Subgraph::UGameFlowNode_FlowControl_Subgraph()
 	TypeName = "Conditional";
 }
 
-void UGameFlowNode_FlowControl_Subgraph::Execute_Implementation(const FName& PinName)
+void UGameFlowNode_FlowControl_Subgraph::Execute_Implementation(const FName PinName)
 {
 	Super::Execute_Implementation(PinName);
 	InstancedAsset->Execute(PinName);

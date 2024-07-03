@@ -40,7 +40,7 @@ public:
 	
 	UGameFlowNode_WorldListener();
 	
-	virtual void Execute_Implementation(const FName& PinName) override;
+	virtual void Execute_Implementation(const FName PinName) override;
     virtual void OnFinishExecute_Implementation() override;
 
 	void TryTriggeringEvent();

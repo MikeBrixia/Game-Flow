@@ -12,7 +12,7 @@ UGameFlowAsset::UGameFlowAsset()
 
 void UGameFlowAsset::Execute(FName EntryPointName)
 {
-	UGameFlowNode* RootNode = CustomInputs.FindChecked(EntryPointName);
+	UGameFlowNode* RootNode = CustomInputs.FindRef(EntryPointName);
 	if(RootNode != nullptr)
 	{
 		RootNode->Execute("Exec");

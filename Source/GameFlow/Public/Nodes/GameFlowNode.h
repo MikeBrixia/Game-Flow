@@ -12,9 +12,11 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type,
 UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default", ClassGroup=(GameFlow))
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
+	// Friending this classes allows the graph editor to freely manipulate this node asset.
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	friend class UGameFlowGraphNode;
+	friend class FGameFlowConnectionDrawingPolicy;
 	
 	GENERATED_BODY()
 
@@ -32,7 +34,7 @@ public:
 	/** The type of this node(Latent, Event ecc.)*/
 	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
-
+	
 	/** True if user has placed a breakpoint on this specific node, false otherwise.
 	 * When true, execution of the game flow asset will be paused on this node and
 	 * should be resumed manually by the user.
@@ -62,10 +64,10 @@ public:
 	
 	UGameFlowNode();
 	
-	/* Execute this node */
+	/** Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	FORCEINLINE void Execute(const FName& PinName = "Exec");
-	FORCEINLINE virtual void Execute_Implementation(const FName& PinName) {}
+	FORCEINLINE void Execute(const FName PinName = "Exec");
+	FORCEINLINE virtual void Execute_Implementation(const FName PinName);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
@@ -97,7 +99,12 @@ public:
 	TArray<FName> GetOutputPinsNames() const;
 	bool CanAddInputPin() const;
 	bool CanAddOutputPin() const;
-	
+
+	/**
+	 * Is this node currently running inside parent asset?
+	 * @returns True if node is currently running, false otherwise.
+	 */
+	bool IsActiveNode() const;
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

@@ -24,7 +24,7 @@ UGameFlowAsset* UGameFlowSubsystem::RegisterAssetInstance(UGameFlowAsset* Asset)
 	}
 	else
 	{
-		UE_LOG(LogGameSession, Warning, TEXT("%s has already been instanced inside %s scene/level and therefore could not be registered. Returning already instanced objet"),
+		UE_LOG(LogGameSession, Warning, TEXT("%s has already been instanced inside %s scene/level and therefore could not be registered. Returning already instanced object"),
 				   *Asset->GetName(), *GetWorld()->GetName());
 	}
 
@@ -70,6 +70,11 @@ TArray<UGameFlowAsset*> UGameFlowSubsystem::GetRunningFlows() const
 	TArray<UGameFlowAsset*> RunningAssets;
 	InstancedAssets.GenerateValueArray(RunningAssets);
 	return RunningAssets;
+}
+
+UGameFlowAsset* UGameFlowSubsystem::GetRunningFlowByArchetype(UObject* Archetype) const
+{
+	return InstancedAssets.FindRef(Archetype);
 }
 
 TArray<UGameFlowListener*> UGameFlowSubsystem::GetListenersByGameplayTags(FGameplayTagContainer GameplayTag, EGameplayContainerMatchType MatchType) const

@@ -434,6 +434,7 @@ void UGameFlowGraphNode::ReconstructNode()
 	
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
+
 	
 	BreakAllNodeLinks();
 	Pins.Empty();
@@ -455,6 +456,28 @@ bool UGameFlowGraphNode::IsRoot() const
 	return NodeAsset->IsA(UGameFlowNode_Input::StaticClass()); 
 }
 
+bool UGameFlowGraphNode::IsLeaf() const
+{
+	bool bIsLeaf = true;
+	TArray<UEdGraphPin*> OutputPins = Pins.FilterByPredicate([=](UEdGraphPin* Pin)
+	{
+		return Pin->Direction == EGPD_Output;
+	});
+	
+	for(const UEdGraphPin* Pin : OutputPins)
+	{
+		// If at least one pin has a connection,
+		// this node is not a leaf.
+		if(Pin->HasAnyConnections())
+		{
+			bIsLeaf = false;
+			break;
+		}
+	}
+
+	return bIsLeaf;
+}
+
 void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity, FString ErrorMessage)
 {
 	bHasCompilerMessage = MessageSeverity == EMessageSeverity::Error ||
@@ -468,14 +491,17 @@ void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity, FSt
 void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 {
 	NodeAsset = Node;
-	// Read new info data from config using the new node asset type.
-	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
-	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-	
-	// Notify listeners that the node asset has been changed.
-	if(OnNodeAssetChanged.IsBound())
+	if(Node != nullptr)
 	{
-		OnNodeAssetChanged.Broadcast();
+		// Read new info data from config using the new node asset type.
+		UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+		Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+	
+		// Notify listeners that the node asset has been changed.
+		if(OnNodeAssetChanged.IsBound())
+		{
+			OnNodeAssetChanged.Broadcast();
+		}
 	}
 }
 
