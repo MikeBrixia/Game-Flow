@@ -434,7 +434,6 @@ void UGameFlowGraphNode::ReconstructNode()
 	
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
-
 	
 	BreakAllNodeLinks();
 	Pins.Empty();
@@ -449,6 +448,16 @@ bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
 {
 	if(NodeAsset != nullptr) NodeAsset->Modify();
 	return Super::Modify(bAlwaysMarkDirty);
+}
+
+void UGameFlowGraphNode::OnNodeAssetExecuted()
+{
+	bIsActive = true;
+}
+
+bool UGameFlowGraphNode::IsActiveNode() const
+{
+	return bIsActive;
 }
 
 bool UGameFlowGraphNode::IsRoot() const

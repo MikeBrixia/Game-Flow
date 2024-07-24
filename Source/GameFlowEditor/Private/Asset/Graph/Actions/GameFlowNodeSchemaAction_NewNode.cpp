@@ -63,20 +63,21 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
 	
 	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass, NodeName, RF_Transactional);
+	NewNode->GUID = FGuid::NewGuid();
+	
 	if(NewNode->IsA(UGameFlowNode_Input::StaticClass()))
 	{
 		// Register input node inside game flow asset.
 		GameFlowAsset->CustomInputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Input>(NewNode));
-		GameFlowAsset->Nodes.Add(NewNode);
 	}
 	else if(NewNode->IsA(UGameFlowNode_Output::StaticClass()))
 	{
 		// Register output node inside game flow asset.
 		GameFlowAsset->CustomOutputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Output>(NewNode));
-		GameFlowAsset->Nodes.Add(NewNode);
 	}
-	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
+	GameFlowAsset->AddNode(NewNode);
 	
+	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
 	if(FromPin != nullptr)
 	{
 		// Connect the dragged pin to the new graph node default pin.

@@ -3,11 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFlowEditor.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Nodes/GameFlowNode.h"
-#include "Nodes/GameFlowNode_Input.h"
-#include "Nodes/GameFlowNode_Output.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
@@ -33,8 +30,11 @@ public:
 
 	/** True if this node is currently inside a rebuild process. */
 	bool bIsRebuilding = false;
-private:
+
+	/** True if the asset inside this is being executed, false otherwise. */
+	bool bIsActive = false;
 	
+private:
 	/** The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowNode> NodeAsset;
@@ -48,7 +48,7 @@ private:
 	
 	/** True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
-	
+
 public:
 	UGameFlowGraphNode();
 	
@@ -65,7 +65,7 @@ public:
 	void OnAssetBlueprintPreCompiled(UBlueprint* Blueprint);
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
-
+	
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FLinearColor GetNodeTitleColor() const override;
@@ -83,7 +83,9 @@ public:
 	virtual void OnRenameNode(const FString& NewName) override;
 	virtual void ReconstructNode() override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
+	virtual void OnNodeAssetExecuted();
 	
+	bool IsActiveNode() const;
 	bool IsRoot() const;
 	bool IsLeaf() const;
 	bool IsOrphan() const;

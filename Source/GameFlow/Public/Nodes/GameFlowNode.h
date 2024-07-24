@@ -5,8 +5,12 @@
 #include "PinHandle.h"
 #include "GameFlowNode.generated.h"
 
+#if WITH_EDITOR
+
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type, FString);
+
+#endif
 
 /** Base class for all Game Flow nodes. */
 UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default", ClassGroup=(GameFlow))
@@ -23,30 +27,42 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 #if WITH_EDITORONLY_DATA
 	
 public:
+
+	/** Used to uniquely identify a node asset inside the editor.
+	 * ID is shared between instances of a game flow assets. */
+	UPROPERTY(VisibleAnywhere)
+	FGuid GUID;
+	
 	/** All the node input pins. */
 	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
 	TMap<FName, FPinHandle> Inputs;
 	
-	/** The last tracked position of the node inside the graph.*/
+	/** The last tracked position of the node inside the graph. */
 	UPROPERTY()
 	FVector2D GraphPosition;
 
-	/** The type of this node(Latent, Event ecc.)*/
+	/** The type of this node(Latent, Event ecc.) */
 	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;
 	
-	/** True if user has placed a breakpoint on this specific node, false otherwise.
+	/** 
+	 * True if user has placed a breakpoint on this specific node, false otherwise.
 	 * When true, execution of the game flow asset will be paused on this node and
 	 * should be resumed manually by the user.
 	 */
+	UPROPERTY()
 	bool bBreakpointEnabled;
+
+	UPROPERTY()
+	bool bIsActive;
 	
 	/** Called when this asset gets deleted and replaced or hot-reloaded(C++ compilation) */
 	FOnAssetRedirected OnAssetRedirected;
+	
 	/** Use this delegate to notify error events on this node to all listeners. */
 	FOnAssetErrorEvent OnErrorEvent;
+	
 protected:
-
 	/** True if this node should have a variable amount of input pins */
     UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     bool bCanAddInputPin;
@@ -67,12 +83,12 @@ public:
 	/** Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void Execute(const FName PinName = "Exec");
-	FORCEINLINE virtual void Execute_Implementation(const FName PinName);
+	FORCEINLINE virtual void Execute_Implementation(const FName PinName) {};
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void OnFinishExecute();
-	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
+	FORCEINLINE virtual void OnFinishExecute_Implementation() {};
 	
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
@@ -105,8 +121,10 @@ public:
 	 * @returns True if node is currently running, false otherwise.
 	 */
 	bool IsActiveNode() const;
+	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
 #endif
 	
 // Editor-only functionality used to define and communicate node look to the Game Flow editor.

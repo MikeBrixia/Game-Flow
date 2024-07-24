@@ -11,7 +11,11 @@ FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(in
                                                                               float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,
                                                                               UEdGraph* InGraphObj) const
 {
-	return new FGameFlowConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements);
+	UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(InGraphObj);
+	FGameFlowConnectionDrawingPolicy* GameFlowConnectionDrawingPolicy = new FGameFlowConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements);
+	GameFlowConnectionDrawingPolicy->SetGraphObj(GameFlowGraph);
+	
+	return GameFlowConnectionDrawingPolicy;
 }
 
 const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
@@ -74,7 +78,7 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNode* GraphNode) const
 {
 	UEdGraphPin* NewNodeTargetPin = nullptr;
-	// Depending on the direction, find a different target pin.
+	// Find the default pin. Should have the opposite direction of the source pin.
 	if (FromPin->Direction == EGPD_Input)
 	{
 		NewNodeTargetPin = GraphNode->GetPinWithDirectionAt(0, EGPD_Output);
@@ -84,7 +88,7 @@ void UGameFlowGraphSchema::ConnectToDefaultPin(UEdGraphPin* FromPin, UEdGraphNod
 		NewNodeTargetPin = GraphNode->GetPinWithDirectionAt(0, EGPD_Input);
 	}
 	
-	// Create a connection with the new node first pin.
+	// Create a connection with the new node default pin.
 	TryCreateConnection(FromPin, NewNodeTargetPin);
 }
 

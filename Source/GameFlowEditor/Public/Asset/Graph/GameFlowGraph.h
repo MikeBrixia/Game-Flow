@@ -23,16 +23,16 @@ class GAMEFLOWEDITOR_API UGameFlowGraph : public UEdGraph
 	GENERATED_BODY()
 
 public:
-	/* Asset currently edited by this graph. */
+	/** Asset currently edited by this graph. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowAsset> GameFlowAsset;
 
 	/** Called when graph nodes gets selected*/
 	FOnGraphNodesSelected OnGraphNodesSelected;
-	
+    
 private:
 	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
-	
+
 public:
 	UGameFlowGraph();
 	
@@ -57,6 +57,18 @@ public:
 	 * @return An array of orphan graph nodes.
 	 */
 	TArray<UGameFlowGraphNode*> GetOrphanNodes() const;
+
+	/**
+	 * Find all roots nodes placed inside the graph.
+	 * @return An array of all root nodes, empty if no root nodes could be found.
+	 */
+	TArray<UGameFlowGraphNode*> GetRootNodes() const;
+
+	/**
+	 * Find all the currently active and executed nodes inside the graph.
+	 * @return An array of all currently active nodes in the graph, empty if none could be found.
+	 */
+	TArray<UGameFlowGraphNode*> GetActiveNodes() const;
 	
 	void OnSaveGraph();
 	void OnValidateGraph();

@@ -30,6 +30,21 @@ struct GAMEFLOW_API FPinConnectionInfo
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGameFlowNode> DestinationObject;
 
+// Data needed by Game Flow drawing policy to correctly display execution flow of nodes.
+#if WITH_EDITORONLY_DATA
+	/** How many time has passed since highlight start. */
+	UPROPERTY(Transient)
+	double HighlightElapsedTime;
+     
+	/** Last connections processing time. */
+	UPROPERTY(Transient)
+	double PreviousTime;
+
+	/** True if the connection is currently being highlighted. */
+    UPROPERTY()
+    bool bIsActive;
+#endif
+	
 	friend bool operator==(const FPinConnectionInfo& Lhs, const FPinConnectionInfo& RHS)
 	{
 		return Lhs.DestinationPinName == RHS.DestinationPinName
@@ -79,6 +94,7 @@ struct GAMEFLOW_API FPinHandle
     void CreateConnection(FPinHandle& OtherPinHandle);
 	void CutConnection(FPinHandle& OtherPinHandle);
 	void CutAllConnections();
+	void UpdateConnection(FPinConnectionInfo& ConnectionInfo);
 	
 	/** Check if this pin handle is valid and ready to be used. */
     bool IsValidHandle() const;

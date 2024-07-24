@@ -1,29 +1,15 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
+
+#include "GameFlow.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 
 UGameFlowNode::UGameFlowNode()
 {
 	TypeName = "Event";
-}
-
-void UGameFlowNode::Execute_Implementation(const FName PinName)
-{
-	// We only need to update the call stack in editor mode.
-#if WITH_EDITOR
-	UGameFlowAsset* ParentAsset = GetTypedOuter<UGameFlowAsset>();
-	// Special behavior because input nodes do not have input pins.
-	if(IsA(UGameFlowNode_Input::StaticClass()))
-	{
-		ParentAsset->CallStack.Add(FName(GetName() + ".Out"));
-	}
-	else // Default call stack behavior.
-	{
-		ParentAsset->CallStack.Add(Inputs[PinName].GetFullPinName());
-	}
-#endif
+	bIsActive = false;
 }
 
 void UGameFlowNode::FinishExecute(bool bFinish)
@@ -35,25 +21,33 @@ void UGameFlowNode::FinishExecute(bool bFinish)
 	{
 		OnFinishExecute();
 		OwnerAsset->RemoveActiveNode(this);
+		
+		// Execute default output pin.
+		ExecuteOutputPin("Out");
 	}
 }
 
 void UGameFlowNode::ExecuteOutputPin(FName PinName)
 {
-	const FPinHandle OutputPinHandle = Outputs.FindRef(PinName);
+	FPinHandle OutputPinHandle = Outputs.FindRef(PinName);
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
-
+	
 	for(const auto& Pair: OutputPinHandle.Connections)
 	{
-		const FPinConnectionInfo& ConnectionInfo = Pair.Value;
+		FPinConnectionInfo ConnectionInfo = Pair.Value;
 		UGameFlowNode* NextNode = ConnectionInfo.DestinationObject;
 		// If valid, activate next node and start executing it.
 		if(NextNode != nullptr)
 		{
 			// Execute the next node.
 			OwnerAsset->AddActiveNode(NextNode);
-
-			FName PinToExecute = ConnectionInfo.DestinationPinName;
+			
+			// Mark connection as active. This is mainly needed by game flow drawing policy.
+			ConnectionInfo.bIsActive = true;
+			OutputPinHandle.Connections[Pair.Key] = ConnectionInfo;
+			UpdatePinHandle(OutputPinHandle);
+			
+			const FName PinToExecute = ConnectionInfo.DestinationPinName;
 			NextNode->Execute(PinToExecute);
 		}
 	}
@@ -147,20 +141,24 @@ void UGameFlowNode::UpdatePinHandle(const FPinHandle& UpdatedPinHandle)
 FPinHandle UGameFlowNode::GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const
 {
 	FPinHandle PinHandle;
-	
-	switch(Direction)
+
+	// Retrieve all non-None pins.
+	if(!PinName.IsNone())
 	{
-	default: break;
+		switch(Direction)
+		{
+		default: break;
 
-	case EGPD_Input:
-		PinHandle = Inputs.FindRef(PinName);
-		break;
+		case EGPD_Input:
+			PinHandle = Inputs.FindRef(PinName);
+			break;
 
-	case EGPD_Output:
-		PinHandle = Outputs.FindRef(PinName);
-		break;
+		case EGPD_Output:
+			PinHandle = Outputs.FindRef(PinName);
+			break;
+		}
 	}
-
+	
 	return PinHandle;
 }
 

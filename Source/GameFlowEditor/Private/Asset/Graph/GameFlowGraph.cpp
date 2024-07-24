@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraph.h"
-#include "GameFlowEditor.h"
 #include "GraphEditAction.h"
+#include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
@@ -74,6 +74,30 @@ TArray<UGameFlowGraphNode*> UGameFlowGraph::GetOrphanNodes() const
 	}
     
 	return OrphanNodes;
+}
+
+TArray<UGameFlowGraphNode*> UGameFlowGraph::GetRootNodes() const
+{
+	TArray<UGameFlowGraphNode*> RootNodes;
+	const TArray<UGameFlowGraphNode*>& GraphNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
+
+	// Create an array of only root nodes and return it.
+	return GraphNodes.FilterByPredicate([] (const UGameFlowGraphNode* GraphNode)
+	{
+		return GraphNode->IsRoot();
+	});
+}
+
+TArray<UGameFlowGraphNode*> UGameFlowGraph::GetActiveNodes() const
+{
+	TArray<UGameFlowGraphNode*> RootNodes;
+	const TArray<UGameFlowGraphNode*>& GraphNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
+
+	// Create an array of only root nodes and return it.
+	return GraphNodes.FilterByPredicate([] (const UGameFlowGraphNode* GraphNode)
+	{
+		return GraphNode->IsActiveNode();
+	});
 }
 
 void UGameFlowGraph::OnSaveGraph()
@@ -164,7 +188,6 @@ void UGameFlowGraph::OnReplaceGraphNode()
 		// Replace multiple nodes in a single action and transaction.
 		ReplaceNodeAction.PerformAction_ReplaceAll(GraphNodes, this);
 	}
-	
 }
 
 void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes)
@@ -173,7 +196,7 @@ void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes
 	{
 		// Remove node from the game flow asset.
 		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
-		GameFlowAsset->Nodes.Remove(NodeAsset);
+		GameFlowAsset->RemoveNode(NodeAsset);
 	}
 }
 
@@ -182,17 +205,18 @@ void UGameFlowGraph::OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes)
 	for(const UGameFlowGraphNode* GraphNode : AddedNodes)
 	{
 		// Add node to the game flow asset.
-		GameFlowAsset->Nodes.AddUnique(GraphNode->GetNodeAsset());
+		GameFlowAsset->AddNode(GraphNode->GetNodeAsset());
 	}
 }
 
 void UGameFlowGraph::RebuildGraphFromAsset()
 {
 	const UGameFlowGraphSchema* GameFlowSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+	
 	// Recreate all game flow asset registered nodes, including orphan nodes.
 	// Orphans are nodes which does not share connections with any parent node,
 	// e.g. their input pins have no links.
-	for(UGameFlowNode* NodeAsset : GameFlowAsset->Nodes)
+	for(UGameFlowNode* NodeAsset : GameFlowAsset->GetNodes())
 	{
 		UGameFlowGraphNode* GraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this);
 		GraphNode->NodePosX = NodeAsset->GraphPosition.X;

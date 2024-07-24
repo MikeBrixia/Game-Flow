@@ -25,21 +25,25 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 	
 	GENERATED_BODY()
 
-public:
-
 #if WITH_EDITORONLY_DATA
+	
+public:
+	/** All nodes assets instanced by the user.*/
 	UPROPERTY(VisibleAnywhere)
-	TArray<UGameFlowNode*> Nodes;
-
-	/** History of all nodes called for execution. */
-	UPROPERTY(Transient, VisibleAnywhere)
-	TArray<FName> CallStack;
+	TMap<FGuid, UGameFlowNode*> Nodes;
 	
 	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
 	UPROPERTY()
 	bool bHasAlreadyBeenOpened;
+	
+private:
+	/* The nodes currently being executed. */
+	UPROPERTY(BlueprintGetter="GetActiveNodes")
+	TArray<UGameFlowNode*> ActiveNodes;
+
 #endif
 
+public:
 	/** If true, game flow subsystem will not be allowed to create more than one instance of this asset.*/
 	UPROPERTY(EditDefaultsOnly, Category="Config")
 	bool bShouldBeSingleton;
@@ -54,11 +58,6 @@ public:
 	
 	/** Called when this asset finishes executing. */
 	FOnFinish OnFinish;
-private:
-	
-	/* The nodes currently being executed. */
-	UPROPERTY(BlueprintGetter="GetActiveNodes")
-	TArray<UGameFlowNode*> ActiveNodes;
 
 public:
 	
@@ -70,14 +69,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow", meta=(AdvancedDisplay="EntryPointName"))
 	void Execute(FName EntryPointName = "Start");
-	
-	/**
-	 * @brief Get the nodes which are currently being executed
-	 *        by the Game Flow asset.
-	 * @return The currently executed node
-	 */
-	UFUNCTION(BlueprintGetter, Category="Game Flow")
-	FORCEINLINE TArray<UGameFlowNode*> GetActiveNodes() const { return ActiveNodes; }
 	
 	/**
 	 * @brief Mark a game flow node as active(currently being executed).
@@ -104,6 +95,28 @@ public:
     UGameFlowAsset* CreateInstance(UObject* Context) const;
 
 #if WITH_EDITOR
+	
+	/**
+	 * @brief Get the nodes which are currently being executed
+	 *        by the Game Flow asset.
+	 * @remarks Editor-only.
+	 * @return The currently executed node
+	 */
+	UFUNCTION(BlueprintGetter, Category="Game Flow")
+	TArray<UGameFlowNode*> GetActiveNodes() const { return ActiveNodes; }
+	
+	void AddNode(UGameFlowNode* Node);
+	void RemoveNode(UGameFlowNode* Node);
+	TArray<UGameFlowNode*> GetNodes() const;
+	
+	/**
+	 * Get a node by it's globally unique identifier.
+	 * @remarks Editor-only.
+	 */
+	UGameFlowNode* GetNodeByGUID(FGuid GUID) const;
+	
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
 #endif
 };
+

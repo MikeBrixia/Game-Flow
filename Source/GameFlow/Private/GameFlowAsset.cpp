@@ -1,8 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GameFlowAsset.h"
-
-#include "GameFlowSubsystem.h"
 #include "Nodes/GameFlowNode_Input.h"
 
 UGameFlowAsset::UGameFlowAsset()
@@ -53,6 +51,36 @@ UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context) const
 }
 
 #if WITH_EDITOR
+
+void UGameFlowAsset::AddNode(UGameFlowNode* Node)
+{
+	const FGuid GUID = Node->GUID;
+	if(GUID.IsValid())
+	{
+		Nodes.Add(GUID, Node);
+	}
+}
+
+void UGameFlowAsset::RemoveNode(UGameFlowNode* Node)
+{
+	const FGuid GUID = Node->GUID;
+	if(GUID.IsValid())
+	{
+		Nodes.Remove(GUID);
+	}
+}
+
+TArray<UGameFlowNode*> UGameFlowAsset::GetNodes() const
+{
+	TArray<UGameFlowNode*> NodeAssets;
+	Nodes.GenerateValueArray(NodeAssets);
+	return NodeAssets;
+}
+
+UGameFlowNode* UGameFlowAsset::GetNodeByGUID(FGuid GUID) const
+{
+	return GUID.IsValid()? Nodes.FindChecked(GUID) : nullptr;
+}
 
 void UGameFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {

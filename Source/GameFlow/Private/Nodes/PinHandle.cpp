@@ -1,13 +1,15 @@
 ﻿
 #include "Nodes/PinHandle.h"
-#include "GameFlow.h"
 #include "Nodes/GameFlowNode.h"
 
 FPinConnectionInfo::FPinConnectionInfo()
 {
+	this->HighlightElapsedTime = 0.f;
+	this->PreviousTime = 0.f;
+	this->bIsActive = false;
 }
 
-FPinConnectionInfo::FPinConnectionInfo(const FName& InputPinName, UGameFlowNode* Node)
+FPinConnectionInfo::FPinConnectionInfo(const FName& InputPinName, UGameFlowNode* Node) : FPinConnectionInfo()
 {
 	this->DestinationPinName = InputPinName;
 	this->DestinationObject = Node;
@@ -75,9 +77,32 @@ void FPinHandle::CutAllConnections()
 	}
 }
 
+void FPinHandle::UpdateConnection(FPinConnectionInfo& ConnectionInfo)
+{
+	const EEdGraphPinDirection ConnectedPinDirection = PinDirection == EGPD_Input? EGPD_Output : EGPD_Input;
+	FPinHandle ConnectedPinHandle = ConnectionInfo.DestinationObject->GetPinByName(ConnectionInfo.DestinationPinName, ConnectedPinDirection);
+	// If this and the connected handle are valid then update the connection.
+	if(IsValidHandle() && ConnectedPinHandle.IsValidHandle())
+	{
+		const FName FullPinName = GetFullPinName();
+		// Update the actual connection.
+		Connections[ConnectedPinHandle.GetFullPinName()] = ConnectionInfo;
+		FPinConnectionInfo ConnectedPinInfo = ConnectedPinHandle.Connections[FullPinName];
+
+		// Update opposite direction connection properties.
+        ConnectedPinInfo.HighlightElapsedTime = ConnectionInfo.HighlightElapsedTime;
+		ConnectedPinInfo.PreviousTime = ConnectionInfo.PreviousTime;
+		// Update opposite connection.
+		ConnectedPinHandle.Connections[FullPinName] = ConnectedPinInfo;
+		
+		// Propagate changes to pin handles(this and connected one).
+		PinOwner->UpdatePinHandle(*this);
+		ConnectionInfo.DestinationObject->UpdatePinHandle(ConnectedPinHandle);
+	}
+}
+
 bool FPinHandle::IsValidHandle() const
 {
-	
 	return IsValidPinName() && PinOwner != nullptr;
 }
 

@@ -1,29 +1,28 @@
 ﻿
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
-
+#include "GameFlowEditor.h"
 #include "GameFlowSubsystem.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
-#include "GameFlow/Public/Nodes/GameFlowNode.h"
 
 FConnectionDrawingPolicy* FGameFlowGraphConnectionDrawingPolicyFactory::CreateConnectionPolicy(
 	const UEdGraphSchema* Schema, int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor,
 	const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
 {
-	FConnectionDrawingPolicy* ConnectionDrawingPolicy = nullptr;
-	// Is the schema a GameFlowGraphSchema?
-	if (Schema->IsA(UGameFlowGraphSchema::StaticClass()))
-	{
-		ConnectionDrawingPolicy = new FGameFlowConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements);
-	}
+	UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(InGraphObj);
+	FGameFlowConnectionDrawingPolicy* GameFlowConnectionDrawingPolicy = new FGameFlowConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements);
+	GameFlowConnectionDrawingPolicy->SetGraphObj(GameFlowGraph);
 	
-	return ConnectionDrawingPolicy;
+	return GameFlowConnectionDrawingPolicy;
 }
 
 FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID,
                                                                    float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
                                                                    : FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 {
-	// Do not draw ending connection arrow.
+	this->WireHighlightDuration = .5f;
+	this->PreviousTime = 0.f;
+	this->HighlightElapsedTime = 0.f;
+	// Do not draw end connection arrow.
 	this->ArrowImage = nullptr;
 	this->ArrowRadius = FVector2D::ZeroVector;
 }
@@ -31,53 +30,93 @@ FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackL
 void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin,
 	FConnectionParams& Params)
 {
-	FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
-	
 	// Execution flow highlight will only happen in PIE/SIE sessions.
 	if(GEditor->IsPlayingSessionInEditor())
 	{
 		FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(0);
 		if(WorldContext != nullptr)
 		{
-			UWorld* PIE_PlayWorld = WorldContext->World();
+			const UWorld* PIE_PlayWorld = WorldContext->World();
 			const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
 			const UGameFlowGraphNode* DestinationNode = CastChecked<UGameFlowGraphNode>(InputPin->GetOwningNode());
+			
 			UObject* AssetArchetype = CastChecked<UGameFlowGraph>(FromNode->GetGraph())->GameFlowAsset->GetArchetype();
-
+				
 			const UGameFlowSubsystem* Subsystem = PIE_PlayWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
 			UGameFlowAsset* GameFlowAsset = Subsystem->GetRunningFlowByArchetype(AssetArchetype);
-
-			// If we've found an instance of the asset archetype, then try debugging the link
-			// between the two nodes.
+			
 			if(GameFlowAsset != nullptr)
 			{
-				const FName& FullyQualifiedInputPinName = FromNode->GetNodeAsset()->Outputs[OutputPin->PinName].GetFullPinName();
-				const FName& FullyQualifiedOutputPinName = DestinationNode->GetNodeAsset()->Inputs[InputPin->PinName].GetFullPinName();
+				UGameFlowNode* FromNodeAsset = GameFlowAsset->GetNodeByGUID(FromNode->GetNodeAsset()->GUID);
+				UGameFlowNode* DestinationNodeAsset = GameFlowAsset->GetNodeByGUID(
+					DestinationNode->GetNodeAsset()->GUID);
 
-				// If destination is a leaf node(no output connections),
-				// then we can clear this connection from the call chain.
-				if(CanClearCallChain(DestinationNode))
+				FPinHandle FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
+				FPinHandle DestinationPinHandle = DestinationNodeAsset->GetPinByName(InputPin->PinName, EGPD_Input);
+				FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.FindRef(DestinationPinHandle.GetFullPinName());
+				
+				if (ConnectionInfo.HighlightElapsedTime < WireHighlightDuration)
 				{
-					GameFlowAsset->CallStack.Remove(FullyQualifiedInputPinName);
-					GameFlowAsset->CallStack.Remove(FullyQualifiedOutputPinName);
+					// Highlight only active nodes connections.
+					if (ConnectionInfo.bIsActive)
+					{
+						HighlightConnection(Params);
+					}
 				}
-
-				// If this connection is registered inside the call stack, then highlight it.
-				if(GameFlowAsset->CallStack.Contains(FullyQualifiedOutputPinName))
+				else
 				{
-					Params.WireColor = FColor::Orange;
-					Params.WireThickness = 3.f;
-					Params.bDrawBubbles = true;
+					// Start connection highlight timer as long as the two nodes are still active.
+                    ConnectionInfo.HighlightElapsedTime = 0.f;
+                    ConnectionInfo.PreviousTime = 0.f;
+					ConnectionInfo.bIsActive = false;
+					FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
 				}
+        
+				UpdateConnectionTimer(ConnectionInfo);
+				// Update pin handle at the end of each connection style processing.
+				FromPinHandle.UpdateConnection(ConnectionInfo);
 			}
 		}
 	}
 }
 
-bool FGameFlowConnectionDrawingPolicy::CanClearCallChain(const UGameFlowGraphNode* Node) const
+void FGameFlowConnectionDrawingPolicy::SetGraphObj(UGameFlowGraph* NewGraphObj)
 {
-	return Node->IsLeaf() && !Node->GetNodeAsset()->IsActiveNode();
+	this->GraphObj = NewGraphObj;
 }
+
+void FGameFlowConnectionDrawingPolicy::HighlightConnection(FConnectionParams& Params)
+{
+	Params.WireColor = FColor::Orange;
+	Params.WireThickness = 3.f;
+	Params.bDrawBubbles = true;
+}
+
+void FGameFlowConnectionDrawingPolicy::NotHighlightedConnection(FConnectionParams& Params)
+{
+	Params.WireColor = FColor::White;
+	Params.WireThickness = .7f;
+	Params.bDrawBubbles = false;
+}
+
+void FGameFlowConnectionDrawingPolicy::UpdateConnectionTimer(FPinConnectionInfo& ConnectionInfo)
+{
+	const double CurrentTime = FApp::GetCurrentTime();
+	if (ConnectionInfo.PreviousTime == 0.f)
+	{
+		// Just set the previous time to current time for next update.
+		ConnectionInfo.PreviousTime = CurrentTime;
+	}
+	else
+	{
+		// First we add the elapsed time between previous and current draw procedure.
+		ConnectionInfo.HighlightElapsedTime += CurrentTime - ConnectionInfo.PreviousTime;
+		// Then we update the previous time because we'll need it in the next draw procedure.
+		ConnectionInfo.PreviousTime = CurrentTime;
+	}
+}
+
+
 
 
 
