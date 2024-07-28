@@ -22,6 +22,7 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 {
 	friend class UGameFlowGraphSchema;
 	friend class GameFlowAssetToolkit;
+	friend class UGameFlowNode_Output;
 	
 	GENERATED_BODY()
 
@@ -58,8 +59,6 @@ public:
 	
 	/** Called when this asset finishes executing. */
 	FOnFinish OnFinish;
-
-public:
 	
 	UGameFlowAsset();
 
@@ -82,20 +81,23 @@ public:
 	 * @param Node The node to deactivate(Mark as finished).
 	 */
 	void RemoveActiveNode(UGameFlowNode* Node);
-	
-	/**
-	 * @brief Call this method when you need to terminate
-	 * the execution of this GameFlow object.
-	 */
-	void TerminateExecution();
 
 	/**
 	 * Create an instance from this game flow asset.
 	 */
     UGameFlowAsset* CreateInstance(UObject* Context) const;
 
+protected:
+	
+	/**
+	* @brief Call this method when you need to terminate
+	* the execution of this GameFlow object.
+	 */
+	void TerminateExecution();
+
 #if WITH_EDITOR
 	
+public:
 	/**
 	 * @brief Get the nodes which are currently being executed
 	 *        by the Game Flow asset.

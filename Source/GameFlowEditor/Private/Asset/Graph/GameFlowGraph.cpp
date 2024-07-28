@@ -2,7 +2,6 @@
 
 #include "Asset/Graph/GameFlowGraph.h"
 #include "GraphEditAction.h"
-#include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
@@ -14,6 +13,8 @@ class UGameFlowNode;
 
 UGameFlowGraph::UGameFlowGraph()
 {
+	this->DebuggedAssetInstance = nullptr;
+	this->GameFlowAsset = nullptr;
 }
 
 void UGameFlowGraph::InitGraph()

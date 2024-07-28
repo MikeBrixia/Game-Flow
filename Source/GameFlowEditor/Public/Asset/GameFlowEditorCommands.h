@@ -9,6 +9,7 @@ public:
 	
 	TSharedPtr<FUICommandInfo> ValidateAsset;
 	TSharedPtr<FUICommandInfo> DebugAsset;
+	TSharedPtr<FUICommandInfo> SelectAssetInstance;
 	
 	/** Register Game Flow editor input commands. */
 	virtual void RegisterCommands() override;

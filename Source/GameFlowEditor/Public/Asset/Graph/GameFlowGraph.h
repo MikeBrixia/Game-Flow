@@ -29,11 +29,11 @@ public:
 
 	/** Called when graph nodes gets selected*/
 	FOnGraphNodesSelected OnGraphNodesSelected;
-    
-private:
-	TObjectPtr<GameFlowAssetToolkit> GameFlowEditor;
 
-public:
+	/** The debugged instance of the current edited GameFlowAsset. */
+	UPROPERTY(Transient)
+	TObjectPtr<UGameFlowAsset> DebuggedAssetInstance;
+	
 	UGameFlowGraph();
 	
 	void InitGraph();

@@ -30,54 +30,73 @@ FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackL
 void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin,
 	FConnectionParams& Params)
 {
-	// Execution flow highlight will only happen in PIE/SIE sessions.
+	// Apply custom game flow connection style only when there is a debugged asset instance.
+	if (GraphObj->DebuggedAssetInstance != nullptr)
+	{
+		const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
+		const UGameFlowGraphNode* DestinationNode = CastChecked<UGameFlowGraphNode>(InputPin->GetOwningNode());
+
+		UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(
+			FromNode->GetNodeAsset()->GUID);
+		UGameFlowNode* DestinationNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(
+			DestinationNode->GetNodeAsset()->GUID);
+
+		FPinHandle FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
+		FPinHandle DestinationPinHandle = DestinationNodeAsset->GetPinByName(InputPin->PinName, EGPD_Input);
+		FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.
+		                                                  FindRef(DestinationPinHandle.GetFullPinName());
+
+		if (ConnectionInfo.HighlightElapsedTime < WireHighlightDuration)
+		{
+			// Highlight only active nodes connections.
+			if (ConnectionInfo.bIsActive)
+			{
+				HighlightConnection(Params);
+			}
+		}
+		else
+		{
+			// Start connection highlight timer as long as the two nodes are still active.
+			ConnectionInfo.HighlightElapsedTime = 0.f;
+			ConnectionInfo.PreviousTime = 0.f;
+			ConnectionInfo.bIsActive = false;
+			FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
+		}
+
+		UpdateConnectionTimer(ConnectionInfo);
+		// Update pin handle at the end of each connection style processing.
+		FromPinHandle.UpdateConnection(ConnectionInfo);
+	}
+	else
+	{
+		// If no debugging instances could be found, fallback on default connection style.
+		FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
+	}
+	
+}
+
+void FGameFlowConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries,
+	FArrangedChildren& ArrangedNodes)
+{
 	if(GEditor->IsPlayingSessionInEditor())
 	{
-		FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(0);
+		const FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(0);
 		if(WorldContext != nullptr)
 		{
 			const UWorld* PIE_PlayWorld = WorldContext->World();
-			const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
-			const UGameFlowGraphNode* DestinationNode = CastChecked<UGameFlowGraphNode>(InputPin->GetOwningNode());
-			
-			UObject* AssetArchetype = CastChecked<UGameFlowGraph>(FromNode->GetGraph())->GameFlowAsset->GetArchetype();
-				
-			const UGameFlowSubsystem* Subsystem = PIE_PlayWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
-			UGameFlowAsset* GameFlowAsset = Subsystem->GetRunningFlowByArchetype(AssetArchetype);
-			
-			if(GameFlowAsset != nullptr)
-			{
-				UGameFlowNode* FromNodeAsset = GameFlowAsset->GetNodeByGUID(FromNode->GetNodeAsset()->GUID);
-				UGameFlowNode* DestinationNodeAsset = GameFlowAsset->GetNodeByGUID(
-					DestinationNode->GetNodeAsset()->GUID);
 
-				FPinHandle FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
-				FPinHandle DestinationPinHandle = DestinationNodeAsset->GetPinByName(InputPin->PinName, EGPD_Input);
-				FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.FindRef(DestinationPinHandle.GetFullPinName());
-				
-				if (ConnectionInfo.HighlightElapsedTime < WireHighlightDuration)
-				{
-					// Highlight only active nodes connections.
-					if (ConnectionInfo.bIsActive)
-					{
-						HighlightConnection(Params);
-					}
-				}
-				else
-				{
-					// Start connection highlight timer as long as the two nodes are still active.
-                    ConnectionInfo.HighlightElapsedTime = 0.f;
-                    ConnectionInfo.PreviousTime = 0.f;
-					ConnectionInfo.bIsActive = false;
-					FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
-				}
-        
-				UpdateConnectionTimer(ConnectionInfo);
-				// Update pin handle at the end of each connection style processing.
-				FromPinHandle.UpdateConnection(ConnectionInfo);
+			// If we're not debugging any asset, take a look inside the game flow subsystem
+			// and in case there is a running flow debug it.
+			if(GraphObj->DebuggedAssetInstance == nullptr)
+			{
+				const UGameFlowSubsystem* Subsystem = PIE_PlayWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
+				UObject* AssetArchetype = GraphObj->GameFlowAsset->GetArchetype();
+				GraphObj->DebuggedAssetInstance = Subsystem->GetRunningFlowByArchetype(AssetArchetype);
 			}
 		}
 	}
+
+	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
 void FGameFlowConnectionDrawingPolicy::SetGraphObj(UGameFlowGraph* NewGraphObj)

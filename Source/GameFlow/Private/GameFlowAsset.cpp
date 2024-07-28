@@ -35,7 +35,9 @@ void UGameFlowAsset::RemoveActiveNode(UGameFlowNode* Node)
 
 void UGameFlowAsset::TerminateExecution()
 {
+#if WITH_EDITOR
 	ActiveNodes.Empty();
+#endif
 	OnFinish.ExecuteIfBound(this);
 }
 

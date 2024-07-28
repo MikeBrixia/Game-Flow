@@ -44,8 +44,9 @@ public:
 	                                 const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements);
 
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params) override;
+	virtual void Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes) override;
 	void SetGraphObj(UGameFlowGraph* NewGraphObj);
-
+    
 protected:
 	void HighlightConnection(FConnectionParams& Params);
 	void NotHighlightedConnection(FConnectionParams& Params);

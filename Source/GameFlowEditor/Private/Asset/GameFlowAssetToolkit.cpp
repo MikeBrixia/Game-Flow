@@ -1,5 +1,6 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
 #include "GameFlowEditor.h"
+#include "GameFlowSubsystem.h"
 #include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
@@ -13,8 +14,8 @@
 GameFlowAssetToolkit::GameFlowAssetToolkit()
 {
 	this->CommandList = MakeShared<FUICommandList>();
-
-	GEditor->RegisterForUndo(this);
+	this->PIE_SelectedWorld = nullptr;
+	this->PIE_SelectedAssetInstance = nullptr;
 }
 
 void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
@@ -34,6 +35,10 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	ConfigureInputs();
 	CreateAssetMenu();
 	CreateAssetToolbar();
+    
+	GEditor->RegisterForUndo(this);
+	FEditorDelegates::PostPIEStarted.AddRaw(this, &GameFlowAssetToolkit::OnPostPIEStarted);
+	FEditorDelegates::EndPIE.AddRaw(this, &GameFlowAssetToolkit::OnPIEFinish);
 }
 
 bool GameFlowAssetToolkit::OnRequestClose()
@@ -156,8 +161,7 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 	const FGameFlowEditorCommands GameFlowCommands = FGameFlowEditorCommands::Get();
 	
 	// Try finding Game Flow asset toolbar.
-	FName MenuName = FName(GetToolMenuToolbarName());
-	UToolMenu* AssetToolbar = UToolMenus::Get()->ExtendMenu(MenuName);
+	UToolMenu* AssetToolbar = GetToolbar();
 	
 	// Have we found the asset toolbar?
 	if(AssetToolbar != nullptr)
@@ -199,6 +203,78 @@ void GameFlowAssetToolkit::OnDebugRequest()
 	// TODO implement debug mode.
 }
 
+void GameFlowAssetToolkit::OnPostPIEStarted(bool bStarted)
+{
+	// Try finding Game Flow asset toolbar.
+	UToolMenu* EditorToolbar = GetToolbar();
+	if(EditorToolbar != nullptr)
+	{
+		// Get all Game Flow editor commands.
+		const FGameFlowEditorCommands GameFlowCommands = FGameFlowEditorCommands::Get();
+		FToolMenuSection& PlaySection = EditorToolbar->FindOrAddSection("PIE Debug");
+		
+		const FToolMenuEntry& SelectPIEWorldInstanceEntry = FToolMenuEntry::InitWidget("Select PIE World",
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString("World: "))
+				.Margin(FMargin(0, 8))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SComboButton)
+			    .OnGetMenuContent(this, &GameFlowAssetToolkit::BuildSelectPIEWorldMenu)
+			    .ButtonContent()
+				[
+					SNew(STextBlock)
+					.Text_Lambda([=]
+					{
+						return PIE_SelectedWorld != nullptr? FText::FromString(PIE_SelectedWorld->GetMapName())
+													   : FText::FromString("None");
+					})
+				]
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString("Instance: "))
+				.Margin(FMargin(0, 8))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SComboButton)
+				.OnGetMenuContent(this, &GameFlowAssetToolkit::BuildSelectAssetInstanceMenu)
+				.ButtonContent()
+				[
+					SNew(STextBlock)
+					.Text_Lambda([=]
+					{
+						return PIE_SelectedAssetInstance != nullptr? FText::FromString(PIE_SelectedAssetInstance->GetName())
+													   : FText::FromString("None");
+					})
+				]
+			],FText::GetEmpty());
+
+		PlaySection.AddEntry(SelectPIEWorldInstanceEntry);
+	}
+}
+
+void GameFlowAssetToolkit::OnPIEFinish(bool bFinished)
+{
+	UToolMenu* EditorToolbar = GetToolbar();
+	if(EditorToolbar != nullptr)
+	{
+		EditorToolbar->RemoveSection("PIE Debug");
+		PIE_SelectedWorld = nullptr;
+		PIE_SelectedAssetInstance = nullptr;
+	}
+}
+
 void GameFlowAssetToolkit::PostUndo(bool bSuccess)
 {
 	FEditorUndoClient::PostUndo(bSuccess);
@@ -209,6 +285,72 @@ void GameFlowAssetToolkit::PostRedo(bool bSuccess)
 {
 	FEditorUndoClient::PostRedo(bSuccess);
 	ExecuteUndoRedo();
+}
+
+UToolMenu* GameFlowAssetToolkit::GetToolbar() const
+{
+	// Try finding Game Flow asset toolbar.
+	const FName MenuName = FName(GetToolMenuToolbarName());
+	return UToolMenus::Get()->ExtendMenu(MenuName);
+}
+
+TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectPIEWorldMenu()
+{
+	FMenuBuilder OptionsMenuBuilder(true, nullptr);
+	
+	const int32 PIESessionsCount = GEditor->GetPlayInEditorSessionInfo()->PIEInstanceCount;
+	// Add all PIE instances worlds as options inside the dropdown menu.
+	for(int i = 0; i < PIESessionsCount; i++)
+	{
+		const FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(i);
+		UWorld* PIE_PlayWorld = WorldContext->World();
+		OptionsMenuBuilder.AddMenuEntry(FText::FromString(PIE_PlayWorld->GetMapName()), FText::GetEmpty(),
+			FSlateIcon(), FExecuteAction::CreateLambda([=]
+			{
+				this->PIE_SelectedWorld = PIE_PlayWorld;
+			}));
+	}
+	return OptionsMenuBuilder.MakeWidget();
+}
+
+TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectAssetInstanceMenu()
+{
+	FMenuBuilder OptionsMenuBuilder(true, nullptr);
+
+	if(PIE_SelectedWorld != nullptr)
+	{
+		UE_LOG(LogGameFlow, Display, TEXT("World selected"))
+		const UGameFlowSubsystem* Subsystem = PIE_SelectedWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
+		UE_LOG(LogGameFlow, Display, TEXT("Num: %d"), Subsystem->GetRunningFlows().Num())
+		for(UGameFlowAsset* Instance : Subsystem->GetRunningFlows())
+		{
+			OptionsMenuBuilder.AddMenuEntry(FText::FromString(Instance->GetName()), FText::GetEmpty(),
+			FSlateIcon(), FExecuteAction::CreateLambda([=]
+			{
+				this->PIE_SelectedAssetInstance = Instance;
+				
+				UGameFlowGraph* GraphObj = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
+		        GraphObj->DebuggedAssetInstance = Instance;
+			}));
+		}
+	}
+
+	return OptionsMenuBuilder.MakeWidget();
+}
+
+
+void GameFlowAssetToolkit::FocusOnPIEWorldAssetInstance(const UWorld* PIE_World, UGameFlowAsset* AssetInstance)
+{
+	UGameFlowGraph* GraphObj = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
+	
+	// If we're not debugging any asset, take a look inside the game flow subsystem
+	// and in case there is a running flow debug it.
+	if(GraphObj->DebuggedAssetInstance == nullptr)
+	{
+		const UGameFlowSubsystem* Subsystem = PIE_World->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
+		UObject* AssetArchetype = GraphObj->GameFlowAsset->GetArchetype();
+		GraphObj->DebuggedAssetInstance = Subsystem->GetRunningFlowByArchetype(AssetArchetype);
+	}
 }
 
 void GameFlowAssetToolkit::ExecuteUndoRedo()

@@ -46,13 +46,26 @@ protected:
 	virtual void SaveAsset_Execute() override;
     void OnValidateRequest();
 	void OnDebugRequest();
+	void OnPostPIEStarted(bool bStarted);
+	void OnPIEFinish(bool bFinished);
+	
 public:
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
 	
 	FORCEINLINE FOnAssetSaved& GetAssetSavedCallback() { return OnAssetSavedCallback; };
-
+    FORCEINLINE UToolMenu* GetToolbar() const;
+	
 private:
+	/** The selected world inside PIE menu. */
+	UWorld* PIE_SelectedWorld;
+	/** The selected asset instance inside PIE menu. */
+	UGameFlowAsset* PIE_SelectedAssetInstance;
+	
+	TSharedRef<SWidget> BuildSelectPIEWorldMenu();
+	TSharedRef<SWidget> BuildSelectAssetInstanceMenu();
+	
+	void FocusOnPIEWorldAssetInstance(const UWorld* PIE_World, UGameFlowAsset* AssetInstance);
     /** Apply undo/redo registered actions to game flow editor. */
 	void ExecuteUndoRedo();
 	/** Display selected nodes inside node details panel. */

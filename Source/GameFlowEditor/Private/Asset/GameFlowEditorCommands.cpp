@@ -20,6 +20,10 @@ void FGameFlowEditorCommands::RegisterCommands()
 								 INVTEXT("Enable/disable debug mode for this asset"),
 								  FSlateIcon(GetStyleSetName(), "GameFlow.Editor.Debug"),
 								  EUserInterfaceActionType::ToggleButton, FInputChord());
+
+	FUICommandInfo::MakeCommandInfo(SharedThis(this), SelectAssetInstance, "World Instance", INVTEXT("World Instance"),
+								 INVTEXT("Select a specific asset instance to inspect"),
+								  FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE
