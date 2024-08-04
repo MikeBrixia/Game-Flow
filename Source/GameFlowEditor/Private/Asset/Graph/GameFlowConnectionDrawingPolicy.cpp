@@ -19,7 +19,7 @@ FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackL
                                                                    float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
                                                                    : FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 {
-	this->WireHighlightDuration = .5f;
+	this->WireHighlightDuration = .7f;
 	this->PreviousTime = 0.f;
 	this->HighlightElapsedTime = 0.f;
 	// Do not draw end connection arrow.

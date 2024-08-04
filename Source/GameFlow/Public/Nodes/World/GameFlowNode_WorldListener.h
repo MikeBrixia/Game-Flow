@@ -43,6 +43,7 @@ public:
 	virtual void Execute_Implementation(const FName PinName) override;
     virtual void OnFinishExecute_Implementation() override;
 
+	UFUNCTION()
 	void TryTriggeringEvent(FGameplayTagContainer GameplayTags);
 	
 protected:
