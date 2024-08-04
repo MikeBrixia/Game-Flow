@@ -7,7 +7,7 @@
 #include "Components/ActorComponent.h"
 #include "GameFlowListener.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNotifyGameFlowListener);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNotifyGameFlowListener, FGameplayTagContainer, GameplayTags);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReceiveGameFlowEvent, FGameplayTagContainer, GameplayTags);
 
 UCLASS(ClassGroup=(GameFlow), meta=(BlueprintSpawnableComponent))

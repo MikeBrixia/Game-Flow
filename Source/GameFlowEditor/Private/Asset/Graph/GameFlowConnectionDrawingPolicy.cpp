@@ -43,8 +43,7 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 
 		FPinHandle FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
 		FPinHandle DestinationPinHandle = DestinationNodeAsset->GetPinByName(InputPin->PinName, EGPD_Input);
-		FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.
-		                                                  FindRef(DestinationPinHandle.GetFullPinName());
+		FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.FindRef(DestinationPinHandle.GetFullPinName());
 
 		if (ConnectionInfo.HighlightElapsedTime < WireHighlightDuration)
 		{
@@ -73,30 +72,6 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 		FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
 	}
 	
-}
-
-void FGameFlowConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries,
-	FArrangedChildren& ArrangedNodes)
-{
-	if(GEditor->IsPlayingSessionInEditor())
-	{
-		const FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(0);
-		if(WorldContext != nullptr)
-		{
-			const UWorld* PIE_PlayWorld = WorldContext->World();
-
-			// If we're not debugging any asset, take a look inside the game flow subsystem
-			// and in case there is a running flow debug it.
-			if(GraphObj->DebuggedAssetInstance == nullptr)
-			{
-				const UGameFlowSubsystem* Subsystem = PIE_PlayWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
-				UObject* AssetArchetype = GraphObj->GameFlowAsset->GetArchetype();
-				GraphObj->DebuggedAssetInstance = Subsystem->GetRunningFlowByArchetype(AssetArchetype);
-			}
-		}
-	}
-
-	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
 void FGameFlowConnectionDrawingPolicy::SetGraphObj(UGameFlowGraph* NewGraphObj)

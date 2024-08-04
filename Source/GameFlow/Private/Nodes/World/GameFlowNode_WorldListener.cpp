@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GameFlow/Public/Nodes/World/GameFlowNode_WorldListener.h"
+#include "GameFlow.h"
 #include "GameFlowSubsystem.h"
 
 UGameFlowNode_WorldListener::UGameFlowNode_WorldListener()
@@ -70,12 +71,14 @@ void UGameFlowNode_WorldListener::StopListening()
 	ExecuteOutputPin("Stopped");
 }
 
-void UGameFlowNode_WorldListener::TryTriggeringEvent()
+void UGameFlowNode_WorldListener::TryTriggeringEvent(FGameplayTagContainer GameplayTags)
 {
-	if(Count < Limit)
+	UE_LOG(LogGameFlow, Display, TEXT("Triggering event"))
+	if (Limit == 0 || Count < Limit)
 	{
 		Count++;
 		OnTriggerEvent();
+		UE_LOG(LogGameFlow, Display, TEXT("Event triggered"))
 	}
 	else
 	{

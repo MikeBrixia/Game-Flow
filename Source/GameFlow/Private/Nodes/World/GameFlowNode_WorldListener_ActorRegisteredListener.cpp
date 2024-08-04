@@ -10,13 +10,8 @@ void UGameFlowNode_WorldListener_ActorRegisteredListener::OnComponentRegistered_
 	UGameFlowListener* ListenerComponent)
 {
 	Super::OnComponentRegistered_Implementation(ListenerComponent);
-
-	// Trigger an event only if the registered component identity tags matches this node
-	// identity tags.
-	if(DoGameplayTagsMatch(ListenerComponent->IdentityTags))
-	{
-		TryTriggeringEvent();
-	}
+	TryTriggeringEvent(ListenerComponent->IdentityTags);
+	
 }
 
 

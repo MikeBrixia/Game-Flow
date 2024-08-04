@@ -242,7 +242,7 @@ void GameFlowAssetToolkit::OnPostPIEStarted(bool bStarted)
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString("Instance: "))
-				.Margin(FMargin(0, 8))
+				.Margin(FMargin(6, 8))
 			]
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
@@ -336,21 +336,6 @@ TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectAssetInstanceMenu()
 	}
 
 	return OptionsMenuBuilder.MakeWidget();
-}
-
-
-void GameFlowAssetToolkit::FocusOnPIEWorldAssetInstance(const UWorld* PIE_World, UGameFlowAsset* AssetInstance)
-{
-	UGameFlowGraph* GraphObj = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
-	
-	// If we're not debugging any asset, take a look inside the game flow subsystem
-	// and in case there is a running flow debug it.
-	if(GraphObj->DebuggedAssetInstance == nullptr)
-	{
-		const UGameFlowSubsystem* Subsystem = PIE_World->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
-		UObject* AssetArchetype = GraphObj->GameFlowAsset->GetArchetype();
-		GraphObj->DebuggedAssetInstance = Subsystem->GetRunningFlowByArchetype(AssetArchetype);
-	}
 }
 
 void GameFlowAssetToolkit::ExecuteUndoRedo()

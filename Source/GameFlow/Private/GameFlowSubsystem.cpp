@@ -3,11 +3,24 @@
 #include "GameFlowSubsystem.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/GameSession.h"
+#include "Kismet/GameplayStatics.h"
 #include "Nodes/World/GameFlowNode_WorldListener.h"
 
 void UGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	
+	TArray<AActor*> WorldActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), WorldActors);
+	for(const AActor* WorldActor : WorldActors)
+	{
+		UActorComponent* Component = WorldActor->GetComponentByClass(UGameFlowListener::StaticClass());
+		if(Component != nullptr)
+		{
+			UGameFlowListener* ComponentListener = CastChecked<UGameFlowListener>(Component);
+			RegisterListener(ComponentListener);
+		}
+	}
 }
 
 UGameFlowAsset* UGameFlowSubsystem::RegisterAssetInstance(UGameFlowAsset* Asset)

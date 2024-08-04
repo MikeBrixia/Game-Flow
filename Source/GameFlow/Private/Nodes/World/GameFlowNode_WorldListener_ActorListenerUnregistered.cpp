@@ -7,9 +7,5 @@ void UGameFlowNode_WorldListener_ActorListenerUnregistered::OnComponentUnregiste
 	UGameFlowListener* ListenerComponent)
 {
 	Super::OnComponentUnregistered_Implementation(ListenerComponent);
-
-	if(DoGameplayTagsMatch(ListenerComponent->IdentityTags))
-	{
-		TryTriggeringEvent();
-	}
+	TryTriggeringEvent(ListenerComponent->IdentityTags);
 }

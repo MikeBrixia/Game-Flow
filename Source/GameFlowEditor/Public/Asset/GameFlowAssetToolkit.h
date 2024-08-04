@@ -65,7 +65,6 @@ private:
 	TSharedRef<SWidget> BuildSelectPIEWorldMenu();
 	TSharedRef<SWidget> BuildSelectAssetInstanceMenu();
 	
-	void FocusOnPIEWorldAssetInstance(const UWorld* PIE_World, UGameFlowAsset* AssetInstance);
     /** Apply undo/redo registered actions to game flow editor. */
 	void ExecuteUndoRedo();
 	/** Display selected nodes inside node details panel. */
