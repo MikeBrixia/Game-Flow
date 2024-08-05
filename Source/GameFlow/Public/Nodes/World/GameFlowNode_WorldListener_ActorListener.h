@@ -14,7 +14,7 @@ UCLASS(NotBlueprintable, NotBlueprintType, DisplayName="On Actor Notify", meta=(
 class GAMEFLOW_API UGameFlowNode_WorldListener_ActorListener : public UGameFlowNode_WorldListener
 {
 	GENERATED_BODY()
-
+    
 	virtual void ListenToComponent_Implementation(UGameFlowListener* ListenerComponent) override;
 	virtual void StopListeningToComponent_Implementation(UGameFlowListener* ListenerComponent) override;
 };

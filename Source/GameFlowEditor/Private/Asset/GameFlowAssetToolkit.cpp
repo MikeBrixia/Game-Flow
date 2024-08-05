@@ -112,6 +112,55 @@ TSharedRef<IDetailsView> GameFlowAssetToolkit::CreateAssetNodeDetails()
 	return DetailsView;
 }
 
+TSharedRef<SWidget> GameFlowAssetToolkit::CreatePIEDebugToolbarSection()
+{
+		return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("World: "))
+			.Margin(FMargin(0, 8))
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SComboButton)
+			.OnGetMenuContent(this, &GameFlowAssetToolkit::BuildSelectPIEWorldMenu)
+			.ButtonContent()
+			[
+				SNew(STextBlock)
+				.Text_Lambda([=]
+				{
+					return PIE_SelectedWorld != nullptr? FText::FromString(PIE_SelectedWorld->GetMapName())
+												   : FText::FromString("None");
+				})
+			]
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("Instance: "))
+			.Margin(FMargin(6, 8))
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SComboButton)
+			.OnGetMenuContent(this, &GameFlowAssetToolkit::BuildSelectAssetInstanceMenu)
+			.ButtonContent()
+			[
+				SNew(STextBlock)
+				.Text_Lambda([=]
+				{
+					return PIE_SelectedAssetInstance != nullptr? FText::FromString(PIE_SelectedAssetInstance->GetName())
+												   : FText::FromString("None");
+				})
+			]
+		];
+}
+
 void GameFlowAssetToolkit::ConfigureInputs()
 {
 	// Get all Game Flow editor commands.
@@ -130,7 +179,7 @@ void GameFlowAssetToolkit::CreateGraph()
 
 	// Listen for game flow graph events.
 	Graph->OnGraphNodesSelected.BindRaw(this, &GameFlowAssetToolkit::DisplaySelectedNodes);
-
+    
 	// Create UI widget from logical graph.
 	GraphWidget = SNew(SGameFlowGraph, SharedThis(this))
 				   .GraphToEdit(Graph);
@@ -209,56 +258,26 @@ void GameFlowAssetToolkit::OnPostPIEStarted(bool bStarted)
 	UToolMenu* EditorToolbar = GetToolbar();
 	if(EditorToolbar != nullptr)
 	{
+		// By default select the first PIE world in the hierarchy.
+		const FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(0);
+		PIE_SelectedWorld = WorldContext->World();
+		
+		const UGameFlowSubsystem* Subsystem = PIE_SelectedWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
+		const TArray<UGameFlowAsset*> InstancedAssets = Subsystem->GetRunningFlows();
+		// If there is at least one instance of the inspected game flow asset, select the first you can find by default.
+		if(InstancedAssets.Num() > 0)
+		{
+			UGameFlowAsset* InstancedAsset = Subsystem->GetRunningFlowByArchetype(Asset->GetArchetype());
+			SelectPIEAssetInstance(InstancedAsset);
+		}
+		
+		const TSharedRef<SWidget> PIE_DebugSection = CreatePIEDebugToolbarSection();
 		// Get all Game Flow editor commands.
 		const FGameFlowEditorCommands GameFlowCommands = FGameFlowEditorCommands::Get();
 		FToolMenuSection& PlaySection = EditorToolbar->FindOrAddSection("PIE Debug");
 		
 		const FToolMenuEntry& SelectPIEWorldInstanceEntry = FToolMenuEntry::InitWidget("Select PIE World",
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString("World: "))
-				.Margin(FMargin(0, 8))
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SComboButton)
-			    .OnGetMenuContent(this, &GameFlowAssetToolkit::BuildSelectPIEWorldMenu)
-			    .ButtonContent()
-				[
-					SNew(STextBlock)
-					.Text_Lambda([=]
-					{
-						return PIE_SelectedWorld != nullptr? FText::FromString(PIE_SelectedWorld->GetMapName())
-													   : FText::FromString("None");
-					})
-				]
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString("Instance: "))
-				.Margin(FMargin(6, 8))
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SComboButton)
-				.OnGetMenuContent(this, &GameFlowAssetToolkit::BuildSelectAssetInstanceMenu)
-				.ButtonContent()
-				[
-					SNew(STextBlock)
-					.Text_Lambda([=]
-					{
-						return PIE_SelectedAssetInstance != nullptr? FText::FromString(PIE_SelectedAssetInstance->GetName())
-													   : FText::FromString("None");
-					})
-				]
-			],FText::GetEmpty());
+			PIE_DebugSection, FText::GetEmpty());
 
 		PlaySection.AddEntry(SelectPIEWorldInstanceEntry);
 	}
@@ -273,6 +292,27 @@ void GameFlowAssetToolkit::OnPIEFinish(bool bFinished)
 		PIE_SelectedWorld = nullptr;
 		PIE_SelectedAssetInstance = nullptr;
 	}
+}
+
+void GameFlowAssetToolkit::OnPIEDebuggedInstanceInvalidated(UGameFlowAsset* DebuggedInstance)
+{
+	PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
+	this->PIE_SelectedAssetInstance = nullptr;
+	// Invalidate graph debugged instance.
+	GraphWidget->GetGameFlowGraph()->SetDebuggedInstance(nullptr);
+}
+
+void GameFlowAssetToolkit::SelectPIEAssetInstance(UGameFlowAsset* AssetInstance)
+{
+	if(PIE_SelectedAssetInstance != nullptr)
+	{
+		PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
+	}
+	AssetInstance->OnFinish.AddRaw(this, &GameFlowAssetToolkit::OnPIEDebuggedInstanceInvalidated);
+	this->PIE_SelectedAssetInstance = AssetInstance;
+
+	UGameFlowGraph* GraphObj = GraphWidget->GetGameFlowGraph();
+	GraphObj->SetDebuggedInstance(AssetInstance);
 }
 
 void GameFlowAssetToolkit::PostUndo(bool bSuccess)
@@ -319,18 +359,13 @@ TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectAssetInstanceMenu()
 
 	if(PIE_SelectedWorld != nullptr)
 	{
-		UE_LOG(LogGameFlow, Display, TEXT("World selected"))
 		const UGameFlowSubsystem* Subsystem = PIE_SelectedWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
-		UE_LOG(LogGameFlow, Display, TEXT("Num: %d"), Subsystem->GetRunningFlows().Num())
 		for(UGameFlowAsset* Instance : Subsystem->GetRunningFlows())
 		{
 			OptionsMenuBuilder.AddMenuEntry(FText::FromString(Instance->GetName()), FText::GetEmpty(),
 			FSlateIcon(), FExecuteAction::CreateLambda([=]
 			{
-				this->PIE_SelectedAssetInstance = Instance;
-				
-				UGameFlowGraph* GraphObj = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
-		        GraphObj->DebuggedAssetInstance = Instance;
+				SelectPIEAssetInstance(Instance);
 			}));
 		}
 	}

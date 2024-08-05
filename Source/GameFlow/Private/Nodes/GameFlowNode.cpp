@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
-
 #include "GameFlow.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"

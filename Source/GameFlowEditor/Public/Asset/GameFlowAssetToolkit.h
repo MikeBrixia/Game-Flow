@@ -48,6 +48,8 @@ protected:
 	void OnDebugRequest();
 	void OnPostPIEStarted(bool bStarted);
 	void OnPIEFinish(bool bFinished);
+	void OnPIEDebuggedInstanceInvalidated(UGameFlowAsset* DebuggedInstance);
+    void SelectPIEAssetInstance(UGameFlowAsset* AssetInstance);
 	
 public:
 	virtual void PostUndo(bool bSuccess) override;
@@ -61,9 +63,6 @@ private:
 	UWorld* PIE_SelectedWorld;
 	/** The selected asset instance inside PIE menu. */
 	UGameFlowAsset* PIE_SelectedAssetInstance;
-	
-	TSharedRef<SWidget> BuildSelectPIEWorldMenu();
-	TSharedRef<SWidget> BuildSelectAssetInstanceMenu();
 	
     /** Apply undo/redo registered actions to game flow editor. */
 	void ExecuteUndoRedo();
@@ -81,6 +80,10 @@ protected:
 	virtual TSharedRef<FTabManager::FLayout> CreateEditorLayout();
 	TSharedRef<IDetailsView> CreateAssetDetails();
     TSharedRef<IDetailsView> CreateAssetNodeDetails();
+	
+	TSharedRef<SWidget> CreatePIEDebugToolbarSection();
+	TSharedRef<SWidget> BuildSelectPIEWorldMenu();
+	TSharedRef<SWidget> BuildSelectAssetInstanceMenu();
 	
 public:
 	FORCEINLINE virtual FString GetWorldCentricTabPrefix() const override { return "Game Flow Asset"; }

@@ -36,9 +36,18 @@ void UGameFlowAsset::RemoveActiveNode(UGameFlowNode* Node)
 void UGameFlowAsset::TerminateExecution()
 {
 #if WITH_EDITOR
-	ActiveNodes.Empty();
+	// Terminate and clear all remaining active nodes.
+	for (int i = ActiveNodes.Num() - 1; i >= 0; --i)
+	{
+		UGameFlowNode* Node = ActiveNodes[i];
+		Node->OnFinishExecute();
+		ActiveNodes.RemoveAt(i);
+	}
 #endif
-	OnFinish.ExecuteIfBound(this);
+	if(OnFinish.IsBound())
+	{
+		OnFinish.Broadcast(this);
+	}
 }
 
 UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context) const

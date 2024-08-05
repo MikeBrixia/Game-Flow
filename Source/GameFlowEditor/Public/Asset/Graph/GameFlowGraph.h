@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFlowAsset.h"
 #include "Nodes/GameFlowGraphNode.h"
-#include "Utils/GameFlowEditorSubsystem.h"
 #include "GameFlowGraph.generated.h"
 
 class GameFlowAssetToolkit;
@@ -27,16 +26,22 @@ public:
 	UPROPERTY()
 	TObjectPtr<UGameFlowAsset> GameFlowAsset;
 
-	/** Called when graph nodes gets selected*/
-	FOnGraphNodesSelected OnGraphNodesSelected;
-
 	/** The debugged instance of the current edited GameFlowAsset. */
 	UPROPERTY(Transient)
 	TObjectPtr<UGameFlowAsset> DebuggedAssetInstance;
 	
+	/** Called when graph nodes gets selected*/
+	FOnGraphNodesSelected OnGraphNodesSelected;
+	
 	UGameFlowGraph();
 	
 	void InitGraph();
+
+	/**
+	 * Set the instance of the inspected asset you want to debug.
+	 * @remark Instance must be a child of the inspected game flow asset.
+	 */
+	void SetDebuggedInstance(UGameFlowAsset* Instance);
 	
 	/**
 	 * @brief Find all graph nodes with an asset of requested type inside the graph.
@@ -73,7 +78,7 @@ public:
 	void OnSaveGraph();
 	void OnValidateGraph();
 	void OnReplaceGraphNode();
-    
+
 #if WITH_HOT_RELOAD
 	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
 #endif

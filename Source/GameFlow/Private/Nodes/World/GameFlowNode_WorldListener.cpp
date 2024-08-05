@@ -33,16 +33,34 @@ void UGameFlowNode_WorldListener::Execute_Implementation(const FName PinName)
 	}
 }
 
+void UGameFlowNode_WorldListener::TryTriggeringEvent(FGameplayTagContainer GameplayTags)
+{
+	OnTriggerEvent();
+	// If we've reached the limit node has been completed.
+	if (Count >= Limit)
+	{
+		OnCompleted();
+	}
+	Count++;
+}
+
 void UGameFlowNode_WorldListener::OnFinishExecute_Implementation()
 {
 	UGameFlowSubsystem* GameFlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
-
+    
 	// Stop listening to game flow subsystem events.
 	GameFlowSubsystem->OnListenerComponentRegistered.RemoveAll(this);
 	GameFlowSubsystem->OnListenerComponentUnregistered.RemoveAll(this);
 	GameFlowSubsystem->OnGameplayTagAdded.RemoveAll(this);
 	GameFlowSubsystem->OnGameplayTagRemoved.RemoveAll(this);
 
+	TArray<UGameFlowListener*> NodeListeners = GameFlowSubsystem->GetListenersByGameplayTags(ListenerTags, MatchingStrategy);
+	// Stop listening to all matching actor component listeners.
+	for(UGameFlowListener* Listener : NodeListeners)
+	{
+		StopListeningToComponent(Listener);
+	}
+	
 	// Reset counter to 0.
 	Count = 0;
 }
@@ -69,21 +87,6 @@ void UGameFlowNode_WorldListener::StopListening()
 {
 	FinishExecute(true);
 	ExecuteOutputPin("Stopped");
-}
-
-void UGameFlowNode_WorldListener::TryTriggeringEvent(FGameplayTagContainer GameplayTags)
-{
-	UE_LOG(LogGameFlow, Display, TEXT("Triggering event"))
-	if (Limit == 0 || Count < Limit)
-	{
-		Count++;
-		OnTriggerEvent();
-		UE_LOG(LogGameFlow, Display, TEXT("Event triggered"))
-	}
-	else
-	{
-		OnCompleted();
-	}
 }
 
 void UGameFlowNode_WorldListener::OnTriggerEvent_Implementation()

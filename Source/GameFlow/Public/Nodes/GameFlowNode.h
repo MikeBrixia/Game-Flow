@@ -21,6 +21,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	friend class UGameFlowNodeFactory;
 	friend class UGameFlowGraphNode;
 	friend class FGameFlowConnectionDrawingPolicy;
+	friend class UGameFlowAsset;
 	
 	GENERATED_BODY()
 

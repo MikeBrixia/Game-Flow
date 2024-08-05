@@ -33,7 +33,7 @@ UGameFlowAsset* UGameFlowSubsystem::RegisterAssetInstance(UGameFlowAsset* Asset)
 		InstancedAssets.Add(Asset->GetArchetype(), AssetInstance);
 		
 		// Listen for finish events. It is needed to know when we need to unregister asset instance.
-		AssetInstance->OnFinish.BindUObject(this, &UGameFlowSubsystem::UnregisterAssetInstance);
+		AssetInstance->OnFinish.AddUObject(this, &UGameFlowSubsystem::UnregisterAssetInstance);
 	}
 	else
 	{

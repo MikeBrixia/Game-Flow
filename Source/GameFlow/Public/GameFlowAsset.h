@@ -10,7 +10,7 @@
 #include "GameFlowAsset.generated.h"
 
 class UGameFlowNode_FlowControl_Subgraph;
-DECLARE_DELEGATE_OneParam(FOnFinish, UGameFlowAsset*)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnFinish, UGameFlowAsset*)
 
 /**
  * Game Flow InstancedAsset are designed to help designer create their

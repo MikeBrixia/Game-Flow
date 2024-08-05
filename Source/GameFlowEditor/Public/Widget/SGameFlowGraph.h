@@ -25,6 +25,7 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs, const TSharedPtr<GameFlowAssetToolkit> AssetEditor);
 
+	UGameFlowGraph* GetGameFlowGraph() const;
 protected:
 	virtual void RegisterGraphCommands();
     virtual void OnSelectionChange(const TSet<UObject*>& Selection);

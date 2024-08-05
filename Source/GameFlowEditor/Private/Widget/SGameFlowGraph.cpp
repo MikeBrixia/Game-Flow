@@ -29,6 +29,11 @@ void SGameFlowGraph::Construct(const FArguments& InArgs, const TSharedPtr<GameFl
 	SGraphEditor::Construct(Arguments);
 }
 
+UGameFlowGraph* SGameFlowGraph::GetGameFlowGraph() const
+{
+	return CastChecked<UGameFlowGraph>(GetCurrentGraph());
+}
+
 void SGameFlowGraph::RegisterGraphCommands()
 {
 	FGraphEditorCommands::Register();

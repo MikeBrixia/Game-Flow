@@ -38,6 +38,17 @@ void UGameFlowGraph::InitGraph()
 	}
 }
 
+void UGameFlowGraph::SetDebuggedInstance(UGameFlowAsset* Instance)
+{
+	// Only instances of the same type as GameFlowAsset can be debugged inside the graph.
+	// Let pass invalid instances.
+	if(Instance == nullptr || Instance->IsA(GameFlowAsset->GetClass()))
+	{
+		// Finally set the new debugged instance and broadcast the event.
+		this->DebuggedAssetInstance = Instance;
+	}
+}
+
 TArray<UGameFlowGraphNode*> UGameFlowGraph::GetNodesOfClass(const TSubclassOf<UGameFlowNode> NodeClass) const
 {
 	const TArray<UGameFlowGraphNode*> GameFlowGraphNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
