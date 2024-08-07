@@ -18,7 +18,7 @@ FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackL
                                                                    float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
                                                                    : FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 {
-	this->WireHighlightDuration = .7f;
+	this->WireHighlightDuration = 2;
 	this->PreviousTime = 0.f;
 	this->HighlightElapsedTime = 0.f;
 	// Do not draw end connection arrow.
@@ -29,6 +29,9 @@ FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackL
 void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin,
 	FConnectionParams& Params)
 {
+	// If no debugging instances could be found, fallback on default connection style.
+	FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
+	
 	// Apply custom game flow connection style only when there is a debugged asset instance.
 	if (GraphObj->DebuggedAssetInstance != nullptr)
 	{
@@ -43,34 +46,32 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 		FPinHandle FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
 		FPinHandle DestinationPinHandle = DestinationNodeAsset->GetPinByName(InputPin->PinName, EGPD_Input);
 		FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.FindRef(DestinationPinHandle.GetFullPinName());
-
-		if (ConnectionInfo.HighlightElapsedTime < WireHighlightDuration)
-		{
-			// Highlight only active nodes connections.
-			if (ConnectionInfo.bIsActive)
-			{
-				HighlightConnection(Params);
-			}
-		}
-		else
+		
+		if (ConnectionInfo.HighlightElapsedTime <= 0)
 		{
 			// Start connection highlight timer as long as the two nodes are still active.
-			ConnectionInfo.HighlightElapsedTime = 0.f;
-			ConnectionInfo.PreviousTime = 0.f;
+			ConnectionInfo.HighlightElapsedTime = WireHighlightDuration;
 			ConnectionInfo.bIsActive = false;
-			FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
 		}
-
-		UpdateConnectionTimer(ConnectionInfo);
+		
+		const double CurrentTime = FApp::GetCurrentTime();
+		// Highlight timer, only functioning when connection is active.
+		if(ConnectionInfo.bIsActive)
+		{
+			const float Alpha = ConnectionInfo.HighlightElapsedTime / WireHighlightDuration;
+			// Update connection params.
+			Params.WireThickness = FMath::Lerp(.7f, 6.f, Alpha);
+			Params.WireColor = FColor::Orange;
+			Params.bDrawBubbles = true;
+			
+			// Keep decreasing the timer until it reaches 0.
+			ConnectionInfo.HighlightElapsedTime -= CurrentTime - ConnectionInfo.PreviousTime;
+		}
+		ConnectionInfo.PreviousTime = CurrentTime;
+		
 		// Update pin handle at the end of each connection style processing.
 		FromPinHandle.UpdateConnection(ConnectionInfo);
 	}
-	else
-	{
-		// If no debugging instances could be found, fallback on default connection style.
-		FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
-	}
-	
 }
 
 void FGameFlowConnectionDrawingPolicy::SetGraphObj(UGameFlowGraph* NewGraphObj)
@@ -81,7 +82,7 @@ void FGameFlowConnectionDrawingPolicy::SetGraphObj(UGameFlowGraph* NewGraphObj)
 void FGameFlowConnectionDrawingPolicy::HighlightConnection(FConnectionParams& Params)
 {
 	Params.WireColor = FColor::Orange;
-	Params.WireThickness = 3.f;
+	Params.WireThickness = 6.f;
 	Params.bDrawBubbles = true;
 }
 

@@ -41,7 +41,7 @@ struct GAMEFLOW_API FPinConnectionInfo
 	double PreviousTime;
 
 	/** True if the connection is currently being highlighted. */
-    UPROPERTY()
+    UPROPERTY(Transient)
     bool bIsActive;
 #endif
 	
