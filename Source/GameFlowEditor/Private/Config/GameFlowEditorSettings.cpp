@@ -12,6 +12,10 @@ void UGameFlowEditorSettings::PostEditChangeProperty(FPropertyChangedEvent& Prop
 	{
 		TArray<FName> Options;
 		NodesTypes.GenerateKeyArray(Options);
-		UGameFlowSettings::Get()->Options = Options;
+		
+		UGameFlowSettings* RuntimeSettings = UGameFlowSettings::Get();
+		// Share runtime useful properties with game flow editor settings.
+		RuntimeSettings->Options = Options;
+        RuntimeSettings->WireHighlightDuration = WireHighlightDuration;
 	}
 }

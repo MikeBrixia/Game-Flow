@@ -106,7 +106,10 @@ void UGameFlowSubsystem::NotifyListeners(FGameplayTagContainer GameplayTag, EGam
 	// Broadcast game flow event to all listeners.
 	for(const UGameFlowListener* Listener : QueriedListeners)
 	{
-		Listener->OnReceiveGameFlowEvent.Broadcast(GameplayTag);
+		if(Listener->OnReceiveGameFlowEvent.IsBound())
+		{
+			Listener->OnReceiveGameFlowEvent.Broadcast(GameplayTag);
+		}
 	}
 }
 

@@ -50,7 +50,9 @@ protected:
 	void OnPIEFinish(bool bFinished);
 	void OnPIEDebuggedInstanceInvalidated(UGameFlowAsset* DebuggedInstance);
     void SelectPIEAssetInstance(UGameFlowAsset* AssetInstance);
-	
+	void UnselectPIEWorld();
+	void UnselectPIEAssetInstance();
+   
 public:
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
@@ -97,4 +99,5 @@ private:
 
 	// -------------------------------------------------------------------------------------------------
 };
+
 

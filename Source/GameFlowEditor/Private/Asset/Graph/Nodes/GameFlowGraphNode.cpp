@@ -213,8 +213,8 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 	// it could lead do data corruption.
 	if(!bIsRebuilding)
 	{
-		FPinHandle PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
-		PinHandle.CutAllConnections();
+		UPinHandle* PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
+		PinHandle->CutAllConnections();
 		// Recreate logical connections between game flow nodes using graph pin data.
 		for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
 		{
@@ -222,8 +222,8 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 			UGameFlowNode* ConnectedNodeAsset = CastChecked<UGameFlowNode>(ConnectedPin->DefaultObject);
 			ConnectedNodeAsset->Modify();
 			
-			FPinHandle ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, ConnectedPin->Direction);
-			PinHandle.CreateConnection(ConnectedPinHandle);
+			UPinHandle* ConnectedPinHandle = ConnectedNodeAsset->GetPinByName(ConnectedPin->PinName, ConnectedPin->Direction);
+			PinHandle->CreateConnection(ConnectedPinHandle);
 		}
 	}
 }
@@ -237,6 +237,10 @@ void UGameFlowGraphNode::DestroyNode()
 }
 
 void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
+{
+}
+
+void UGameFlowGraphNode::OnNodeAssetPinTriggered(UPinHandle* PinHandle)
 {
 }
 

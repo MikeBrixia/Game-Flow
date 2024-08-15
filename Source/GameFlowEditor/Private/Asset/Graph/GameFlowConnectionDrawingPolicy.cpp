@@ -2,6 +2,7 @@
 #include "Asset/Graph/GameFlowConnectionDrawingPolicy.h"
 #include "GameFlowSubsystem.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Config/GameFlowEditorSettings.h"
 
 FConnectionDrawingPolicy* FGameFlowGraphConnectionDrawingPolicyFactory::CreateConnectionPolicy(
 	const UEdGraphSchema* Schema, int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor,
@@ -18,9 +19,7 @@ FGameFlowConnectionDrawingPolicy::FGameFlowConnectionDrawingPolicy(int32 InBackL
                                                                    float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
                                                                    : FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 {
-	this->WireHighlightDuration = 2;
-	this->PreviousTime = 0.f;
-	this->HighlightElapsedTime = 0.f;
+	this->EditorSettings = UGameFlowEditorSettings::Get();
 	// Do not draw end connection arrow.
 	this->ArrowImage = nullptr;
 	this->ArrowRadius = FVector2D::ZeroVector;
@@ -36,41 +35,33 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 	if (GraphObj->DebuggedAssetInstance != nullptr)
 	{
 		const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
-		const UGameFlowGraphNode* DestinationNode = CastChecked<UGameFlowGraphNode>(InputPin->GetOwningNode());
-
-		UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(
+		const UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(
 			FromNode->GetNodeAsset()->GUID);
-		UGameFlowNode* DestinationNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(
-			DestinationNode->GetNodeAsset()->GUID);
-
-		FPinHandle FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
-		FPinHandle DestinationPinHandle = DestinationNodeAsset->GetPinByName(InputPin->PinName, EGPD_Input);
-		FPinConnectionInfo ConnectionInfo = FromPinHandle.Connections.FindRef(DestinationPinHandle.GetFullPinName());
 		
-		if (ConnectionInfo.HighlightElapsedTime <= 0)
+		UPinHandle* FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
+
+		const double WireHighlightDuration = EditorSettings->WireHighlightDuration;
+		if (FromPinHandle->ActivatedElapsedTime <= 0)
 		{
 			// Start connection highlight timer as long as the two nodes are still active.
-			ConnectionInfo.HighlightElapsedTime = WireHighlightDuration;
-			ConnectionInfo.bIsActive = false;
+			FromPinHandle->ActivatedElapsedTime = WireHighlightDuration;
+			FromPinHandle->bIsActive = false;
 		}
 		
 		const double CurrentTime = FApp::GetCurrentTime();
 		// Highlight timer, only functioning when connection is active.
-		if(ConnectionInfo.bIsActive)
+		if(FromPinHandle->bIsActive)
 		{
-			const float Alpha = ConnectionInfo.HighlightElapsedTime / WireHighlightDuration;
+			const float Alpha = FromPinHandle->ActivatedElapsedTime / WireHighlightDuration;
 			// Update connection params.
 			Params.WireThickness = FMath::Lerp(.7f, 6.f, Alpha);
 			Params.WireColor = FColor::Orange;
 			Params.bDrawBubbles = true;
 			
 			// Keep decreasing the timer until it reaches 0.
-			ConnectionInfo.HighlightElapsedTime -= CurrentTime - ConnectionInfo.PreviousTime;
+			FromPinHandle->ActivatedElapsedTime -= CurrentTime - FromPinHandle->PreviousTime;
 		}
-		ConnectionInfo.PreviousTime = CurrentTime;
-		
-		// Update pin handle at the end of each connection style processing.
-		FromPinHandle.UpdateConnection(ConnectionInfo);
+		FromPinHandle->PreviousTime = CurrentTime;
 	}
 }
 
@@ -91,23 +82,6 @@ void FGameFlowConnectionDrawingPolicy::NotHighlightedConnection(FConnectionParam
 	Params.WireColor = FColor::White;
 	Params.WireThickness = .7f;
 	Params.bDrawBubbles = false;
-}
-
-void FGameFlowConnectionDrawingPolicy::UpdateConnectionTimer(FPinConnectionInfo& ConnectionInfo)
-{
-	const double CurrentTime = FApp::GetCurrentTime();
-	if (ConnectionInfo.PreviousTime == 0.f)
-	{
-		// Just set the previous time to current time for next update.
-		ConnectionInfo.PreviousTime = CurrentTime;
-	}
-	else
-	{
-		// First we add the elapsed time between previous and current draw procedure.
-		ConnectionInfo.HighlightElapsedTime += CurrentTime - ConnectionInfo.PreviousTime;
-		// Then we update the previous time because we'll need it in the next draw procedure.
-		ConnectionInfo.PreviousTime = CurrentTime;
-	}
 }
 
 

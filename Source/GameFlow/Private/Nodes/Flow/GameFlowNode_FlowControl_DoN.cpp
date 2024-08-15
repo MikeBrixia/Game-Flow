@@ -28,8 +28,16 @@ void UGameFlowNode_FlowControl_DoN::Execute_Implementation(const FName PinName)
 	else if(Count <= N)
 	{
 		Count++;
-		ExecuteOutputPin("Exit");
+		TriggerOutputPin("Exit");
 	}
 	FinishExecute(true);
+}
+
+void UGameFlowNode_FlowControl_DoN::OnFinishExecute_Implementation()
+{
+	Super::OnFinishExecute_Implementation();
+
+	// Execute default output pin.
+	TriggerOutputPin("Out");
 }
 

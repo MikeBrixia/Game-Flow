@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Debug/FGameFlowGraphDebugger.h"
 #include "GameFlowAsset.h"
 #include "Nodes/GameFlowGraphNode.h"
 #include "GameFlowGraph.generated.h"
@@ -32,6 +33,9 @@ public:
 	
 	/** Called when graph nodes gets selected*/
 	FOnGraphNodesSelected OnGraphNodesSelected;
+
+	/** Game Flow graph debugger instance shared by all graphs. */
+	TSharedPtr<FGameFlowGraphDebugger> Debugger;
 	
 	UGameFlowGraph();
 	

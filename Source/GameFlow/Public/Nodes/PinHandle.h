@@ -4,7 +4,7 @@
 
 class UFloatProperty;
 class UGameFlowNode;
-struct FPinHandle;
+class UPinHandle;
 
 UENUM()
 enum EGameFlowPinType
@@ -13,95 +13,68 @@ enum EGameFlowPinType
 	Property
 };
 
-/**
- * Stores all relevant info about a connection between two pins.
- */
-USTRUCT(BlueprintType)
-struct GAMEFLOW_API FPinConnectionInfo
-{
-	GENERATED_USTRUCT_BODY()
-
-	FPinConnectionInfo();
-	FPinConnectionInfo(const FName& InputPinName, UGameFlowNode* Node);
-	
-	UPROPERTY(EditAnywhere)
-	FName DestinationPinName;
-	
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UGameFlowNode> DestinationObject;
-
-// Data needed by Game Flow drawing policy to correctly display execution flow of nodes.
-#if WITH_EDITORONLY_DATA
-	/** How many time has passed since highlight start. */
-	UPROPERTY(Transient)
-	double HighlightElapsedTime;
-     
-	/** Last connections processing time. */
-	UPROPERTY(Transient)
-	double PreviousTime;
-
-	/** True if the connection is currently being highlighted. */
-    UPROPERTY(Transient)
-    bool bIsActive;
-#endif
-	
-	friend bool operator==(const FPinConnectionInfo& Lhs, const FPinConnectionInfo& RHS)
-	{
-		return Lhs.DestinationPinName == RHS.DestinationPinName
-			&& Lhs.DestinationObject == RHS.DestinationObject;
-	}
-
-	friend bool operator!=(const FPinConnectionInfo& Lhs, const FPinConnectionInfo& RHS)
-	{
-		return !(Lhs == RHS);
-	}
-};
-
 /** Utility structure used to handle game flow logical pins state and connections. */
-USTRUCT()
-struct GAMEFLOW_API FPinHandle
+UCLASS(DefaultToInstanced)
+class GAMEFLOW_API UPinHandle : public UObject
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 	
-	FPinHandle();
-	FPinHandle(FName PinName, UGameFlowNode* PinOwner, TEnumAsByte<EEdGraphPinDirection> PinDirection);
-	FPinHandle(const FPinHandle& Other);
-	
+	UPinHandle();
+
+public:
 	/** The name of the handled pin. */
 	UPROPERTY(VisibleAnywhere)
 	FName PinName;
 
-	/** All the connections held by this pin. */
-    UPROPERTY(VisibleAnywhere)
-    TMap<FName, FPinConnectionInfo> Connections;
-
-#if WITH_EDITORONLY_DATA
 	/** The node who owns this pin. */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UGameFlowNode> PinOwner;
-	
+
+	/** True if this is an output pin, false if it is in input pin. */
+    UPROPERTY(VisibleAnywhere)
+    bool bIsOutput;
+
+	/** All the connections held by this pin. */
+	UPROPERTY(VisibleAnywhere)
+	TMap<FName, UPinHandle*> Connections;
+
+#if WITH_EDITORONLY_DATA
 	/** True when this pin has been marked with a breakpoint, false otherwise. */
     UPROPERTY()
     bool bIsBreakpointEnabled;
 
+	/** True if this pin is active and executing. */
+	UPROPERTY(Transient)
+	bool bIsActive;
+
+	/** Time passed since this pin was activated. */
+	UPROPERTY(Transient)
+	double ActivatedElapsedTime;
+
+	/** Last connections processing time. */
+	UPROPERTY(Transient)
+	double PreviousTime;
+		
 	/** The direction of the handled pin(input, output ecc.)*/
-    UPROPERTY(VisibleDefaultsOnly)
-    TEnumAsByte<EEdGraphPinDirection> PinDirection;
+	UPROPERTY(VisibleAnywhere)
+	TEnumAsByte<EEdGraphPinDirection> PinDirection;
 #endif
+	
+	 void TriggerPin();
 
 #if WITH_EDITOR
+	static UPinHandle* CreatePinHandle(FName PinName, UGameFlowNode* PinOwner, EEdGraphPinDirection PinDirection);
 	/** Create a connection between this handle and another pin handle. */
-    void CreateConnection(FPinHandle& OtherPinHandle);
-	void CutConnection(FPinHandle& OtherPinHandle);
+    void CreateConnection(UPinHandle* OtherPinHandle);
+	void CutConnection(UPinHandle* OtherPinHandle);
 	void CutAllConnections();
-	void UpdateConnection(FPinConnectionInfo& ConnectionInfo);
 	
 	/** Check if this pin handle is valid and ready to be used. */
     bool IsValidHandle() const;
 	bool IsValidPinName() const;
-    bool CanCreateConnection(const FPinHandle& OtherPinHandle) const;
-    FName GetFullPinName() const;
+    bool CanCreateConnection(const UPinHandle* OtherPinHandle) const;
 #endif
 };
+
 
 

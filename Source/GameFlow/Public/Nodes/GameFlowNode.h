@@ -9,6 +9,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type, FString);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnBeforeExecute, FName)
 
 #endif
 
@@ -22,6 +23,7 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	friend class UGameFlowGraphNode;
 	friend class FGameFlowConnectionDrawingPolicy;
 	friend class UGameFlowAsset;
+	friend class UPinHandle;
 	
 	GENERATED_BODY()
 
@@ -36,7 +38,7 @@ public:
 	
 	/** All the node input pins. */
 	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
-	TMap<FName, FPinHandle> Inputs;
+	TMap<FName, UPinHandle*> Inputs;
 	
 	/** The last tracked position of the node inside the graph. */
 	UPROPERTY()
@@ -62,7 +64,9 @@ public:
 	
 	/** Use this delegate to notify error events on this node to all listeners. */
 	FOnAssetErrorEvent OnErrorEvent;
-	
+
+	/** Called right before the asset will begin it's execution. */
+	FOnBeforeExecute OnBeforeExecute;
 protected:
 	/** True if this node should have a variable amount of input pins */
     UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
@@ -77,19 +81,19 @@ public:
 	
 	/** All node output pins. */
 	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
-	TMap<FName, FPinHandle> Outputs;
+	TMap<FName, UPinHandle*> Outputs;
 	
 	UGameFlowNode();
 	
 	/** Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void Execute(const FName PinName = "Exec");
-	FORCEINLINE virtual void Execute_Implementation(const FName PinName) {};
-
+	FORCEINLINE virtual void Execute_Implementation(const FName PinName) {}
+	
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void OnFinishExecute();
-	FORCEINLINE virtual void OnFinishExecute_Implementation() {};
+	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
 	
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
@@ -99,7 +103,10 @@ protected:
 	FORCEINLINE void FinishExecute(bool bFinish);
 
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	FORCEINLINE void ExecuteOutputPin(FName PinName);
+	FORCEINLINE void TriggerOutputPin(FName PinName);
+	
+private:
+	void TryExecute(FName PinName);
 	
 // Editor-only functionality used by external editors to manipulate this node.
 #if WITH_EDITOR
@@ -109,9 +116,8 @@ public:
 	void RemoveInputPin(FName PinName);
 	FORCEINLINE void AddOutputPin(FName PinName);
     void RemoveOutputPin(FName PinName);
-    void UpdatePinHandle(const FPinHandle& UpdatedPinHandle);
 	
-	FPinHandle GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const;
+	UPinHandle* GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<FName> GetInputPinsNames() const;
 	TArray<FName> GetOutputPinsNames() const;
 	bool CanAddInputPin() const;

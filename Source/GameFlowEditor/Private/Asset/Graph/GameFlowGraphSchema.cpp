@@ -296,15 +296,15 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 		for(const FName& OutPinName : CurrentNodeAsset->GetOutputPinsNames())
 		{
 			// Find the node and pin to which the current node is connected to.
-			FPinHandle OutputPinHandle = CurrentNodeAsset->GetPinByName(OutPinName, EGPD_Output);
+			UPinHandle* OutputPinHandle = CurrentNodeAsset->GetPinByName(OutPinName, EGPD_Output);
 			
 			// If pin is not valid skip to next iteration, it cannot be processed.
-			if(!OutputPinHandle.IsValidHandle()) continue;
+			if(!OutputPinHandle->IsValidHandle()) continue;
 			
-			for(const auto& Pair : OutputPinHandle.Connections)
+			for(const auto& Pair : OutputPinHandle->Connections)
 			{
-				const UGameFlowNode* ConnectedNode = Pair.Value.DestinationObject;
-				const FName& ConnectedPinName = Pair.Value.DestinationPinName;
+				const UGameFlowNode* ConnectedNode = Pair.Value->PinOwner;
+				const FName& ConnectedPinName = Pair.Value->PinName;
 				
 				// If next node is invalid or input pin name is None, skip this iteration.
 				if(ConnectedNode == nullptr || ConnectedPinName.IsEqual(EName::None)) continue;
@@ -343,17 +343,17 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 
 		const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 		// Find the node and pin to which the current node is connected to.
-		FPinHandle PinHandle = Pin->Direction == EGPD_Output
+		UPinHandle* PinHandle = Pin->Direction == EGPD_Output
 			            ? NodeAsset->Outputs.FindRef(Pin->PinName)
 			            : NodeAsset->Inputs.FindRef(Pin->PinName);
 
 		// If pin is not valid skip to next iteration, it cannot be processed.
-		if(!PinHandle.IsValidHandle()) continue;
+		if(!PinHandle->IsValidHandle()) continue;
 		
-		for(const auto& Pair : PinHandle.Connections)
+		for(const auto& Pair : PinHandle->Connections)
 		{
-			const UGameFlowNode* ConnectedNode = Pair.Value.DestinationObject;
-			const FName& InPinName = PinHandle.PinName;
+			const UGameFlowNode* ConnectedNode = Pair.Value->PinOwner;
+			const FName& InPinName = PinHandle->PinName;
 			// If next node is invalid or input pin name is None, skip the iteration.
 			if (ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
 			

@@ -86,18 +86,18 @@ void UGameFlowNode_WorldListener::StartListening()
 void UGameFlowNode_WorldListener::StopListening()
 {
 	FinishExecute(true);
-	ExecuteOutputPin("Stopped");
+	TriggerOutputPin("Stopped");
 }
 
 void UGameFlowNode_WorldListener::OnTriggerEvent_Implementation()
 {
-	ExecuteOutputPin("Trigger Event");
+	TriggerOutputPin("Trigger Event");
 }
 
 void UGameFlowNode_WorldListener::OnCompleted_Implementation()
 {
 	FinishExecute(true);
-	ExecuteOutputPin("Completed");
+	TriggerOutputPin("Completed");
 }
 
 void UGameFlowNode_WorldListener::ListenToComponent_Implementation(UGameFlowListener* ListenerComponent)

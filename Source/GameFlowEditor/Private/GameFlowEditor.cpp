@@ -7,6 +7,7 @@
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Config/GameFlowSettings.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
 
@@ -57,6 +58,10 @@ void FGameFlowEditorModule::StartupModule()
 	
 	// Add Game Flow script templates to the engine.
 	InitializeCppScriptTemplates();
+
+	// On startup we need to forward some data to the runtime settings,
+	// given the plugin setup this is the best way to share it.
+	ForwardEditorSettingsToRuntimeSettings();
 }
 
 // This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
@@ -92,8 +97,20 @@ void FGameFlowEditorModule::InitializeCppScriptTemplates()
 	
 	const TCHAR* CopyMsg = bCopyResult? TEXT("Script templates copied succesfully to engine template folder!") :
 										TEXT("Script templates could not be copied to engine template folder");
-	// Log copy operation result to unreal engine console.
 	UE_LOG(LogGameFlow, Display, TEXT("%s"), CopyMsg);
+}
+
+void FGameFlowEditorModule::ForwardEditorSettingsToRuntimeSettings()
+{
+	UGameFlowSettings* RuntimeSettings = UGameFlowSettings::Get();
+	UGameFlowEditorSettings* EditorSettings = UGameFlowEditorSettings::Get();
+	
+	TArray<FName> Options;
+	EditorSettings->NodesTypes.GenerateKeyArray(Options);
+	RuntimeSettings->Options = Options;
+	RuntimeSettings->WireHighlightDuration = EditorSettings->WireHighlightDuration;
+
+	UE_LOG(LogGameFlow, Display, TEXT("At init time: %f"), RuntimeSettings->WireHighlightDuration)
 }
 
 void FGameFlowEditorModule::RemoveCppScriptTemplates()

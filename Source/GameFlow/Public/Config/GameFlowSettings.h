@@ -27,4 +27,7 @@ public:
 
 	UPROPERTY()
 	TArray<FName> Options;
+
+	UPROPERTY()
+	double WireHighlightDuration;
 };

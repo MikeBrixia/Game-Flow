@@ -21,3 +21,11 @@ void UGameFlowNode_WorldListener_NotifyListeners::Execute_Implementation(const F
 
 	FinishExecute(true);
 }
+
+void UGameFlowNode_WorldListener_NotifyListeners::OnFinishExecute_Implementation()
+{
+	Super::OnFinishExecute_Implementation();
+
+	// Execute default output pin.
+	TriggerOutputPin("Out");
+}

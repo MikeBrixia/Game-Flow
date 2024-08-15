@@ -12,7 +12,7 @@ void UGameFlowNode_Input::Execute_Implementation(const FName PinName)
 {
 	Super::Execute_Implementation(PinName);
 
-	ExecuteOutputPin("Out");
+	TriggerOutputPin("Out");
 }
 
 

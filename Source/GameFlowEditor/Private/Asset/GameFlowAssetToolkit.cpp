@@ -1,13 +1,14 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
 #include "GameFlowEditor.h"
 #include "GameFlowSubsystem.h"
-#include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Config/GameFlowEditorSettings.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "GraphEditorActions.h"
 #include "Kismet2/DebuggerCommands.h"
-#include "Utils/GameFlowEditorSubsystem.h"
 #include "Utils/GameFlowFactory.h"
 #include "Widget/SGameFlowGraph.h"
 
@@ -289,17 +290,27 @@ void GameFlowAssetToolkit::OnPIEFinish(bool bFinished)
 	if(EditorToolbar != nullptr)
 	{
 		EditorToolbar->RemoveSection("PIE Debug");
-		PIE_SelectedWorld = nullptr;
-		PIE_SelectedAssetInstance = nullptr;
+		UnselectPIEWorld();
 	}
 }
 
 void GameFlowAssetToolkit::OnPIEDebuggedInstanceInvalidated(UGameFlowAsset* DebuggedInstance)
 {
-	PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
-	this->PIE_SelectedAssetInstance = nullptr;
-	// Invalidate graph debugged instance.
-	GraphWidget->GetGameFlowGraph()->SetDebuggedInstance(nullptr);
+	if(PIE_SelectedWorld != nullptr)
+	{
+		// Timer necessary when terminating a game flow asset execution. This wil add
+		// a small delay to allow graph drawing policy to highlight executed connections
+		// before invalidating the debug asset instance following asset execution end.
+		FTimerHandle TimerHandle;
+		PIE_SelectedWorld->GetTimerManager().SetTimer(TimerHandle, [=]
+		{
+			PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
+	        this->PIE_SelectedAssetInstance = nullptr;
+	        // Invalidate graph debugged instance.
+	        GraphWidget->GetGameFlowGraph()->SetDebuggedInstance(nullptr);
+		}
+		, UGameFlowEditorSettings::Get()->WireHighlightDuration, false);
+	}
 }
 
 void GameFlowAssetToolkit::SelectPIEAssetInstance(UGameFlowAsset* AssetInstance)
@@ -309,10 +320,35 @@ void GameFlowAssetToolkit::SelectPIEAssetInstance(UGameFlowAsset* AssetInstance)
 		PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
 	}
 	AssetInstance->OnFinish.AddRaw(this, &GameFlowAssetToolkit::OnPIEDebuggedInstanceInvalidated);
-	this->PIE_SelectedAssetInstance = AssetInstance;
 
 	UGameFlowGraph* GraphObj = GraphWidget->GetGameFlowGraph();
+	// Override PIE selected asset instance with new one.
 	GraphObj->SetDebuggedInstance(AssetInstance);
+
+	PIE_SelectedAssetInstance = AssetInstance;
+}
+
+void GameFlowAssetToolkit::UnselectPIEWorld()
+{
+	if(PIE_SelectedWorld != nullptr && PIE_SelectedAssetInstance != nullptr)
+	{
+		UnselectPIEAssetInstance();
+		// Unselect PIE World instance.
+		PIE_SelectedWorld = nullptr;
+	}
+}
+
+void GameFlowAssetToolkit::UnselectPIEAssetInstance()
+{
+	if(PIE_SelectedAssetInstance != nullptr)
+	{
+		PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
+		
+		UGameFlowGraph* GraphObj = GraphWidget->GetGameFlowGraph();
+		GraphObj->SetDebuggedInstance(nullptr);
+		
+		PIE_SelectedAssetInstance = nullptr;
+	}
 }
 
 void GameFlowAssetToolkit::PostUndo(bool bSuccess)
@@ -347,6 +383,11 @@ TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectPIEWorldMenu()
 		OptionsMenuBuilder.AddMenuEntry(FText::FromString(PIE_PlayWorld->GetMapName()), FText::GetEmpty(),
 			FSlateIcon(), FExecuteAction::CreateLambda([=]
 			{
+				// Make sure to unselect all PIE world and asset at once.
+				if(PIE_PlayWorld == nullptr)
+				{
+					UnselectPIEWorld();
+				}
 				this->PIE_SelectedWorld = PIE_PlayWorld;
 			}));
 	}

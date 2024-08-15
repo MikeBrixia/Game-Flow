@@ -3,6 +3,7 @@
 #include "ConnectionDrawingPolicy.h"
 #include "EdGraphUtilities.h"
 #include "GameFlowGraph.h"
+#include "Config/GameFlowEditorSettings.h"
 
 
 /** Factory responsible for creating Game Flow graph connection policy.
@@ -31,13 +32,7 @@ class FGameFlowConnectionDrawingPolicy : public FConnectionDrawingPolicy
 	/** The graph in which the connections takes place. */
 	TObjectPtr<UGameFlowGraph> GraphObj;
 
-	/** How many time has passed since highlight start.*/
-	double HighlightElapsedTime;
-
-	double PreviousTime;
-	
-	/** How much the highlight should last. */
-	float WireHighlightDuration;
+	TObjectPtr<UGameFlowEditorSettings> EditorSettings;
 public:
 	
 	FGameFlowConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor,
@@ -49,5 +44,4 @@ public:
 protected:
 	void HighlightConnection(FConnectionParams& Params);
 	void NotHighlightedConnection(FConnectionParams& Params);
-	void UpdateConnectionTimer(FPinConnectionInfo& ConnectionInfo);
 };

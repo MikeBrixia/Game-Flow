@@ -47,10 +47,18 @@ void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName PinNa
 		if(TruePortsNum == ConditionalPorts.Num())
 		{
 			Reset();
-			ExecuteOutputPin("Out");
+			TriggerOutputPin("Out");
 		}
 	}
 	FinishExecute(true);
+}
+
+void UGameFlowNode_LogicalOperator_AND::OnFinishExecute_Implementation()
+{
+	Super::OnFinishExecute_Implementation();
+
+	// Execute default output pin.
+	TriggerOutputPin("Out");
 }
 
 void UGameFlowNode_LogicalOperator_AND::Reset()

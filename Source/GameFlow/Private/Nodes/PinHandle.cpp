@@ -1,136 +1,103 @@
 ﻿
 #include "Nodes/PinHandle.h"
+#include "GameFlow.h"
+#include "Config/GameFlowSettings.h"
 #include "Nodes/GameFlowNode.h"
 
-FPinConnectionInfo::FPinConnectionInfo()
-{
-	this->HighlightElapsedTime = 0.f;
-	this->PreviousTime = 0.f;
-	this->bIsActive = false;
-}
-
-FPinConnectionInfo::FPinConnectionInfo(const FName& InputPinName, UGameFlowNode* Node) : FPinConnectionInfo()
-{
-	this->DestinationPinName = InputPinName;
-	this->DestinationObject = Node;
-}
-
-FPinHandle::FPinHandle()
+UPinHandle::UPinHandle()
 {
 	PinDirection = EGPD_MAX;
 	bIsBreakpointEnabled = false;
 }
 
-FPinHandle::FPinHandle(FName PinName, UGameFlowNode* PinOwner, TEnumAsByte<EEdGraphPinDirection> PinDirection) : FPinHandle()
+void UPinHandle::TriggerPin()
 {
-	this->PinName = PinName;
-	this->PinOwner = PinOwner;
-	this->PinDirection = PinDirection;
-}
-
-FPinHandle::FPinHandle(const FPinHandle& Other) : FPinHandle()
-{
-	this->PinName = Other.PinName;
-	this->PinDirection = Other.PinDirection;
-	this->PinOwner = Other.PinOwner;
-	this->Connections = Other.Connections;
+	// Only output pins can broadcast events.
+	if(bIsOutput)
+	{
+		for(const auto& Pair : Connections)
+		{
+			UPinHandle* PinHandle = Pair.Value;
+			PinHandle->TriggerPin();
+		}
+#if WITH_EDITOR
+		bIsActive = true;
+		ActivatedElapsedTime = UGameFlowSettings::Get()->WireHighlightDuration;
+#endif
+	}
+	// Input pins instead will directly try to execute the owner.
+	else
+	{
+		PinOwner->TryExecute(PinName);
+	}
 }
 
 #if WITH_EDITOR
 
-void FPinHandle::CreateConnection(FPinHandle& OtherPinHandle)
+UPinHandle* UPinHandle::CreatePinHandle(FName PinName, UGameFlowNode* PinOwner, EEdGraphPinDirection PinDirection)
+{
+	const FString NodeName = PinOwner->GetName();
+	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
+	UPinHandle* NewPinHandle = NewObject<UPinHandle>(PinOwner, FullPinName);
+	NewPinHandle->PinDirection = PinDirection;
+	NewPinHandle->bIsOutput = PinDirection == EGPD_Output;
+	NewPinHandle->PinName = PinName;
+	NewPinHandle->PinOwner = PinOwner;
+	return NewPinHandle;
+}
+
+void UPinHandle::CreateConnection(UPinHandle* OtherPinHandle)
 {
 	if(CanCreateConnection(OtherPinHandle))
 	{
-		const FName PinFullName = GetFullPinName();
-		const FName OtherPinFullName = OtherPinHandle.GetFullPinName();
+		const FName PinFullName = GetFName();
+		const FName OtherPinFullName = OtherPinHandle->GetFName();
 		
-		Connections.Add(OtherPinFullName, {OtherPinHandle.PinName, OtherPinHandle.PinOwner});
-		OtherPinHandle.Connections.Add(PinFullName, {PinName, PinOwner});
-
-		PinOwner->UpdatePinHandle(*this);
-		OtherPinHandle.PinOwner->UpdatePinHandle(OtherPinHandle);
+		// Register editor connection info.
+		Connections.Add(OtherPinFullName, OtherPinHandle);
+		OtherPinHandle->Connections.Add(PinFullName, this);
 	}
 }
 
-void FPinHandle::CutConnection(FPinHandle& OtherPinHandle)
+void UPinHandle::CutConnection(UPinHandle* OtherPinHandle)
 {
-	Connections.Remove(OtherPinHandle.GetFullPinName());
-	OtherPinHandle.Connections.Remove(GetFullPinName());
+	const FName PinFullName = OtherPinHandle->GetFName();
+
+	// Cut connection between these two nodes.
+	Connections.Remove(PinFullName);
+	OtherPinHandle->Connections.Remove(PinFullName);
 }
 
-void FPinHandle::CutAllConnections()
+void UPinHandle::CutAllConnections()
 {
 	for(const auto& Pair : Connections)
 	{
-		const FPinConnectionInfo& ConnectionInfo = Pair.Value;
-		// The opposite direction of this pin.
-		const EEdGraphPinDirection Direction = this->PinDirection == EGPD_Input? EGPD_Output : EGPD_Input;
-		FPinHandle ConnectedPin = ConnectionInfo.DestinationObject->GetPinByName(ConnectionInfo.DestinationPinName, Direction);
-		
+		UPinHandle* OtherPinHandle = Pair.Value;
         // After having found the connected pin, cut the connection.
-		CutConnection(ConnectedPin);
-		
-		// Finally we need to update both pins handle.
-		PinOwner->UpdatePinHandle(*this);
-		ConnectionInfo.DestinationObject->UpdatePinHandle(ConnectedPin);
+		CutConnection(OtherPinHandle);
 	}
 }
 
-void FPinHandle::UpdateConnection(FPinConnectionInfo& ConnectionInfo)
-{
-	const EEdGraphPinDirection ConnectedPinDirection = PinDirection == EGPD_Input? EGPD_Output : EGPD_Input;
-	FPinHandle ConnectedPinHandle = ConnectionInfo.DestinationObject->GetPinByName(ConnectionInfo.DestinationPinName, ConnectedPinDirection);
-	// If this and the connected handle are valid then update the connection.
-	if(IsValidHandle() && ConnectedPinHandle.IsValidHandle())
-	{
-		const FName FullPinName = GetFullPinName();
-		// Update the actual connection.
-		Connections[ConnectedPinHandle.GetFullPinName()] = ConnectionInfo;
-		FPinConnectionInfo ConnectedPinInfo = ConnectedPinHandle.Connections[FullPinName];
-
-		// Update opposite direction connection properties.
-        ConnectedPinInfo.HighlightElapsedTime = ConnectionInfo.HighlightElapsedTime;
-		ConnectedPinInfo.PreviousTime = ConnectionInfo.PreviousTime;
-		// Update opposite connection.
-		ConnectedPinHandle.Connections[FullPinName] = ConnectedPinInfo;
-		
-		// Propagate changes to pin handles(this and connected one).
-		PinOwner->UpdatePinHandle(*this);
-		ConnectionInfo.DestinationObject->UpdatePinHandle(ConnectedPinHandle);
-	}
-}
-
-bool FPinHandle::IsValidHandle() const
+bool UPinHandle::IsValidHandle() const
 {
 	return IsValidPinName() && PinOwner != nullptr;
 }
 
-bool FPinHandle::IsValidPinName() const
+bool UPinHandle::IsValidPinName() const
 {
 	// A valid pin name should not be 'None' or whitespaces only.
 	return !PinName.IsNone() && PinName.IsValid()
 		   && !PinName.ToString().IsEmpty();
 }
 
-bool FPinHandle::CanCreateConnection(const FPinHandle& OtherPinHandle) const
+bool UPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 {
-	const bool bValidHandles = IsValidHandle() && OtherPinHandle.IsValidHandle();
+	const bool bValidHandles = IsValidHandle() && OtherPinHandle->IsValidHandle();
 	// Do not allow a connection between two pins on the same node.
-	const bool bRecursiveConnection = PinOwner == OtherPinHandle.PinOwner;
+	const bool bRecursiveConnection = PinOwner == OtherPinHandle->PinOwner;
 	// True if the two handles do not have the same direction(e.g. Input pins can only connect to output pins and vice-versa).
-	const bool bHaveDifferentDirections = PinDirection != OtherPinHandle.PinDirection;
+	const bool bHaveDifferentDirections = PinDirection != OtherPinHandle->PinDirection;
 	return bValidHandles && !bRecursiveConnection && bHaveDifferentDirections;
-}
-
-FName FPinHandle::GetFullPinName() const
-{
-	if(IsValidHandle())
-	{
-		const FString NodeName = PinOwner->GetName();
-		return FName(NodeName + "." + PinName.ToString());
-	}
-	return EName::None;
 }
 
 #endif

@@ -31,3 +31,11 @@ void UGameFlowNode_Debug_Log::Execute_Implementation(const FName PinName)
 
 	FinishExecute(true);
 }
+
+void UGameFlowNode_Debug_Log::OnFinishExecute_Implementation()
+{
+	Super::OnFinishExecute_Implementation();
+
+	// Execute default output pin.
+	TriggerOutputPin("Out");
+}

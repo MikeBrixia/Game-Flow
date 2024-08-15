@@ -24,6 +24,7 @@ public:
 
 private:
 	void InitializeCppScriptTemplates();
+	void ForwardEditorSettingsToRuntimeSettings();
 	void RemoveCppScriptTemplates();
 	
 	FORCEINLINE FString GetScriptTemplatesPath() const { return FPaths::ProjectPluginsDir() / "GameFlow/Config/ScriptTemplates/"; }

@@ -32,4 +32,5 @@ public:
 	UGameFlowNode_Debug_Log();
 	
 	virtual void Execute_Implementation(const FName PinName) override;
+	virtual void OnFinishExecute_Implementation() override;
 };

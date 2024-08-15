@@ -27,6 +27,9 @@ public:
 	/* The color of the execution pin. */
 	UPROPERTY(Config, EditAnywhere, Category="Nodes|Style", meta=(EditCondition="bEditNodesStyles"))
 	FLinearColor ExecPinColor;
+    
+	UPROPERTY(Config, EditAnywhere, Category="Nodes|Debug")
+	double WireHighlightDuration = 2.f;
 	
 	FORCEINLINE static UGameFlowEditorSettings* Get()
 	{

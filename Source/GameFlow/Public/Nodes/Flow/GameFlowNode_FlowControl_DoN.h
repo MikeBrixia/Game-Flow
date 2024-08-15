@@ -23,7 +23,7 @@ public:
 	UGameFlowNode_FlowControl_DoN();
 	
 	virtual void Execute_Implementation(const FName PinName) override;
-
+    virtual void OnFinishExecute_Implementation() override;
 private:
 	/** The number of times the output pin has been executed. */
 	uint32 Count;
