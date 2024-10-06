@@ -1,13 +1,13 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
-#include "GameFlow.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
+#include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
 {
-	TypeName = "Event";
+	TypeName = "Default";
 	bIsActive = false;
 }
 
@@ -35,7 +35,7 @@ void UGameFlowNode::FinishExecute(bool bFinish)
 
 void UGameFlowNode::TriggerOutputPin(FName PinName)
 {
-	UPinHandle* OutputPinHandle = Outputs.FindRef(PinName);
+	UOutPinHandle* OutputPinHandle = Outputs.FindRef(PinName);
 	OutputPinHandle->TriggerPin();
 }
 
@@ -86,7 +86,7 @@ void UGameFlowNode::AddInputPin(FName PinName)
 {
 	if(!PinName.IsNone() && PinName.IsValid())
 	{
-		UPinHandle* NewInputPinHandle = UPinHandle::CreatePinHandle(PinName, this, EGPD_Input);
+		UInputPinHandle* NewInputPinHandle = CreateExecInputPin(PinName);
 		Inputs.Add(PinName, NewInputPinHandle);
 	}
 }
@@ -100,7 +100,7 @@ void UGameFlowNode::AddOutputPin(FName PinName)
 {
 	if(!PinName.IsNone() && PinName.IsValid())
 	{
-		UPinHandle* NewOutputPinHandle = UPinHandle::CreatePinHandle(PinName, this, EGPD_Output);
+		UOutPinHandle* NewOutputPinHandle = CreateExecOutputPin(PinName);
 		Outputs.Add(PinName, NewOutputPinHandle);
 	}
 }
@@ -145,36 +145,21 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 	{
 		const FName PinName = PropertyChangedEvent.GetPropertyName();
 		TMap<FName, UPinHandle*> Pins;
-		TArray<FName> PinsNames;
-		EEdGraphPinDirection PinDirection = EGPD_MAX;
-		
-		if(PinName.IsEqual("Inputs"))
-		{
-			PinsNames = GetInputPinsNames();
-			Pins = Inputs;
-			PinDirection = EGPD_Input;
-		}
-		else if(PinName.IsEqual("Outputs"))
-		{
-			PinsNames = GetOutputPinsNames();
-			Pins = Outputs;
-			PinDirection = EGPD_Output;
-		}
 		
 		switch(PropertyChangedEvent.ChangeType)
 		{
+			
 		default: break;
 
 			// Handle details panel input/output pins addition.
 		case EPropertyChangeType::ArrayAdd:
 			{
-				const int KeyIndex = PropertyChangedEvent.GetArrayIndex(PinName.ToString());
-				const FName Name = PinsNames[KeyIndex];
-				UPinHandle* Handle = Pins[Name];
-				// Initialize pin handle properties
-				Handle->PinName = Name;
-				Handle->PinDirection = PinDirection;
-				break;
+				if(PinName.IsEqual("Inputs"))
+				{
+				}
+				else if(PinName.IsEqual("Outputs"))
+				{
+				}
 			}
 
 			// Handle pins renames in details panel.
@@ -196,6 +181,37 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 			}
 		}
 	}
+}
+
+UOutPinHandle* UGameFlowNode::CreateExecOutputPin(FName PinName)
+{
+	const FString NodeName = GetName();
+	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
+	
+	UOutPinHandle* NewOutPin = CreateDefaultSubobject<UOutPinHandle>(FullPinName);
+	NewOutPin->PinName = PinName;
+	NewOutPin->PinOwner = this;
+    
+	return NewOutPin;
+}
+
+UInputPinHandle* UGameFlowNode::CreateExecInputPin(FName PinName)
+{
+	const FString NodeName = GetName();
+	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
+	
+	UInputPinHandle* NewInputPin = CreateDefaultSubobject<UInputPinHandle>(FullPinName);
+	NewInputPin->PinName = PinName;
+	NewInputPin->PinOwner = this;
+
+	return NewInputPin;
+}
+
+FName UGameFlowNode::GeneratePinName(FName PinName) const
+{
+	const FString NodeName = GetName();
+	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
+	return FullPinName;
 }
 
 #endif

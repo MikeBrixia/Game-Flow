@@ -3,13 +3,14 @@
 
 #include "CoreMinimal.h"
 #include "PinHandle.h"
+#include "Pins/InputPinHandle.h"
+#include "Pins/OutPinHandles.h"
 #include "GameFlowNode.generated.h"
 
 #if WITH_EDITOR
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type, FString);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnBeforeExecute, FName)
 
 #endif
 
@@ -24,6 +25,8 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	friend class FGameFlowConnectionDrawingPolicy;
 	friend class UGameFlowAsset;
 	friend class UPinHandle;
+	friend class UExecPinHandle;
+	friend class UOutPinHandle;
 	
 	GENERATED_BODY()
 
@@ -35,10 +38,6 @@ public:
 	 * ID is shared between instances of a game flow assets. */
 	UPROPERTY(VisibleAnywhere)
 	FGuid GUID;
-	
-	/** All the node input pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
-	TMap<FName, UPinHandle*> Inputs;
 	
 	/** The last tracked position of the node inside the graph. */
 	UPROPERTY()
@@ -64,37 +63,42 @@ public:
 	
 	/** Use this delegate to notify error events on this node to all listeners. */
 	FOnAssetErrorEvent OnErrorEvent;
-
-	/** Called right before the asset will begin it's execution. */
-	FOnBeforeExecute OnBeforeExecute;
+	
 protected:
-	/** True if this node should have a variable amount of input pins */
+	/** True if this node should have a variable amount of input pins. */
     UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
     bool bCanAddInputPin;
 
-	/** True if this node should have a variable amount of input pins */
+	/** True if this node should have a variable amount of input pins. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
 #endif
 
 public:
+
+	/** All the node input pins. */
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
-	TMap<FName, UPinHandle*> Outputs;
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();
+
+	void TryExecute(FName PinName);
+	
+protected:
 	
 	/** Execute this node */
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void Execute(const FName PinName = "Exec");
 	FORCEINLINE virtual void Execute_Implementation(const FName PinName) {}
 	
-protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void OnFinishExecute();
 	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
-	
+
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
 	 * @param bFinish If true, this node will be the only output and node will be unloaded.
@@ -106,7 +110,6 @@ protected:
 	FORCEINLINE void TriggerOutputPin(FName PinName);
 	
 private:
-	void TryExecute(FName PinName);
 	
 // Editor-only functionality used by external editors to manipulate this node.
 #if WITH_EDITOR
@@ -114,6 +117,7 @@ private:
 public:
 	FORCEINLINE void AddInputPin(FName PinName);
 	void RemoveInputPin(FName PinName);
+	
 	FORCEINLINE void AddOutputPin(FName PinName);
     void RemoveOutputPin(FName PinName);
 	
@@ -132,16 +136,25 @@ public:
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
+private:
+    UOutPinHandle* CreateExecOutputPin(FName PinName);
+    UInputPinHandle* CreateExecInputPin(FName PinName);
+    
+    FName GeneratePinName(FName PinName) const;
 #endif
 	
 // Editor-only functionality used to define and communicate node look to the Game Flow editor.
 #if WITH_EDITOR
+
+public:
+	
 	/** Returns a list of all types of nodes defined inside Project Setting at Plugins/GameFlow. */
 	UFUNCTION(CallInEditor)
 	TArray<FName> GetNodeTypeOptions() const;
-
+    
 	/** Defines the tint and icon path for the node. */
 	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
+
 #endif
 };
 
