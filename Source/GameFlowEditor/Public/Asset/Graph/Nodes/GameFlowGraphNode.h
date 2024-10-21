@@ -33,15 +33,16 @@ public:
 
 	/** True if the asset inside this is being executed, false otherwise. */
 	bool bIsActive = false;
-
-	/** Stores debug info needed by drawing policy and graph debugger. */
-	TMap<FName, TPair<double, double>> PinsDebugInfo;
 	
 private:
 	/** The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY()
 	TObjectPtr<UGameFlowNode> NodeAsset;
 
+	/** All the tracked instances of the inspected node asset. */
+	UPROPERTY()
+	TArray<UGameFlowNode*> NodeAssetInstances;
+	
 	/** Node asset info red from global GameFlow plugin settings. */
 	UPROPERTY()
 	FGameFlowNodeInfo Info;
@@ -69,6 +70,9 @@ public:
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
+
+	UFUNCTION()
+	void OnNodeAssetExecuted();
 	
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
@@ -87,7 +91,6 @@ public:
 	virtual void OnRenameNode(const FString& NewName) override;
 	virtual void ReconstructNode() override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
-	virtual void OnNodeAssetExecuted();
 	
 	bool IsActiveNode() const;
 	bool IsRoot() const;

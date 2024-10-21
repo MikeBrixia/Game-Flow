@@ -1,8 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/Pins/OutPinHandles.h"
-
-#include "GameFlow.h"
 #include "Config/GameFlowSettings.h"
 #include "Nodes/Pins/InputPinHandle.h"
 
@@ -27,6 +25,5 @@ void UOutPinHandle::TriggerPin()
 bool UOutPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 {
 	const bool bIsExecPin = OtherPinHandle->IsA(UInputPinHandle::StaticClass());
-	UE_LOG(LogGameFlow, Display, TEXT("%d"), bIsExecPin && Super::CanCreateConnection(OtherPinHandle))
 	return bIsExecPin && Super::CanCreateConnection(OtherPinHandle);
 }

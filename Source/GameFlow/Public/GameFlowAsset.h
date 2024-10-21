@@ -37,6 +37,10 @@ public:
 	UPROPERTY()
 	bool bHasAlreadyBeenOpened;
 	
+	/** The source asset from which this node was duplicated. nullptr if this node is the source asset. */
+	UPROPERTY()
+	TObjectPtr<UGameFlowAsset> TemplateAsset;
+	
 private:
 	/* The nodes currently being executed. */
 	UPROPERTY(BlueprintGetter="GetActiveNodes")
@@ -85,7 +89,7 @@ public:
 	/**
 	 * Create an instance from this game flow asset.
 	 */
-    UGameFlowAsset* CreateInstance(UObject* Context) const;
+    UGameFlowAsset* CreateInstance(UObject* Context);
 
 protected:
 	
@@ -116,8 +120,6 @@ public:
 	 * @remarks Editor-only.
 	 */
 	UGameFlowNode* GetNodeByGUID(FGuid GUID) const;
-	
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 #endif
 };

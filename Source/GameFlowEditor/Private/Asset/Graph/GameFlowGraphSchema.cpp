@@ -300,15 +300,12 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 			
 			// If pin is not valid skip to next iteration, it cannot be processed.
 			if(!OutputPinHandle->IsValidHandle()) continue;
-
-			UE_LOG(LogGameFlow, Display, TEXT("Process output pin"))
 			
 			for(const auto& Pin : OutputPinHandle->GetConnections())
 			{
 				const UGameFlowNode* ConnectedNode = Pin->PinOwner;
 				const FName& ConnectedPinName = Pin->PinName;
-
-				UE_LOG(LogGameFlow, Display, TEXT("Check connection"))
+				
 				// If next node is invalid or input pin name is None, skip this iteration.
 				if(ConnectedNode == nullptr || ConnectedPinName.IsEqual(EName::None)) continue;
 				
@@ -318,9 +315,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 				
 				UEdGraphPin* FromPin = CurrentNode->FindPin(OutPinName);
 				UEdGraphPin* DestinationPin = GraphNode->FindPin(ConnectedPinName);
-
-				UE_LOG(LogGameFlow, Display, TEXT("Reconnect '%s' to '%s'"),
-					*OutPinName.ToString(), *ConnectedPinName.ToString())
+				
 				// After finding the current node output pin and the next node input pin,
 				// create a connection between the two.
 				TryCreateConnection(FromPin, DestinationPin);
@@ -342,10 +337,8 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode,
                                                    const TArray<EEdGraphPinDirection> Directions) const
 {
-	UE_LOG(LogGameFlow, Display, TEXT("%d"), GraphNode->Pins.Num())
 	for (UEdGraphPin* Pin : GraphNode->Pins)
 	{
-		UE_LOG(LogGameFlow, Display, TEXT("Process pin"))
 		if (!Directions.Contains(Pin->Direction)) continue;
 
 		const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
@@ -355,12 +348,10 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		if(Pin->Direction == EGPD_Output)
 		{
 			PinHandle = NodeAsset->Outputs.FindRef(Pin->PinName);
-			UE_LOG(LogGameFlow, Display, TEXT("Output"))
 		}
 		else
 		{
 			PinHandle = NodeAsset->Inputs.FindRef(Pin->PinName);
-			UE_LOG(LogGameFlow, Display, TEXT("Input"))
 		}
 		
 		// If pin is not valid skip to next iteration, it cannot be processed.

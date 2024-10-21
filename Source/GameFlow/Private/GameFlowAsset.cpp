@@ -50,12 +50,13 @@ void UGameFlowAsset::TerminateExecution()
 	}
 }
 
-UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context) const
+UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context)
 {
 	UGameFlowAsset* Instance = nullptr;
 	if(Context != nullptr && IsAsset())
 	{
 		Instance = DuplicateObject(this, Context);
+		Instance->TemplateAsset = this;
 	}
 	
 	return Instance;
@@ -91,11 +92,6 @@ TArray<UGameFlowNode*> UGameFlowAsset::GetNodes() const
 UGameFlowNode* UGameFlowAsset::GetNodeByGUID(FGuid GUID) const
 {
 	return GUID.IsValid()? Nodes.FindChecked(GUID) : nullptr;
-}
-
-void UGameFlowAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	UObject::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 #endif

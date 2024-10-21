@@ -25,7 +25,7 @@ void UGameFlowNode_FlowControl_Subgraph::PostEditChangeProperty(FPropertyChanged
 	{
 		FStreamableManager StreamableManager;
 		// Load asset from soft reference.
-		const UGameFlowAsset* LoadedAsset = StreamableManager.LoadSynchronous(Asset);
+		UGameFlowAsset* LoadedAsset = StreamableManager.LoadSynchronous(Asset);
 		
 		// Loaded asset should be of a different class.
 		if(CanInstanceAssetFromSource(LoadedAsset))

@@ -3,12 +3,14 @@
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
+#include "LevelEditor.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Slate/Private/Framework/Docking/SDockingArea.h"
 #include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
@@ -105,9 +107,10 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 	// Get node asset info from config.
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 
-	// Listen to game flow assets events.
+	// Listen to game flow asset events.
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
 	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
+	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
 	
 	// Listen to Unreal Editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
@@ -457,6 +460,26 @@ bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
 void UGameFlowGraphNode::OnNodeAssetExecuted()
 {
 	bIsActive = true;
+	if(NodeAsset->bBreakpointEnabled && GEditor != nullptr)
+	{
+		GEditor->SetPIEWorldsPaused(true);
+		
+		// Ottieni il modulo del Level Editor
+	    FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+     
+		// Ottieni il TabManager dell'Editor
+		TSharedPtr<FTabManager> TabManager = LevelEditorModule.GetLevelEditorTabManager();
+		
+		for (const auto&  Entry: TabManager->GetPrivateApi().GetLiveDockAreas())
+		{
+			for(const auto& Tab : Entry.Pin().Get()->GetAllSidebarTabs())
+			{
+				UE_LOG(LogGameFlow, Log, TEXT("Tab registrato: %s"), *Tab->GetTabLabel().ToString());
+			}
+		}
+        
+		TabManager->TryInvokeTab(NodeAsset->GetTypedOuter<UGameFlowAsset>()->GetFName());
+	}
 }
 
 bool UGameFlowGraphNode::IsActiveNode() const

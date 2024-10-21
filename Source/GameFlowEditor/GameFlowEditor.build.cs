@@ -49,7 +49,7 @@ public class GameFlowEditor : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", 
+				"SlateCore",
 				"EditorScriptingUtilities",
 				"UMG",
 				"UMGEditor",

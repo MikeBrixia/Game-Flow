@@ -180,7 +180,8 @@ void GameFlowAssetToolkit::CreateGraph()
 
 	// Listen for game flow graph events.
 	Graph->OnGraphNodesSelected.BindRaw(this, &GameFlowAssetToolkit::DisplaySelectedNodes);
-    
+    Graph->EditorToolkit = this;
+	
 	// Create UI widget from logical graph.
 	GraphWidget = SNew(SGameFlowGraph, SharedThis(this))
 				   .GraphToEdit(Graph);

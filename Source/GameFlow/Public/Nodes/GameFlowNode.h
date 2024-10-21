@@ -11,6 +11,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type, FString);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAssetExecuted);
 
 #endif
 
@@ -63,6 +64,10 @@ public:
 	
 	/** Use this delegate to notify error events on this node to all listeners. */
 	FOnAssetErrorEvent OnErrorEvent;
+
+	/** Use this delegate to notify the editor that the asset is being executed*/
+	UPROPERTY()
+	FOnAssetExecuted OnAssetExecuted;
 	
 protected:
 	/** True if this node should have a variable amount of input pins. */

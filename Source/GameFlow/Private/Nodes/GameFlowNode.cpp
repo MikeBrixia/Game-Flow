@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
+#include "GameFlow.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Nodes/Pins/OutPinHandles.h"
@@ -17,6 +18,11 @@ void UGameFlowNode::TryExecute(FName PinName)
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
 	// Mark this node as active.
 	OwnerAsset->AddActiveNode(this);
+    if(OwnerAsset->TemplateAsset != nullptr)
+    {
+    	UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
+    	TemplateNode->OnAssetExecuted.Broadcast();
+    }
 #endif
 	Execute(PinName);
 }

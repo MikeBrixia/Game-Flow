@@ -1,6 +1,6 @@
 ﻿
 #include "Nodes/PinHandle.h"
-
+#include "Editor.h"
 #include "GameFlow.h"
 #include "Config/GameFlowSettings.h"
 #include "Nodes/GameFlowNode.h"
@@ -52,9 +52,6 @@ void UPinHandle::CreateConnection(UPinHandle* OtherPinHandle)
 {
 	if(CanCreateConnection(OtherPinHandle))
 	{
-		UE_LOG(LogGameFlow, Display, TEXT("Connect %s to %s"),
-			*PinName.ToString(), *OtherPinHandle->PinName.ToString())
-		
 		// Create a two way connection between the nodes.
 		AddConnection(OtherPinHandle);
 		OtherPinHandle->AddConnection(this);

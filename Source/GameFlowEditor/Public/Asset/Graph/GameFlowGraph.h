@@ -36,6 +36,9 @@ public:
 
 	/** Game Flow graph debugger instance shared by all graphs. */
 	TSharedPtr<FGameFlowGraphDebugger> Debugger;
+
+	/** The editor toolkit in which this graph is displayed. */
+	TObjectPtr<GameFlowAssetToolkit> EditorToolkit;
 	
 	UGameFlowGraph();
 	
