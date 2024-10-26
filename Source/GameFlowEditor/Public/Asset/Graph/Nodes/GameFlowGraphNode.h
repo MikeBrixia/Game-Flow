@@ -25,6 +25,7 @@ class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 public:
 	/** Called when the node asset encapsulated inside this graph node gets changed. */
 	FOnNodeAssetChanged OnNodeAssetChanged;
+	
 	/** Callback for when this node has finished being validated. */
 	FOnValidationEnd OnValidationResult;
 

@@ -4,13 +4,13 @@
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "LevelEditor.h"
+#include "Asset/GameFlowAssetToolkit.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Slate/Private/Framework/Docking/SDockingArea.h"
 #include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
@@ -464,21 +464,12 @@ void UGameFlowGraphNode::OnNodeAssetExecuted()
 	{
 		GEditor->SetPIEWorldsPaused(true);
 		
-		// Ottieni il modulo del Level Editor
 	    FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-     
-		// Ottieni il TabManager dell'Editor
 		TSharedPtr<FTabManager> TabManager = LevelEditorModule.GetLevelEditorTabManager();
 		
-		for (const auto&  Entry: TabManager->GetPrivateApi().GetLiveDockAreas())
-		{
-			for(const auto& Tab : Entry.Pin().Get()->GetAllSidebarTabs())
-			{
-				UE_LOG(LogGameFlow, Log, TEXT("Tab registrato: %s"), *Tab->GetTabLabel().ToString());
-			}
-		}
-        
-		TabManager->TryInvokeTab(NodeAsset->GetTypedOuter<UGameFlowAsset>()->GetFName());
+        UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+		TSharedPtr<FTabManager> EditorTabManager = GameFlowGraph->EditorToolkit->GetTabManager();
+		EditorTabManager->FindExistingLiveTab(FName("Flow Graph"))->DrawAttention();
 	}
 }
 
