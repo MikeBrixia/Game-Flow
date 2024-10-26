@@ -37,10 +37,13 @@ protected:
 	virtual void CreateGraph();
 	virtual void CreateAssetMenu();
 	virtual void CreateAssetToolbar();
-    
+    virtual void OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin);
+	
 	// --------------------- EDITOR ACTIONS ----------------------------------------------------------
 	
 	TSharedPtr<FUICommandList> CommandList;
+
+	/** Called when the user or the editor requests a save event. */
 	FOnAssetSaved OnAssetSavedCallback;
 	
 	virtual void SaveAsset_Execute() override;

@@ -31,7 +31,6 @@ public class GameFlow : ModuleRules
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
-			
 		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
@@ -41,6 +40,8 @@ public class GameFlow : ModuleRules
 				"Slate",
 				"SlateCore",
 				"DeveloperSettings",
+				"AssetManagerEditor",
+				"AssetTools"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

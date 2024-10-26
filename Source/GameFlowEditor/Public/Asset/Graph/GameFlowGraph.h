@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Debug/FGameFlowGraphDebugger.h"
 #include "GameFlowAsset.h"
 #include "Nodes/GameFlowGraphNode.h"
 #include "GameFlowGraph.generated.h"
@@ -11,6 +10,7 @@
 class GameFlowAssetToolkit;
 
 DECLARE_DELEGATE_OneParam(FOnGraphNodesSelected, TSet<UGameFlowGraphNode*>)
+DECLARE_DELEGATE_TwoParams(FOnBreakpointHit, UGameFlowGraphNode*, UEdGraphPin*)
 
 /**
  * Class representing a Game Flow graph.
@@ -34,8 +34,8 @@ public:
 	/** Called when graph nodes gets selected*/
 	FOnGraphNodesSelected OnGraphNodesSelected;
 
-	/** Game Flow graph debugger instance shared by all graphs. */
-	TSharedPtr<FGameFlowGraphDebugger> Debugger;
+	/** Called when an active breakpoint gets hit by execution flow. */
+	FOnBreakpointHit OnBreakpointHitRequest;
 
 	/** The editor toolkit in which this graph is displayed. */
 	TObjectPtr<GameFlowAssetToolkit> EditorToolkit;
@@ -85,6 +85,7 @@ public:
 	void OnSaveGraph();
 	void OnValidateGraph();
 	void OnReplaceGraphNode();
+    void OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin);
 
 #if WITH_HOT_RELOAD
 	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);

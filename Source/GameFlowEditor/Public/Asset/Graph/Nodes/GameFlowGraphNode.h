@@ -73,7 +73,7 @@ public:
 	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
 
 	UFUNCTION()
-	void OnNodeAssetExecuted();
+	void OnNodeAssetExecuted(UInputPinHandle* InputPinHandle);
 	
 	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;

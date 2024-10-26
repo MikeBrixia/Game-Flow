@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
-#include "GameFlow.h"
+#include "AssetViewUtils.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Nodes/Pins/OutPinHandles.h"
@@ -18,10 +18,20 @@ void UGameFlowNode::TryExecute(FName PinName)
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
 	// Mark this node as active.
 	OwnerAsset->AddActiveNode(this);
+
+	// If we've hit a breakpoint, try opening the asset editor if it is closed.
+	if(bBreakpointEnabled)
+	{
+		AssetViewUtils::OpenEditorForAsset(OwnerAsset->TemplateAsset);
+	}
+	
     if(OwnerAsset->TemplateAsset != nullptr)
     {
-    	UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
-    	TemplateNode->OnAssetExecuted.Broadcast();
+    	const UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
+    	if(TemplateNode!= nullptr && TemplateNode->OnAssetExecuted.IsBound())
+    	{
+    		TemplateNode->OnAssetExecuted.Broadcast(Inputs.FindRef(PinName));
+    	}
     }
 #endif
 	Execute(PinName);

@@ -457,19 +457,20 @@ bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
 	return Super::Modify(bAlwaysMarkDirty);
 }
 
-void UGameFlowGraphNode::OnNodeAssetExecuted()
+void UGameFlowGraphNode::OnNodeAssetExecuted(UInputPinHandle* InputPinHandle)
 {
 	bIsActive = true;
-	if(NodeAsset->bBreakpointEnabled && GEditor != nullptr)
+	
+	if(NodeAsset->bBreakpointEnabled || (InputPinHandle != nullptr && InputPinHandle->bIsBreakpointEnabled))
 	{
+		// Pause the play session when the breakpoint gets hit.
 		GEditor->SetPIEWorldsPaused(true);
-		
-	    FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-		TSharedPtr<FTabManager> TabManager = LevelEditorModule.GetLevelEditorTabManager();
+
+		UEdGraphPin* GraphPin = FindPin(InputPinHandle->PinName);
 		
         UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-		TSharedPtr<FTabManager> EditorTabManager = GameFlowGraph->EditorToolkit->GetTabManager();
-		EditorTabManager->FindExistingLiveTab(FName("Flow Graph"))->DrawAttention();
+		// Notify graph of the breakpoint hit.
+		GameFlowGraph->OnBreakpointHit(this, GraphPin);
 	}
 }
 

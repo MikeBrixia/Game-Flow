@@ -11,7 +11,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetRedirected)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAssetErrorEvent, EMessageSeverity::Type, FString);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAssetExecuted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAssetExecuted, UInputPinHandle*, PinHandle);
 
 #endif
 

@@ -5,9 +5,6 @@
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/GameFlowEditorSettings.h"
-#include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "GraphEditorActions.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Utils/GameFlowFactory.h"
 #include "Widget/SGameFlowGraph.h"
@@ -180,6 +177,7 @@ void GameFlowAssetToolkit::CreateGraph()
 
 	// Listen for game flow graph events.
 	Graph->OnGraphNodesSelected.BindRaw(this, &GameFlowAssetToolkit::DisplaySelectedNodes);
+	Graph->OnBreakpointHitRequest.BindRaw(this, &GameFlowAssetToolkit::OnBreakpointHit);
     Graph->EditorToolkit = this;
 	
 	// Create UI widget from logical graph.
@@ -226,6 +224,26 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 		// contains actions to start the editor game application).
 		FToolMenuSection& PlaySection = AssetToolbar->FindOrAddSection("Play");
 		FPlayWorldCommands::BuildToolbar(PlaySection);
+	}
+}
+
+void GameFlowAssetToolkit::OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin)
+{
+	const TSharedPtr<SDockTab> FlowGraphTab = TabManager->FindExistingLiveTab(GraphTabName);
+	if(FlowGraphTab.IsValid())
+	{
+		// First focus on the flow graph editor tab.
+		FlowGraphTab->DrawAttention();
+		// Then if pin was the source of the breakpoint hit, jump to it
+		if(GraphPin != nullptr)
+		{
+			GraphWidget->JumpToPin(GraphPin);
+		}
+		// Otherwise jump to the node
+		else
+		{
+			GraphWidget->JumpToNode(GraphNode);
+		}
 	}
 }
 
