@@ -11,7 +11,7 @@ FGameFlowGraphNodeCommands::FGameFlowGraphNodeCommands(): TCommands("GameFlowGra
 
 void FGameFlowGraphNodeCommands::RegisterCommands()
 {
-	// Default node commands
+	// Node Commands.
 	{
 		FUICommandInfo::MakeCommandInfo(SharedThis(this), ReplaceNode, "ReplaceNode",
 									LOCTEXT("ReplaceNodeCommand", "Replace"),
@@ -29,7 +29,7 @@ void FGameFlowGraphNodeCommands::RegisterCommands()
 										FSlateIcon(GetStyleSetName(), "GameFlow.Editor.Common.Adjust"), EUserInterfaceActionType::Button, FInputChord());
 	}
     
-	// Debug commands
+	// Debug commands.
 	{
 		FUICommandInfo::MakeCommandInfo(SharedThis(this), AddBreakpoint, "Add breakpoint",
 									 LOCTEXT("AddBreakpointCommand", "Add breakpoint"),
@@ -50,6 +50,14 @@ void FGameFlowGraphNodeCommands::RegisterCommands()
 										LOCTEXT("DisableBreakpointCommand", "Disable Breakpoint"),
 										LOCTEXT("DisableBreakpointCommandDescription", "Remove a debug breakpoint on this node"),
 										FSlateIcon(GetStyleSetName(), "GameFlow.Editor.Debug.Icon.DisabledBreakpoint"), EUserInterfaceActionType::Button, FInputChord());
+	}
+
+	// Utils.
+	{
+		FUICommandInfo::MakeCommandInfo(SharedThis(this), AddComment, "Add Comment",
+										LOCTEXT("AddCommentCommand", "Add Comment"),
+										LOCTEXT("AddCommandDescription", "Add comment bubble on top of the node"),
+										FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
 	}
 }
 

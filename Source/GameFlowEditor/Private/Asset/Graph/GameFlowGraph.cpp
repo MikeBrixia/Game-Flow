@@ -127,6 +127,15 @@ void UGameFlowGraph::OnValidateGraph()
 	GraphSchema->ValidateAsset(*this);
 }
 
+void UGameFlowGraph::OnDebugModeUpdated(bool bEnabled)
+{
+	const TArray<UGameFlowGraphNode*> GameFlowNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
+	for(UGameFlowGraphNode* Node : GameFlowNodes)
+	{
+		Node->SetDebugEnabled(bEnabled);
+	}
+}
+
 #if WITH_HOT_RELOAD
 
 void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)

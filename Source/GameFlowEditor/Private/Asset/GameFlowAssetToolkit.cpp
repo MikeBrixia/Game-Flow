@@ -161,11 +161,16 @@ TSharedRef<SWidget> GameFlowAssetToolkit::CreatePIEDebugToolbarSection()
 
 void GameFlowAssetToolkit::ConfigureInputs()
 {
-	// Get all Game Flow editor commands.
 	const FGameFlowEditorCommands& GameFlowCommands = FGameFlowEditorCommands::Get();
-
+	
+	// Game Flow commands.
 	ToolkitCommands->MapAction(GameFlowCommands.ValidateAsset,
 		FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::OnValidateRequest));
+	ToolkitCommands->MapAction(GameFlowCommands.DebugAsset,
+		FExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::OnDebugRequest),
+		FCanExecuteAction::CreateRaw(this, &GameFlowAssetToolkit::CanEnableDebug),
+		FIsActionChecked::CreateRaw(this, &GameFlowAssetToolkit::IsDebugEnabled));
+	
 	// Engine's Play commands.
 	ToolkitCommands->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
 }
@@ -269,7 +274,19 @@ void GameFlowAssetToolkit::OnValidateRequest()
 
 void GameFlowAssetToolkit::OnDebugRequest()
 {
-	// TODO implement debug mode.
+	bDebugEnabled = !bDebugEnabled;
+	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GraphWidget->GetCurrentGraph());
+	Graph->OnDebugModeUpdated(bDebugEnabled);
+}
+
+bool GameFlowAssetToolkit::IsDebugEnabled() const
+{
+	return bDebugEnabled;
+}
+
+bool GameFlowAssetToolkit::CanEnableDebug() const
+{
+	return true;
 }
 
 void GameFlowAssetToolkit::OnPostPIEStarted(bool bStarted)

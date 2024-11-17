@@ -10,6 +10,7 @@ UGameFlowNode::UGameFlowNode()
 {
 	TypeName = "Default";
 	bIsActive = false;
+	bForceDebugView = false;
 }
 
 void UGameFlowNode::TryExecute(FName PinName)
@@ -204,7 +205,7 @@ UOutPinHandle* UGameFlowNode::CreateExecOutputPin(FName PinName)
 	const FString NodeName = GetName();
 	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
 	
-	UOutPinHandle* NewOutPin = CreateDefaultSubobject<UOutPinHandle>(FullPinName);
+	UOutPinHandle* NewOutPin = NewObject<UOutPinHandle>(this, FullPinName);
 	NewOutPin->PinName = PinName;
 	NewOutPin->PinOwner = this;
     
@@ -216,7 +217,7 @@ UInputPinHandle* UGameFlowNode::CreateExecInputPin(FName PinName)
 	const FString NodeName = GetName();
 	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
 	
-	UInputPinHandle* NewInputPin = CreateDefaultSubobject<UInputPinHandle>(FullPinName);
+	UInputPinHandle* NewInputPin = NewObject<UInputPinHandle>(this, FullPinName);
 	NewInputPin->PinName = PinName;
 	NewInputPin->PinOwner = this;
 

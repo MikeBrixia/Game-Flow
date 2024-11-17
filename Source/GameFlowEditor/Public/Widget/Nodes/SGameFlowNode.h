@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SCommentBubble.h"
 #include "SGraphNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "KismetPins/SGraphPinExec.h"
@@ -28,7 +29,7 @@ public:
 protected:
 	/* The text displayed inside the node titlebar. */
 	FText TitleText;
-
+	
 private:
     /* The class which will be used as a replacement for the current one. */
 	UClass* NodeReplacementClass = nullptr;
@@ -38,6 +39,7 @@ public:
 	void Construct(const FArguments& InArgs);
 
 	virtual bool IsNodeEditable() const override { return true; }
+	
 protected:
 	/* The widget which represents the node title area. */
 	TSharedPtr<SBorder> TitleAreaWidget;
@@ -52,6 +54,9 @@ protected:
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+	virtual FString GetNodeComment() const override;
+	
+	virtual void GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const override;
 	
 	/**
 	 * @brief Called when an input pin gets created using the InputSideAddButton

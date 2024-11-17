@@ -18,4 +18,7 @@ public:
 	TSharedPtr<FUICommandInfo> EnableBreakpoint;
 	TSharedPtr<FUICommandInfo> RemoveBreakpoint;
 	TSharedPtr<FUICommandInfo> DisableBreakpoint;
+
+	// Utils
+	TSharedPtr<FUICommandInfo> AddComment;
 };

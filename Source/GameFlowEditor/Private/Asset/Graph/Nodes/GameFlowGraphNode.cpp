@@ -81,12 +81,51 @@ FText UGameFlowGraphNode::GetTooltipText() const
 	return NodeAsset->GetClass()->GetToolTipText();
 }
 
+void UGameFlowGraphNode::OnCommentTextCommitted(const FText& NewText, const ETextCommit::Type CommitType)
+{
+	OnUpdateCommentText(NewText.ToString());
+}
+
 FSlateIcon UGameFlowGraphNode::GetIconAndTint(FLinearColor& OutColor) const
 {
 	FString StyleKey;
 	NodeAsset->GetNodeIconInfo(StyleKey, OutColor);
 	const FSlateIcon NodeIcon { FGameFlowEditorStyle::TypeName,FName(StyleKey) };
 	return NodeIcon;
+}
+
+void UGameFlowGraphNode::SetDebugEnabled(bool bEnabled)
+{
+	bDebugEnabled = bEnabled;
+}
+
+bool UGameFlowGraphNode::IsDebugEnabled() const
+{
+	return bDebugEnabled || NodeAsset->bForceDebugView;
+}
+
+FText UGameFlowGraphNode::GetDebugInfo() const
+{
+	FString DebugInfoStatus;
+	
+	for (TFieldIterator<FProperty> PropIt(NodeAsset->GetClass()); PropIt; ++PropIt)
+	{
+		const FProperty* Property = *PropIt;
+		if(Property->HasMetaData("GF_Debuggable") && Property->GetMetaData("GF_Debuggable") == "enabled")
+		{
+			FString CPP_PropertyName = *Property->GetNameCPP();
+			FString PropertyType = Property->GetCPPType();
+			FString PropertyValue;
+			
+			const void* ValuePtr = Property->ContainerPtrToValuePtr<void>(NodeAsset);
+			Property->ExportTextItem_Direct(PropertyValue, ValuePtr, nullptr, nullptr, 0);
+			
+			FString PropertyInfoStatus = FString::Printf(TEXT("%s %s: %s \n"),*PropertyType, *CPP_PropertyName, *PropertyValue); 
+			DebugInfoStatus.Append(PropertyInfoStatus);
+		}
+	}
+
+	return FText::FromString(DebugInfoStatus);
 }
 
 FGameFlowNodeInfo& UGameFlowGraphNode::GetNodeInfo()
@@ -102,6 +141,8 @@ UGameFlowNode* UGameFlowGraphNode::GetNodeAsset() const
 void UGameFlowGraphNode::PostPlacedNewNode()
 {
 	Super::PostPlacedNewNode();
+
+	NodeComment = NodeAsset->SavedNodeComment;
 	
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
 	// Get node asset info from config.
@@ -310,7 +351,6 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	Super::GetNodeContextMenuActions(Menu, Context);
 	
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
-	
 	// When only the node is selected, show available context actions.
 	if(Context->Pin != nullptr)
 	{
@@ -326,7 +366,7 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	}
 	else if(Context->Node != nullptr)
 	{
-		// Generic node actions.
+		// Node actions.
 		{
 			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
@@ -334,13 +374,30 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveNode, ContextMenuCommands);
 		}
 
-		// Debug actions
+		// Debug actions.
 		{
 			FToolMenuSection& DebugSection = Menu->AddSection("DebugSection", NSLOCTEXT("FGameFlowNode", "NodeDebugContextAction", "Debug"));
 			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.AddBreakpoint, ContextMenuCommands);
 			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveBreakpoint, ContextMenuCommands);
 			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.EnableBreakpoint, ContextMenuCommands);
 			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.DisableBreakpoint, ContextMenuCommands);
+		}
+		
+		// Utils.
+		{
+			FToolMenuSection& UtilsSection = Menu->AddSection("UtilsSection", NSLOCTEXT("FGameFlowNode", "NodeUtilsContextAction", "Utils"));
+
+			/*
+			// Node comment text box
+			UtilsSection.AddEntry(FToolMenuEntry::InitWidget(
+				"Comment Text",
+				SNew(SEditableTextBox)
+				.Text(FText::FromString(TEXT("")))
+				.OnTextCommitted_Lambda(FOnTextCommitted::CreateUObject(this, &UGameFlowGraphNode::OnCommentTextCommitted)),
+				FText::FromString(""),
+				true
+			));
+			*/
 		}
 	} 
 }
@@ -467,7 +524,6 @@ void UGameFlowGraphNode::OnNodeAssetExecuted(UInputPinHandle* InputPinHandle)
 		GEditor->SetPIEWorldsPaused(true);
 
 		UEdGraphPin* GraphPin = FindPin(InputPinHandle->PinName);
-		
         UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
 		// Notify graph of the breakpoint hit.
 		GameFlowGraph->OnBreakpointHit(this, GraphPin);

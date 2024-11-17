@@ -54,6 +54,9 @@ private:
 	/** True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
 
+	/** True if debug was enabled for this node. */
+	bool bDebugEnabled = false;
+	
 public:
 	UGameFlowGraphNode();
 	
@@ -71,7 +74,7 @@ public:
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
-
+	
 	UFUNCTION()
 	void OnNodeAssetExecuted(UInputPinHandle* InputPinHandle);
 	
@@ -85,7 +88,12 @@ public:
 	FGameFlowNodeInfo& GetNodeInfo();
 	void SetNodeInfo(FGameFlowNodeInfo NewInfo);
 	virtual FText GetTooltipText() const override;
+	void OnCommentTextCommitted(const FText& NewText, const ETextCommit::Type CommitType);
 	virtual FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
+	
+	void SetDebugEnabled(bool bEnabled);
+	bool IsDebugEnabled() const;
+    FText GetDebugInfo() const;
 	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;

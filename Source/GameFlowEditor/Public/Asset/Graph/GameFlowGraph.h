@@ -84,6 +84,7 @@ public:
 	
 	void OnSaveGraph();
 	void OnValidateGraph();
+	void OnDebugModeUpdated(bool bEnabled);
 	void OnReplaceGraphNode();
     void OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin);
 

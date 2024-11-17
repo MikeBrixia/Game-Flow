@@ -39,11 +39,19 @@ public:
 	 * ID is shared between instances of a game flow assets. */
 	UPROPERTY(VisibleAnywhere)
 	FGuid GUID;
+
+	/** If set to true, this node will be debugged independently of the editor debug mode. */
+	UPROPERTY(EditAnywhere, Category="Config")
+	bool bForceDebugView;
 	
 	/** The last tracked position of the node inside the graph. */
 	UPROPERTY()
 	FVector2D GraphPosition;
 
+	/** Store developer comment about this node. */
+	UPROPERTY()
+	FString SavedNodeComment;
+	
 	/** The type of this node(Latent, Event ecc.) */
 	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"))
 	FName TypeName;

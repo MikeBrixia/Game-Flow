@@ -17,7 +17,8 @@ private:
 
 	/* Asset inspected by this editor. */
 	TObjectPtr<UGameFlowAsset> Asset;
-
+	
+	bool bDebugEnabled = false;
 public:
 	TSharedPtr<IDetailsView> NodesDetailsView;
 	TSharedPtr<SGameFlowGraph> GraphWidget;
@@ -48,14 +49,17 @@ protected:
 	
 	virtual void SaveAsset_Execute() override;
     void OnValidateRequest();
-	void OnDebugRequest();
 	void OnPostPIEStarted(bool bStarted);
 	void OnPIEFinish(bool bFinished);
 	void OnPIEDebuggedInstanceInvalidated(UGameFlowAsset* DebuggedInstance);
     void SelectPIEAssetInstance(UGameFlowAsset* AssetInstance);
 	void UnselectPIEWorld();
 	void UnselectPIEAssetInstance();
-   
+
+	void OnDebugRequest();
+	bool IsDebugEnabled() const;
+	bool CanEnableDebug() const;
+	
 public:
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;

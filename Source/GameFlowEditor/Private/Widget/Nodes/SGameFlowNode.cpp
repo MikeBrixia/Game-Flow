@@ -141,6 +141,26 @@ void SGameFlowNode::AddButton_CreatePin(EEdGraphPinDirection PinDirection)
 	CreateStandardPinWidget(NewPin);
 }
 
+FString SGameFlowNode::GetNodeComment() const
+{
+	return GraphNode->NodeComment;
+}
+
+void SGameFlowNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const
+{
+	SGraphNode::GetNodeInfoPopups(Context, Popups);
+	
+	const UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
+	const FText DebugInfo = GameFlowGraphNode->GetDebugInfo();
+
+	// Display debug popup only if there are properties marked for display and debug is enabled.
+	if(!DebugInfo.IsEmpty() && GameFlowGraphNode->IsDebugEnabled())
+	{
+		const FGraphInformationPopupInfo DebugPopup = FGraphInformationPopupInfo(nullptr, FLinearColor::Gray, DebugInfo.ToString());
+		Popups.Add(DebugPopup);
+	}
+}
+
 void SGameFlowNode::UpdateErrorInfo()
 {
 	SGraphNode::UpdateErrorInfo();
