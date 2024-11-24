@@ -156,7 +156,7 @@ void SGameFlowNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphIn
 	// Display debug popup only if there are properties marked for display and debug is enabled.
 	if(!DebugInfo.IsEmpty() && GameFlowGraphNode->IsDebugEnabled())
 	{
-		const FGraphInformationPopupInfo DebugPopup = FGraphInformationPopupInfo(nullptr, FLinearColor::Gray, DebugInfo.ToString());
+		const FGraphInformationPopupInfo DebugPopup = FGraphInformationPopupInfo(nullptr, FColor::Orange, DebugInfo.ToString());
 		Popups.Add(DebugPopup);
 	}
 }

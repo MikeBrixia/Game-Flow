@@ -88,9 +88,12 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 								  CoreStyleConstants::Icon16x16));
 			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Latent", new IMAGE_BRUSH(TEXT("Graph/LatentIcon"),
 								  CoreStyleConstants::Icon16x16));
-			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Conditional.Subgraph", new IMAGE_BRUSH(TEXT("Graph/Icons/Subgraph"),
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Debug", new IMAGE_BRUSH_SVG(TEXT("Starship/Common/Bug"),
 								  CoreStyleConstants::Icon16x16));
 			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Conditional", new IMAGE_BRUSH(TEXT("Icons/icon_Blueprint_Sequence_16x"),
+								  CoreStyleConstants::Icon16x16));
+			
+			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Conditional.Subgraph", new IMAGE_BRUSH(TEXT("Graph/Icons/Subgraph"),
 								  CoreStyleConstants::Icon16x16));
 			StyleSet->Set("GameFlow.Editor.Default.Nodes.Icons.Event.Notify", new IMAGE_BRUSH(TEXT("Graph/MessageIcon"),
 								  CoreStyleConstants::Icon16x16));

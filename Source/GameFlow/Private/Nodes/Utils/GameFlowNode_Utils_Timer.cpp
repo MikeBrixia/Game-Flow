@@ -2,8 +2,6 @@
 
 #include "Nodes/Utils/GameFlowNode_Utils_Timer.h"
 
-#include "GameFlow.h"
-
 UGameFlowNode_Utils_Timer::UGameFlowNode_Utils_Timer()
 {
 	TypeName = "Latent";
@@ -12,7 +10,6 @@ UGameFlowNode_Utils_Timer::UGameFlowNode_Utils_Timer()
 	StepTime = 0.f;
 	
 	bLoop = false;
-	bStepLoop = false;
 	
 	AddInputPin("Start");
 	AddInputPin("Stop");
@@ -31,11 +28,12 @@ void UGameFlowNode_Utils_Timer::Execute_Implementation(const FName PinName)
 	
 	if(PinName.IsEqual("Start"))
 	{
+		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Purple, "Try Start timer");
 		StartTimer();
 	}
 	else if(PinName.IsEqual("Stop"))
 	{
-		PauseTimer();
+		StopTimer();
 	}
 	else if(PinName.IsEqual("Skip"))
 	{
@@ -49,13 +47,21 @@ void UGameFlowNode_Utils_Timer::Execute_Implementation(const FName PinName)
 
 void UGameFlowNode_Utils_Timer::StartTimer()
 {
+	GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Purple, FString::SanitizeFloat(GetWorld()->DeltaTimeSeconds));
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	
 	TimerManager.SetTimer(CompletionTimerHandle, [=]()
-			{
-		        const float DeltaTime = GetWorld()->DeltaTimeSeconds;
-		        TimerUpdate(DeltaTime);
-			},GetWorld()->DeltaTimeSeconds, true);
+	{
+		TriggerOutputPin("Completed");
+	},Time, true);
+
+	if(StepTime > 0.f)
+	{
+		TimerManager.SetTimer(StepTimerHandle, [=]()
+		{
+			TriggerOutputPin("Step");
+		}, StepTime, true);
+	}
 }
 
 void UGameFlowNode_Utils_Timer::SkipTimer()
@@ -63,58 +69,54 @@ void UGameFlowNode_Utils_Timer::SkipTimer()
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	
 	TimerManager.ClearTimer(CompletionTimerHandle);
-	TriggerOutputPin("Skip");
+	TimerManager.ClearTimer(StepTimerHandle);
+	TriggerOutputPin("Skipped");
 }
 
 void UGameFlowNode_Utils_Timer::ResumeTimer()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-
+	
 	if(TimerManager.IsTimerPaused(CompletionTimerHandle))
 	{
 		TimerManager.UnPauseTimer(CompletionTimerHandle);
 	}
+
+	if(TimerManager.IsTimerPaused(StepTimerHandle))
+	{
+		TimerManager.UnPauseTimer(StepTimerHandle);
+	}
+
+	TriggerOutputPin("Stopped");
 }
 
-void UGameFlowNode_Utils_Timer::PauseTimer()
+void UGameFlowNode_Utils_Timer::StopTimer()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	if(TimerManager.IsTimerActive(CompletionTimerHandle))
 	{
 		TimerManager.PauseTimer(CompletionTimerHandle);
 	}
-	
+
+	if(TimerManager.IsTimerActive(StepTimerHandle))
+	{
+		TimerManager.PauseTimer(StepTimerHandle);
+	}
 }
 
-void UGameFlowNode_Utils_Timer::TimerUpdate(float DeltaTime)
+#if WITH_EDITOR
+
+#include "Editor.h"
+
+FString UGameFlowNode_Utils_Timer::GetCustomDebugInfo() const
 {
-	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-
-	GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Purple, "Timer update");
-	if(CurrentTime >= Time)
+	const UWorld* World =  GetWorld();
+	if(World != nullptr && CompletionTimerHandle.IsValid())
 	{
-		if(bLoop)
-		{
-			CurrentTime = 0.f;
-		}
-		else
-		{
-			TimerManager.ClearTimer(CompletionTimerHandle);
-		}
-		TriggerOutputPin("Completed");
+		const FTimerManager& TimerManager = World->GetTimerManager();
+		return FString::Printf(TEXT("Elapsed time: %f \n"), TimerManager.GetTimerElapsed(CompletionTimerHandle));
 	}
-
-	if(StepCurrentTime >= StepTime && bCanStep)
-	{
-		if(bStepLoop)
-		{
-			StepCurrentTime = 0.f;
-		}
-       
-		bCanStep = bStepLoop;
-		TriggerOutputPin("Step");
-	}
-	
-	CurrentTime += DeltaTime;
-	StepCurrentTime += DeltaTime;
+	return "";
 }
+
+#endif

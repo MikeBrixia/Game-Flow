@@ -94,6 +94,7 @@ public:
 	void SetDebugEnabled(bool bEnabled);
 	bool IsDebugEnabled() const;
     FText GetDebugInfo() const;
+	UGameFlowNode* GetInspectedNodeInstance() const;
 	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;

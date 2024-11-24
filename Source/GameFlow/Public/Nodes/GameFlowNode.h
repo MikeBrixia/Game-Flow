@@ -137,6 +137,7 @@ public:
 	UPinHandle* GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<FName> GetInputPinsNames() const;
 	TArray<FName> GetOutputPinsNames() const;
+	
 	bool CanAddInputPin() const;
 	bool CanAddOutputPin() const;
 
@@ -145,6 +146,13 @@ public:
 	 * @returns True if node is currently running, false otherwise.
 	 */
 	bool IsActiveNode() const;
+
+	/** Returns a list of all types of nodes defined inside Project Setting at Plugins/GameFlow. */
+	UFUNCTION(CallInEditor)
+	TArray<FName> GetNodeTypeOptions() const;
+    
+	/** Defines the tint and icon path for the node. */
+	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
 	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -154,20 +162,11 @@ private:
     UInputPinHandle* CreateExecInputPin(FName PinName);
     
     FName GeneratePinName(FName PinName) const;
-#endif
-	
-// Editor-only functionality used to define and communicate node look to the Game Flow editor.
-#if WITH_EDITOR
 
-public:
-	
-	/** Returns a list of all types of nodes defined inside Project Setting at Plugins/GameFlow. */
-	UFUNCTION(CallInEditor)
-	TArray<FName> GetNodeTypeOptions() const;
-    
-	/** Defines the tint and icon path for the node. */
-	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
-
+	/** Return user-specified debug info. Use this when you want to debug
+	 * properties which are not stored as UPROPERTY on the node or to add more
+	 * complex debug behaviors. */
+    virtual FString GetCustomDebugInfo() const;
 #endif
 };
 

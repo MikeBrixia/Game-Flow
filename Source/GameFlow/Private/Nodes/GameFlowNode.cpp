@@ -231,4 +231,9 @@ FName UGameFlowNode::GeneratePinName(FName PinName) const
 	return FullPinName;
 }
 
+FString UGameFlowNode::GetCustomDebugInfo() const
+{
+	return "";
+}
+
 #endif

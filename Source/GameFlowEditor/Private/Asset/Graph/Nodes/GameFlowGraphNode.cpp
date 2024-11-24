@@ -3,8 +3,6 @@
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
-#include "LevelEditor.h"
-#include "Asset/GameFlowAssetToolkit.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
@@ -107,8 +105,12 @@ bool UGameFlowGraphNode::IsDebugEnabled() const
 FText UGameFlowGraphNode::GetDebugInfo() const
 {
 	FString DebugInfoStatus;
+
+	UGameFlowNode* InspectedNode = GetInspectedNodeInstance();
+	if(InspectedNode == nullptr) return FText::FromString(DebugInfoStatus);
 	
-	for (TFieldIterator<FProperty> PropIt(NodeAsset->GetClass()); PropIt; ++PropIt)
+	// Automated UPROPERTY debug info generation.
+	for (TFieldIterator<FProperty> PropIt(InspectedNode->GetClass()); PropIt; ++PropIt)
 	{
 		const FProperty* Property = *PropIt;
 		if(Property->HasMetaData("GF_Debuggable") && Property->GetMetaData("GF_Debuggable") == "enabled")
@@ -117,14 +119,18 @@ FText UGameFlowGraphNode::GetDebugInfo() const
 			FString PropertyType = Property->GetCPPType();
 			FString PropertyValue;
 			
-			const void* ValuePtr = Property->ContainerPtrToValuePtr<void>(NodeAsset);
+			const void* ValuePtr = Property->ContainerPtrToValuePtr<void>(InspectedNode);
 			Property->ExportTextItem_Direct(PropertyValue, ValuePtr, nullptr, nullptr, 0);
 			
 			FString PropertyInfoStatus = FString::Printf(TEXT("%s %s: %s \n"),*PropertyType, *CPP_PropertyName, *PropertyValue); 
 			DebugInfoStatus.Append(PropertyInfoStatus);
 		}
 	}
-
+	
+	// String used to display more advanced debug messages.
+	FString CustomDebugString = InspectedNode->GetCustomDebugInfo();
+	DebugInfoStatus.Append(CustomDebugString);
+	
 	return FText::FromString(DebugInfoStatus);
 }
 
@@ -570,6 +576,16 @@ void UGameFlowGraphNode::ReportError(EMessageSeverity::Type MessageSeverity, FSt
 			MessageSeverity == EMessageSeverity::PerformanceWarning;
 	ErrorType = MessageSeverity;
 	ErrorMsg = ErrorMessage;
+}
+
+UGameFlowNode* UGameFlowGraphNode::GetInspectedNodeInstance() const
+{
+	const UGameFlowAsset* DebuggedAssetInstance = CastChecked<UGameFlowGraph>(GetGraph())->DebuggedAssetInstance;
+	if(DebuggedAssetInstance != nullptr)
+	{
+		return DebuggedAssetInstance->GetNodeByGUID(NodeAsset->GUID);
+	}
+	return nullptr;
 }
 
 void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)

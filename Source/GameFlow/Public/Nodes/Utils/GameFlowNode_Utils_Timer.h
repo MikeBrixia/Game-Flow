@@ -20,41 +20,33 @@ public:
 	UGameFlowNode_Utils_Timer();
 
 	/** Amount of time needed to complete the timer. */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta=(GF_Debuggable="enabled"))
 	float Time;
 
 	/** Trigger step event each step time interval. */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta=(GF_Debuggable="enabled"))
 	float StepTime;
 
 	/** If true, this node will restart itself after completion. */
 	UPROPERTY(EditAnywhere)
 	bool bLoop;
 
-	/** If true, step will be called each time timer wills exceed step time */
-	UPROPERTY(EditAnywhere)
-	bool bStepLoop;
-	
 private:
-
-	UPROPERTY(Transient, meta=(GF_Debuggable="enabled"))
-	float CurrentTime;
-
-	UPROPERTY(Transient, meta=(GF_Debuggable="enabled"))
-	float StepCurrentTime;
-
-	UPROPERTY(Transient, meta=(GF_Debuggable="enabled"))
-	bool bCanStep;
 	
 	/** Handle for the currently playing timer. */
 	FTimerHandle CompletionTimerHandle;
+	
+	/** Handle for step time*/
+	FTimerHandle StepTimerHandle;
 	
 	virtual void Execute_Implementation(const FName PinName) override;
 
 	void StartTimer();
 	void SkipTimer();
 	void ResumeTimer();
-	void PauseTimer();
+	void StopTimer();
 
-	void TimerUpdate(float DeltaTime);
+#if WITH_EDITOR
+    virtual FString GetCustomDebugInfo() const override;
+#endif
 };
