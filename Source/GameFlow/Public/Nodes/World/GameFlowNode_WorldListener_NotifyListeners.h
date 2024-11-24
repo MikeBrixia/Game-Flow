@@ -17,10 +17,10 @@ class GAMEFLOW_API UGameFlowNode_WorldListener_NotifyListeners final : public UG
 
 public:
 
-	UPROPERTY(EditAnywhere, Category="Notify Listeners")
+	UPROPERTY(EditAnywhere, Category="Notify Listeners", meta=(GF_Debuggable="enabled"))
 	FGameplayTagContainer IdentityTags;
 
-	UPROPERTY(EditAnywhere, Category="Notify Listeners")
+	UPROPERTY(EditAnywhere, Category="Notify Listeners", meta=(GF_Debuggable="enabled"))
 	EGameplayContainerMatchType MatchingStrategy;
 	
 	UGameFlowNode_WorldListener_NotifyListeners();

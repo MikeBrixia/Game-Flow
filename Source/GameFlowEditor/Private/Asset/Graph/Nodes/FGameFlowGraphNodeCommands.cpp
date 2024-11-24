@@ -13,6 +13,16 @@ void FGameFlowGraphNodeCommands::RegisterCommands()
 {
 	// Node Commands.
 	{
+		FUICommandInfo::MakeCommandInfo(SharedThis(this), CopyNode, "CopyNode",
+									LOCTEXT("CopyNodeCommand", "Copy"),
+									LOCTEXT("CopyNodeCommandDescription", "Copy this node"),
+									FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
+
+		FUICommandInfo::MakeCommandInfo(SharedThis(this), PasteNode, "PasteNode",
+									LOCTEXT("PasteNodeCommand", "Paste"),
+									LOCTEXT("PasteNodeCommandDescription", "Paste node inside the graph"),
+									FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
+		
 		FUICommandInfo::MakeCommandInfo(SharedThis(this), ReplaceNode, "ReplaceNode",
 									LOCTEXT("ReplaceNodeCommand", "Replace"),
 									LOCTEXT("ReplaceNodeCommandDescription", "Replace this node with another game flow node"),

@@ -19,7 +19,7 @@ UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
 		AddInputPin(PortName);
 	}
 	bCanAddInputPin = true;
-	TruePortsNum = 0;
+	ActiveInputs = 0;
 	
 	AddOutputPin("Out");
 }
@@ -41,10 +41,10 @@ void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName PinNa
 		{
 			// Update node conditional ports state.
 			ConditionalPorts[PinIndex] = true;
-			TruePortsNum++;
+			ActiveInputs++;
 		}
 		
-		if(TruePortsNum == ConditionalPorts.Num())
+		if(ActiveInputs == ConditionalPorts.Num())
 		{
 			Reset();
 			TriggerOutputPin("Out");
@@ -64,7 +64,7 @@ void UGameFlowNode_LogicalOperator_AND::OnFinishExecute_Implementation()
 void UGameFlowNode_LogicalOperator_AND::Reset()
 {
 	// Reset node state after execution is ended. 
-	TruePortsNum = 0;
+	ActiveInputs = 0;
 	for (int i = 0; i < ConditionalPorts.Num(); i++)
 	{
 		ConditionalPorts[i] = false;

@@ -20,7 +20,7 @@ class GAMEFLOW_API UGameFlowNode_FlowControl_Subgraph : public UGameFlowNode
 public:
 
 	/** Reference to the asset you want to instance. */
-	UPROPERTY(EditAnywhere, Category="Game Flow|Subgraph")
+	UPROPERTY(EditAnywhere, Category="Game Flow|Subgraph", meta=(GF_Debuggable="enabled"))
 	TSoftObjectPtr<UGameFlowAsset> Asset;
 
 	UGameFlowNode_FlowControl_Subgraph();

@@ -17,7 +17,7 @@ class GAMEFLOW_API UGameFlowNode_Debug_Log final : public UGameFlowNode
 
 public:
 
-	UPROPERTY(EditAnywhere, Category="Log")
+	UPROPERTY(EditAnywhere, Category="Log", meta=(GF_Debuggable="enabled"))
 	FString DebugMessage;
 	
 	UPROPERTY(EditAnywhere, Category="Console")

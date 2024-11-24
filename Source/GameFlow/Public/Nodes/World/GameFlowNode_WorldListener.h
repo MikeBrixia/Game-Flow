@@ -19,23 +19,23 @@ class GAMEFLOW_API UGameFlowNode_WorldListener : public UGameFlowNode
 
 public:
 	/** The tags which identifies this node listener. */
-	UPROPERTY(EditAnywhere, Category="World Listener")
+	UPROPERTY(EditAnywhere, Category="World Listener", meta=(GF_Debuggable="enabled"))
 	FGameplayTagContainer IdentityTags;
 
 	/** The tags of component listeners we want to listen to. */
-	UPROPERTY(EditAnywhere, Category="World Listener")
+	UPROPERTY(EditAnywhere, Category="World Listener", meta=(GF_Debuggable="enabled"))
 	FGameplayTagContainer ListenerTags;
 	
 	/** Matching strategy for this node tags. */
-	UPROPERTY(EditAnywhere, Category="World Listener")
+	UPROPERTY(EditAnywhere, Category="World Listener", meta=(GF_Debuggable="enabled"))
 	EGameplayContainerMatchType MatchingStrategy;
 
 	/** The maximum number of times an event can be triggered. if 0 it means indefinite. */
-	UPROPERTY(EditAnywhere, Category="World Listener")
+	UPROPERTY(EditAnywhere, Category="World Listener", meta=(GF_Debuggable="enabled"))
 	uint32 Limit;
 
-	/** How many events has this node triggered? */
-	UPROPERTY(VisibleAnywhere, Category="World Listener")
+	/** How many events has this node been triggered? */
+	UPROPERTY(VisibleAnywhere, Category="World Listener", meta=(GF_Debuggable="enabled"))
 	uint32 Count;
 	
 	UGameFlowNode_WorldListener();

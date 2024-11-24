@@ -28,7 +28,6 @@ void UGameFlowNode_Utils_Timer::Execute_Implementation(const FName PinName)
 	
 	if(PinName.IsEqual("Start"))
 	{
-		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Purple, "Try Start timer");
 		StartTimer();
 	}
 	else if(PinName.IsEqual("Stop"))
@@ -105,8 +104,6 @@ void UGameFlowNode_Utils_Timer::StopTimer()
 }
 
 #if WITH_EDITOR
-
-#include "Editor.h"
 
 FString UGameFlowNode_Utils_Timer::GetCustomDebugInfo() const
 {

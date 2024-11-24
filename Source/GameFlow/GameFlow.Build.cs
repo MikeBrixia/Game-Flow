@@ -32,15 +32,6 @@ public class GameFlow : ModuleRules
 			}
 			);
 		
-		if (Target.Type == TargetType.Editor)
-		{
-			PublicDependencyModuleNames.AddRange(new[]
-			{
-				"MessageLog",
-				"UnrealEd"
-			});
-		}
-		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{

@@ -17,7 +17,7 @@ class GAMEFLOW_API UGameFlowNode_FlowControl_DoN final : public UGameFlowNode
 
 public:
 	/** The number of times this node output pin can be executed before needing to be reset. */
-	UPROPERTY(EditAnywhere, Category="Do N")
+	UPROPERTY(EditAnywhere, Category="Do N", meta=(GF_Debuggable="enabled"))
 	uint32 N;
 	
 	UGameFlowNode_FlowControl_DoN();
@@ -25,6 +25,8 @@ public:
 	virtual void Execute_Implementation(const FName PinName) override;
     virtual void OnFinishExecute_Implementation() override;
 private:
+	
 	/** The number of times the output pin has been executed. */
+	UPROPERTY(meta=(GF_Debuggable="enabled"))
 	uint32 Count;
 };

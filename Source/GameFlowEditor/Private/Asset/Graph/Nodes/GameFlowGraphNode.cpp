@@ -3,6 +3,7 @@
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
+#include "GraphEditorActions.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
@@ -22,9 +23,16 @@ UGameFlowGraphNode::UGameFlowGraphNode()
 void UGameFlowGraphNode::ConfigureContextMenuAction()
 {
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
-    
+	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
+	
 	// Configure core commands
 	{
+		ContextMenuCommands->MapAction(GraphNodeCommands.CopyNode,
+			                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::PrepareForCopying));
+		
+		ContextMenuCommands->MapAction(GraphNodeCommands.PasteNode,
+									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::PostPasteNode));
+		
 		ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
 								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnReplacementRequest),
 								   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanBeReplaced),
@@ -43,25 +51,25 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 
 	// Configure debug commands
 	{
-		ContextMenuCommands->MapAction(GraphNodeCommands.AddBreakpoint,
+		ContextMenuCommands->MapAction(GraphEditorCommands.AddBreakpoint,
 								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnAddBreakpointRequest),
 								   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanAddBreakpoint),
 								   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanAddBreakpoint),
 								   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanAddBreakpoint));
 	
-		ContextMenuCommands->MapAction(GraphNodeCommands.RemoveBreakpoint,
+		ContextMenuCommands->MapAction(GraphEditorCommands.RemoveBreakpoint,
 									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnRemoveBreakpointRequest),
 									   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanRemoveBreakpoint),
 									   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanRemoveBreakpoint),
 									   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanRemoveBreakpoint));
 		
-		ContextMenuCommands->MapAction(GraphNodeCommands.EnableBreakpoint,
+		ContextMenuCommands->MapAction(GraphEditorCommands.EnableBreakpoint,
 									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnEnableBreakpointRequest),
 									   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanEnableBreakpoint),
 									   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanEnableBreakpoint),
 									   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanEnableBreakpoint));
 
-		ContextMenuCommands->MapAction(GraphNodeCommands.DisableBreakpoint,
+		ContextMenuCommands->MapAction(GraphEditorCommands.DisableBreakpoint,
 									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnDisableBreakpointRequest),
 									   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanDisableBreakpoint),
 									   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanDisableBreakpoint),
@@ -166,6 +174,22 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 	// Initialize node.
 	AllocateDefaultPins();
 	ConfigureContextMenuAction();
+}
+
+bool UGameFlowGraphNode::CanDuplicateNode() const
+{
+	return !(GEditor->IsPlayingSessionInEditor() || GEditor->IsPlayingWithOnlinePIE()
+	       || GEditor->IsSimulatingInEditor() || GEditor->IsPlayingViaLauncher());
+}
+
+void UGameFlowGraphNode::PostPasteNode()
+{
+	Super::PostPasteNode();
+}
+
+void UGameFlowGraphNode::PrepareForCopying()
+{
+	Super::PrepareForCopying();
 }
 
 void UGameFlowGraphNode::OnReplacementRequest()

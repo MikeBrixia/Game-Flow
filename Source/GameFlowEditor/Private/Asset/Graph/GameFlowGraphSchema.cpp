@@ -242,7 +242,6 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 		UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
 		GraphNode->ReportError(EMessageSeverity::Warning, "Node should be replaced with new version if available");
 	}
-	
 }
 
 bool UGameFlowGraphSchema::CanCreateGraphNodeForClass(UClass* Class) const

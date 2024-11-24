@@ -9,6 +9,8 @@ public:
 	virtual void RegisterCommands() override;
 
 	// Node commands.
+	TSharedPtr<FUICommandInfo> CopyNode;
+	TSharedPtr<FUICommandInfo> PasteNode;
 	TSharedPtr<FUICommandInfo> ReplaceNode;
 	TSharedPtr<FUICommandInfo> ValidateNode;
     TSharedPtr<FUICommandInfo> RemoveNode;

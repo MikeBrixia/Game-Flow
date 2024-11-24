@@ -21,8 +21,8 @@ private:
 	TArray<bool> ConditionalPorts;
 
 	/** The number of ports which are currently evaluated to true. */
-	UPROPERTY()
-	int TruePortsNum;
+	UPROPERTY(meta=(GF_Debuggable="enabled"))
+	int ActiveInputs;
 
 public:
 	UGameFlowNode_LogicalOperator_AND();

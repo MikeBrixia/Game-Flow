@@ -30,7 +30,7 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 	
 public:
 	/** All nodes assets instanced by the user.*/
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY()
 	TMap<FGuid, UGameFlowNode*> Nodes;
 	
 	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
@@ -54,11 +54,11 @@ public:
 	bool bShouldBeSingleton;
 	
 	/** All the user-defined entry points of the asset. */
-	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
+	UPROPERTY()
 	TMap<FName, UGameFlowNode_Input*> CustomInputs;
 	
 	/** All the user-defined exit points of the asset. */
-	UPROPERTY(EditDefaultsOnly, EditFixedSize, Category="Game Flow")
+	UPROPERTY()
 	TMap<FName, UGameFlowNode_Output*> CustomOutputs;
 	
 	/** Called when this asset finishes executing. */
