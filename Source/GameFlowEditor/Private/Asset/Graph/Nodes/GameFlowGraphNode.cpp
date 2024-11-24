@@ -10,6 +10,7 @@
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Framework/Commands/GenericCommands.h"
 #include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
 
@@ -24,13 +25,14 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 {
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
 	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
+	const FGenericCommands& GenericCommands = FGenericCommands::Get();
 	
 	// Configure core commands
 	{
-		ContextMenuCommands->MapAction(GraphNodeCommands.CopyNode,
+		ContextMenuCommands->MapAction(GenericCommands.Copy,
 			                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::PrepareForCopying));
 		
-		ContextMenuCommands->MapAction(GraphNodeCommands.PasteNode,
+		ContextMenuCommands->MapAction(GenericCommands.Paste,
 									   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::PostPasteNode));
 		
 		ContextMenuCommands->MapAction(GraphNodeCommands.ReplaceNode,
@@ -39,7 +41,7 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 								   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanBeReplaced),
 								   FIsActionButtonVisible::CreateUObject(this, &UGameFlowGraphNode::CanBeReplaced));
 		
-		ContextMenuCommands->MapAction(GraphNodeCommands.RemoveNode,
+		ContextMenuCommands->MapAction(GenericCommands.Delete,
 								   FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::DestroyNode),
 								   FCanExecuteAction::CreateUObject(this, &UGameFlowGraphNode::CanUserDeleteNode),
 								   FIsActionChecked::CreateUObject(this, &UGameFlowGraphNode::CanUserDeleteNode),
@@ -180,16 +182,6 @@ bool UGameFlowGraphNode::CanDuplicateNode() const
 {
 	return !(GEditor->IsPlayingSessionInEditor() || GEditor->IsPlayingWithOnlinePIE()
 	       || GEditor->IsSimulatingInEditor() || GEditor->IsPlayingViaLauncher());
-}
-
-void UGameFlowGraphNode::PostPasteNode()
-{
-	Super::PostPasteNode();
-}
-
-void UGameFlowGraphNode::PrepareForCopying()
-{
-	Super::PrepareForCopying();
 }
 
 void UGameFlowGraphNode::OnReplacementRequest()
@@ -381,6 +373,9 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	Super::GetNodeContextMenuActions(Menu, Context);
 	
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
+	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
+	const FGenericCommands& GenericCommands = FGenericCommands::Get();
+	
 	// When only the node is selected, show available context actions.
 	if(Context->Pin != nullptr)
 	{
@@ -401,16 +396,18 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
-			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveNode, ContextMenuCommands);
+			GameFlowSection.AddMenuEntryWithCommandList(GenericCommands.Delete, ContextMenuCommands);
+			GameFlowSection.AddMenuEntryWithCommandList(GenericCommands.Copy, ContextMenuCommands);
+			GameFlowSection.AddMenuEntryWithCommandList(GenericCommands.Paste, ContextMenuCommands);
 		}
 
 		// Debug actions.
 		{
 			FToolMenuSection& DebugSection = Menu->AddSection("DebugSection", NSLOCTEXT("FGameFlowNode", "NodeDebugContextAction", "Debug"));
-			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.AddBreakpoint, ContextMenuCommands);
-			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.RemoveBreakpoint, ContextMenuCommands);
-			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.EnableBreakpoint, ContextMenuCommands);
-			DebugSection.AddMenuEntryWithCommandList(GraphNodeCommands.DisableBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphEditorCommands.AddBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphEditorCommands.RemoveBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphEditorCommands.EnableBreakpoint, ContextMenuCommands);
+			DebugSection.AddMenuEntryWithCommandList(GraphEditorCommands.DisableBreakpoint, ContextMenuCommands);
 		}
 		
 		// Utils.

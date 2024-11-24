@@ -56,6 +56,7 @@ public class GameFlowEditor : ModuleRules
 				"UMGEditor",
 				"ToolWidgets",
 				"InputCore",
+				"ApplicationCore"
 				// .. add private dependencies that you statically link with here ...	
 			}
 		);

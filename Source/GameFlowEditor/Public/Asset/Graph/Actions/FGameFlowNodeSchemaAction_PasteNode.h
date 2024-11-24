@@ -3,7 +3,8 @@
 
 struct FGameFlowNodeSchemaAction_PasteNode : public FEdGraphSchemaAction
 {
-
+	TObjectPtr<UGameFlowGraphNode> NodeToPaste;
+	
 	FGameFlowNodeSchemaAction_PasteNode()
 	{
 	}

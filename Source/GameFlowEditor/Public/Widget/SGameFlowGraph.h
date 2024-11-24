@@ -26,10 +26,15 @@ public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<GameFlowAssetToolkit> AssetEditor);
 
 	UGameFlowGraph* GetGameFlowGraph() const;
+	
 protected:
 	virtual void RegisterGraphCommands();
     virtual void OnSelectionChange(const TSet<UObject*>& Selection);
+	
+	virtual void OnCopyNode();
+	virtual void OnPasteNode();
     virtual void OnDeleteNodes();
+	
 	void UndoGraphAction();
 	void RedoGraphAction();
 	
@@ -39,4 +44,5 @@ protected:
 private:
 	TSharedPtr<FUICommandList> CommandList;
 };
+
 

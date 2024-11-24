@@ -1,11 +1,15 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/SGameFlowGraph.h"
+#include "EdGraphUtilities.h"
+#include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
+#include "Asset/Graph/Actions/FGameFlowNodeSchemaAction_PasteNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Framework/Commands/GenericCommands.h"
+#include "Windows/WindowsPlatformApplicationMisc.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -41,7 +45,11 @@ void SGameFlowGraph::RegisterGraphCommands()
 	
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
 	CommandList = MakeShareable(new FUICommandList);
-	
+
+	CommandList->MapAction(GenericCommands.Copy,
+		                   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnCopyNode));
+	CommandList->MapAction(GenericCommands.Paste,
+						   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnPasteNode));
 	CommandList->MapAction(GenericCommands.Delete,
 						   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnDeleteNodes));
 	
@@ -59,6 +67,46 @@ void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 	UEdGraph* Graph = GetCurrentGraph();
 	// Tell logic graph to select the already selected UI nodes.
 	Graph->SelectNodeSet(SelectedNodes, true);
+}
+
+void SGameFlowGraph::OnCopyNode()
+{
+	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
+	// Prepare each node for copying operation.
+	for(UGameFlowGraphNode* GraphNode : SelectedNodes)
+	{
+		GraphNode->PrepareForCopying();
+	}
+
+	const TSet<UObject*> Selection = reinterpret_cast<const TSet<UObject*>&>(GetSelectedNodes());
+	FString ExportedText;
+	// And then copy them to the clipboard.
+	FEdGraphUtilities::ExportNodesToText(Selection, ExportedText);
+	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+}
+
+void SGameFlowGraph::OnPasteNode()
+{
+	FString PastedData;
+	// Read data from the clipboard.
+	FPlatformApplicationMisc::ClipboardPaste(PastedData);
+	
+	TSet<UEdGraphNode*> CopiedNodes;
+	// Import nodes from clipboard text data and paste them.
+	FEdGraphUtilities::ImportNodesFromText(GetCurrentGraph(), PastedData, CopiedNodes);
+	
+	const TSet<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(CopiedNodes);
+	// Pasting process using paste action with undo/redo support.
+	for(UGameFlowGraphNode* GraphNode : GraphNodes)
+	{
+		FVector2D CursorPosition = FSlateApplication::Get().GetCursorPos();
+		CursorPosition = GetGraphPanel()->PanelCoordToGraphCoord(CursorPosition);
+		
+		FGameFlowNodeSchemaAction_PasteNode PasteNodeAction;
+		PasteNodeAction.NodeToPaste = GraphNode;
+		PasteNodeAction.PerformAction(GetCurrentGraph(), nullptr, CursorPosition, true);
+		UE_LOG(LogGameFlow, Display, TEXT("Paste node"))
+	}
 }
 
 void SGameFlowGraph::OnDeleteNodes()

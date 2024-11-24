@@ -93,10 +93,10 @@ public:
 	UGameFlowNode* GetInspectedNodeInstance() const;
 	
 	virtual bool CanDuplicateNode() const override;
-	virtual void PostPlacedNewNode() override;
 	virtual void PostPasteNode() override;
 	virtual void PrepareForCopying() override;
 	
+	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;
 	virtual void OnRenameNode(const FString& NewName) override;
 	virtual void ReconstructNode() override;
