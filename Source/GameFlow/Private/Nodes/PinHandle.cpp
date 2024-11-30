@@ -94,5 +94,26 @@ bool UPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 	return bValidHandles && !bRecursiveConnection;
 }
 
+void UPinHandle::ExportCustomProperties(FOutputDevice& Out, uint32 Indent)
+{
+	UObject::ExportCustomProperties(Out, Indent);
+	Out.Logf(TEXT("PinName=%s"), *PinName.ToString());
+	Out.Logf(TEXT("bIsOutput=%d"), bIsOutput);
+	
+	FString ConnectionsData;
+	for (UPinHandle* ConnectedPin : Connections)
+	{
+		FStringOutputDevice ConnectionsOutDevice;
+		ConnectedPin->ExportCustomProperties(Out, Indent);
+		ConnectionsData += FString::Printf(TEXT("%s,\n"), *ConnectionsOutDevice);
+	}
+	Out.Logf(TEXT("Connections=%s"), *ConnectionsData);
+}
+
+void UPinHandle::ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn)
+{
+	UObject::ImportCustomProperties(SourceText, Warn);
+}
+
 #endif
 

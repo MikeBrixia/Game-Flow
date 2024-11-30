@@ -95,6 +95,8 @@ public:
 	virtual bool CanDuplicateNode() const override;
 	virtual void PostPasteNode() override;
 	virtual void PrepareForCopying() override;
+    virtual void ExportCustomProperties(FOutputDevice& Out, uint32 Indent) override;
+	virtual void ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn) override;
 	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;

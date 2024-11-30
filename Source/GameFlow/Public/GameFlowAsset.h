@@ -30,7 +30,7 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 	
 public:
 	/** All nodes assets instanced by the user.*/
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TMap<FGuid, UGameFlowNode*> Nodes;
 	
 	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */

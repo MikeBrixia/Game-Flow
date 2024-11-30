@@ -69,6 +69,7 @@ void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 	Graph->SelectNodeSet(SelectedNodes, true);
 }
 
+
 void SGameFlowGraph::OnCopyNode()
 {
 	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
@@ -80,6 +81,7 @@ void SGameFlowGraph::OnCopyNode()
 
 	const TSet<UObject*> Selection = reinterpret_cast<const TSet<UObject*>&>(GetSelectedNodes());
 	FString ExportedText;
+	
 	// And then copy them to the clipboard.
 	FEdGraphUtilities::ExportNodesToText(Selection, ExportedText);
 	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
@@ -90,23 +92,29 @@ void SGameFlowGraph::OnPasteNode()
 	FString PastedData;
 	// Read data from the clipboard.
 	FPlatformApplicationMisc::ClipboardPaste(PastedData);
-	
+
+	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GetCurrentGraph());
 	TSet<UEdGraphNode*> CopiedNodes;
 	// Import nodes from clipboard text data and paste them.
-	FEdGraphUtilities::ImportNodesFromText(GetCurrentGraph(), PastedData, CopiedNodes);
+	FEdGraphUtilities::ImportNodesFromText(Graph, PastedData, CopiedNodes);
 	
-	const TSet<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(CopiedNodes);
+	const TSet<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<TSet<UGameFlowGraphNode*>&>(CopiedNodes);
 	// Pasting process using paste action with undo/redo support.
 	for(UGameFlowGraphNode* GraphNode : GraphNodes)
 	{
-		FVector2D CursorPosition = FSlateApplication::Get().GetCursorPos();
-		CursorPosition = GetGraphPanel()->PanelCoordToGraphCoord(CursorPosition);
+		FVector2D PastePosition = GetGraphPanel()->GetPastePosition();
+		GraphNode->NodePosX = PastePosition.X;
+		GraphNode->NodePosY = PastePosition.Y;
+		
+		GraphNode->CreateNewGuid();
 		
 		FGameFlowNodeSchemaAction_PasteNode PasteNodeAction;
 		PasteNodeAction.NodeToPaste = GraphNode;
-		PasteNodeAction.PerformAction(GetCurrentGraph(), nullptr, CursorPosition, true);
-		UE_LOG(LogGameFlow, Display, TEXT("Paste node"))
+		Graph->GameFlowAsset->AddNode(GraphNode->GetNodeAsset());
+		//PasteNodeAction.PerformAction(GetCurrentGraph(), nullptr, PastePosition, true);
 	}
+	
+	NotifyGraphChanged();
 }
 
 void SGameFlowGraph::OnDeleteNodes()
@@ -132,7 +140,7 @@ void SGameFlowGraph::RedoGraphAction()
 FGraphAppearanceInfo SGameFlowGraph::GetGraphAppearanceInfo()
 {
 	FGraphAppearanceInfo GraphAppearanceInfo;
-	GraphAppearanceInfo.CornerText = NSLOCTEXT("GameFlow", "GameFlowGraph", "Game Flow Editor");
+	GraphAppearanceInfo.CornerText = NSLOCTEXT("GameFlow", "GameFlowGraph", "Flow Graph");
 	GraphAppearanceInfo.InstructionText = NSLOCTEXT("GameFlow", "GameFlowGraphInstruction", 
 													"Create a Start node to use it as an entry point for your logic!");
 	return GraphAppearanceInfo;

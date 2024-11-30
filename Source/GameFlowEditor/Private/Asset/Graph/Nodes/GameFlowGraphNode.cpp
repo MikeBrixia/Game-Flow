@@ -184,6 +184,32 @@ bool UGameFlowGraphNode::CanDuplicateNode() const
 	       || GEditor->IsSimulatingInEditor() || GEditor->IsPlayingViaLauncher());
 }
 
+void UGameFlowGraphNode::PostPasteNode()
+{
+	Super::PostPasteNode();
+	UE_LOG(LogGameFlow, Display, TEXT("Post paste node"))
+}
+
+void UGameFlowGraphNode::PrepareForCopying()
+{
+	Super::PrepareForCopying();
+	UE_LOG(LogGameFlow, Display, TEXT("Prepare for copying"))
+}
+
+void UGameFlowGraphNode::ExportCustomProperties(FOutputDevice& Out, uint32 Indent)
+{
+	Super::ExportCustomProperties(Out, Indent);
+	NodeAsset->ExportCustomProperties(Out, Indent);
+	UE_LOG(LogGameFlow, Display, TEXT("Export custom properties"))
+}
+
+void UGameFlowGraphNode::ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn)
+{
+	Super::ImportCustomProperties(SourceText, Warn);
+	
+	UE_LOG(LogGameFlow, Display, TEXT("Import custom properties"))
+}
+
 void UGameFlowGraphNode::OnReplacementRequest()
 {
 	const TSharedRef<SGameFlowReplaceNodeDialog> ReplaceNodeDialog = SNew(SGameFlowReplaceNodeDialog);

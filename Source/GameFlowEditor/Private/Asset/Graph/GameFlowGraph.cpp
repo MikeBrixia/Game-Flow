@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraph.h"
+#include "GameFlowEditor.h"
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
@@ -170,7 +171,8 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	Super::NotifyGraphChanged(Action);
 	// We want to use a set of UGameFlowGraphNode type.
 	const TSet<UGameFlowGraphNode*> ModifiedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(Action.Nodes);
-	
+
+	UE_LOG(LogGameFlow, Display, TEXT("Graph changed"))
 	switch(Action.Action)
 	{
 		case GRAPHACTION_SelectNode:
@@ -186,6 +188,11 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	    case GRAPHACTION_RemoveNode:
 			{
 				OnNodesRemoved(ModifiedNodes);
+				break;
+			}
+
+	    case GRAPHACTION_Default:
+			{
 				break;
 			}
 		

@@ -94,5 +94,7 @@ public:
 	 */
 	virtual bool CanCreateConnection(const UPinHandle* OtherPinHandle) const;
 
+    virtual void ExportCustomProperties(FOutputDevice& Out, uint32 Indent) override;
+    virtual void ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn) override;
 #endif
 };
