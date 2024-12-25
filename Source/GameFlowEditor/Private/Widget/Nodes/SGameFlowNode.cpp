@@ -151,7 +151,7 @@ void SGameFlowNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphIn
 	SGraphNode::GetNodeInfoPopups(Context, Popups);
 	
 	const UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
-	const FText DebugInfo = GameFlowGraphNode->GetDebugInfo();
+	const FText DebugInfo = GameFlowGraphNode->GetDebugInfoText();
 
 	// Display debug popup only if there are properties marked for display and debug is enabled.
 	if(!DebugInfo.IsEmpty() && GameFlowGraphNode->IsDebugEnabled())

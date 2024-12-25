@@ -112,7 +112,7 @@ bool UGameFlowGraphNode::IsDebugEnabled() const
 	return bDebugEnabled || NodeAsset->bForceDebugView;
 }
 
-FText UGameFlowGraphNode::GetDebugInfo() const
+FText UGameFlowGraphNode::GetDebugInfoText() const
 {
 	FString DebugInfoStatus;
 
@@ -194,20 +194,6 @@ void UGameFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
 	UE_LOG(LogGameFlow, Display, TEXT("Prepare for copying"))
-}
-
-void UGameFlowGraphNode::ExportCustomProperties(FOutputDevice& Out, uint32 Indent)
-{
-	Super::ExportCustomProperties(Out, Indent);
-	NodeAsset->ExportCustomProperties(Out, Indent);
-	UE_LOG(LogGameFlow, Display, TEXT("Export custom properties"))
-}
-
-void UGameFlowGraphNode::ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn)
-{
-	Super::ImportCustomProperties(SourceText, Warn);
-	
-	UE_LOG(LogGameFlow, Display, TEXT("Import custom properties"))
 }
 
 void UGameFlowGraphNode::OnReplacementRequest()

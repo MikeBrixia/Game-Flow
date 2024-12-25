@@ -90,11 +90,11 @@ protected:
 public:
 
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", Export)
 	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"), Export)
 	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();
@@ -154,8 +154,6 @@ public:
 	/** Defines the tint and icon path for the node. */
 	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
 
-	virtual void ExportCustomProperties(FOutputDevice& Out, uint32 Indent) override;
-	virtual void ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn) override;
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 

@@ -171,8 +171,7 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	Super::NotifyGraphChanged(Action);
 	// We want to use a set of UGameFlowGraphNode type.
 	const TSet<UGameFlowGraphNode*> ModifiedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(Action.Nodes);
-
-	UE_LOG(LogGameFlow, Display, TEXT("Graph changed"))
+	
 	switch(Action.Action)
 	{
 		case GRAPHACTION_SelectNode:

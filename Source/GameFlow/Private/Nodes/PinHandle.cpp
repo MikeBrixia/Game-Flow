@@ -1,7 +1,5 @@
 ﻿
 #include "Nodes/PinHandle.h"
-#include "Editor.h"
-#include "GameFlow.h"
 #include "Config/GameFlowSettings.h"
 #include "Nodes/GameFlowNode.h"
 
@@ -82,8 +80,7 @@ bool UPinHandle::IsValidHandle() const
 bool UPinHandle::IsValidPinName() const
 {
 	// A valid pin name should not be 'None' or whitespaces only.
-	return !PinName.IsNone() && PinName.IsValid()
-		   && !PinName.ToString().IsEmpty();
+	return !PinName.IsNone() && !PinName.ToString().IsEmpty();
 }
 
 bool UPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
@@ -92,27 +89,6 @@ bool UPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 	// Do not allow a connection between two pins on the same node.
 	const bool bRecursiveConnection = PinOwner == OtherPinHandle->PinOwner;
 	return bValidHandles && !bRecursiveConnection;
-}
-
-void UPinHandle::ExportCustomProperties(FOutputDevice& Out, uint32 Indent)
-{
-	UObject::ExportCustomProperties(Out, Indent);
-	Out.Logf(TEXT("PinName=%s"), *PinName.ToString());
-	Out.Logf(TEXT("bIsOutput=%d"), bIsOutput);
-	
-	FString ConnectionsData;
-	for (UPinHandle* ConnectedPin : Connections)
-	{
-		FStringOutputDevice ConnectionsOutDevice;
-		ConnectedPin->ExportCustomProperties(Out, Indent);
-		ConnectionsData += FString::Printf(TEXT("%s,\n"), *ConnectionsOutDevice);
-	}
-	Out.Logf(TEXT("Connections=%s"), *ConnectionsData);
-}
-
-void UPinHandle::ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn)
-{
-	UObject::ImportCustomProperties(SourceText, Warn);
 }
 
 #endif

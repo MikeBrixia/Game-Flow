@@ -361,7 +361,7 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 			const UGameFlowNode* ConnectedNode = ConnectedPinHandle->PinOwner;
 			const FName& InPinName = PinHandle->PinName;
 			
-			// If next node is invalid or input pin name is None, skip the iteration.
+			// If next node is invalid or input pin name is None, skip this iteration.
 			if (ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
 			
 			const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);

@@ -37,7 +37,7 @@ public:
 	
 private:
 	/** The game flow node asset encapsulated inside this graph node. */
-	UPROPERTY()
+	UPROPERTY(Export)
 	TObjectPtr<UGameFlowNode> NodeAsset;
 	
 	/** Node asset info red from global GameFlow plugin settings. */
@@ -89,14 +89,12 @@ public:
 	
 	void SetDebugEnabled(bool bEnabled);
 	bool IsDebugEnabled() const;
-    FText GetDebugInfo() const;
+    FText GetDebugInfoText() const;
 	UGameFlowNode* GetInspectedNodeInstance() const;
 	
 	virtual bool CanDuplicateNode() const override;
 	virtual void PostPasteNode() override;
 	virtual void PrepareForCopying() override;
-    virtual void ExportCustomProperties(FOutputDevice& Out, uint32 Indent) override;
-	virtual void ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn) override;
 	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;

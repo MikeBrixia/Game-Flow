@@ -89,29 +89,31 @@ void SGameFlowGraph::OnCopyNode()
 
 void SGameFlowGraph::OnPasteNode()
 {
+	FScopedTransaction Transaction(NSLOCTEXT("GameFlowEditor", "PasteNodes", "Paste nodes"));
+	
 	FString PastedData;
 	// Read data from the clipboard.
 	FPlatformApplicationMisc::ClipboardPaste(PastedData);
 
 	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GetCurrentGraph());
+	Graph->Modify();
+	
 	TSet<UEdGraphNode*> CopiedNodes;
 	// Import nodes from clipboard text data and paste them.
 	FEdGraphUtilities::ImportNodesFromText(Graph, PastedData, CopiedNodes);
 	
 	const TSet<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<TSet<UGameFlowGraphNode*>&>(CopiedNodes);
-	// Pasting process using paste action with undo/redo support.
+	// Initialize pasted graph node.
 	for(UGameFlowGraphNode* GraphNode : GraphNodes)
 	{
-		FVector2D PastePosition = GetGraphPanel()->GetPastePosition();
-		GraphNode->NodePosX = PastePosition.X;
-		GraphNode->NodePosY = PastePosition.Y;
-		
 		GraphNode->CreateNewGuid();
 		
-		FGameFlowNodeSchemaAction_PasteNode PasteNodeAction;
-		PasteNodeAction.NodeToPaste = GraphNode;
 		Graph->GameFlowAsset->AddNode(GraphNode->GetNodeAsset());
-		//PasteNodeAction.PerformAction(GetCurrentGraph(), nullptr, PastePosition, true);
+		
+		const FVector2D PastePosition = GetGraphPanel()->GetPastePosition();
+		GraphNode->NodePosX = PastePosition.X;
+		GraphNode->NodePosY = PastePosition.Y;
+		GraphNode->PostPlacedNewNode();
 	}
 	
 	NotifyGraphChanged();

@@ -83,37 +83,6 @@ void UGameFlowNode::GetNodeIconInfo(FString& Key, FLinearColor& Color) const
 	Key = "GameFlow.Editor.Default.Nodes.Icons." + TypeName.ToString();
 }
 
-void UGameFlowNode::ExportCustomProperties(FOutputDevice& Out, uint32 Indent)
-{
-	UObject::ExportCustomProperties(Out, Indent);
-	Out.Logf(TEXT("TypeName=%s"), *TypeName.ToString());
-	
-	// Serialize Input pins data.
-	FString InputsData;
-	for (const TPair<FName, UInputPinHandle*>& Pair : Inputs)
-	{
-		FStringOutputDevice InputPinsOutDevice;
-		Pair.Value->ExportCustomProperties(InputPinsOutDevice, Indent);
-		InputsData += FString::Printf(TEXT("%s:%s,"), *Pair.Key.ToString(), *InputPinsOutDevice);
-	}
-	Out.Logf(TEXT("Inputs=%s \n"), *InputsData);
-
-	// Serialize Output pins data.
-	FString OutputPinsData;
-	for (const TPair<FName, UOutPinHandle*>& Pair : Outputs)
-	{
-		FStringOutputDevice InputPinsOutDevice;
-		Pair.Value->ExportCustomProperties(InputPinsOutDevice, Indent);
-		InputsData += FString::Printf(TEXT("%s:%s,"), *Pair.Key.ToString(), *InputPinsOutDevice);
-	}
-	Out.Logf(TEXT("Outputs=%s \n"), *InputsData);
-}
-
-void UGameFlowNode::ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn)
-{
-	UObject::ImportCustomProperties(SourceText, Warn);
-}
-
 bool UGameFlowNode::CanAddInputPin() const
 {
 	return bCanAddInputPin;

@@ -18,11 +18,11 @@ public:
 	FName PinName;
 
 	/** The node who owns this pin. */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Export)
 	TObjectPtr<UGameFlowNode> PinOwner;
 
 	/** True if this is an output pin, false if it is in input pin. */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Export)
 	bool bIsOutput;
 
 private:
@@ -94,7 +94,5 @@ public:
 	 */
 	virtual bool CanCreateConnection(const UPinHandle* OtherPinHandle) const;
 
-    virtual void ExportCustomProperties(FOutputDevice& Out, uint32 Indent) override;
-    virtual void ImportCustomProperties(const TCHAR* SourceText, FFeedbackContext* Warn) override;
 #endif
 };
