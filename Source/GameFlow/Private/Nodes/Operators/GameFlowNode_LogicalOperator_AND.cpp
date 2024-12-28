@@ -3,7 +3,7 @@
 #include "Nodes/Operators//GameFlowNode_LogicalOperator_AND.h"
 #include "Kismet/KismetStringLibrary.h"
 
-UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
+UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND() : Super()
 {
 	// Initialize AND node as a conditional node.
 	TypeName = "Conditional";

@@ -298,7 +298,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 			UPinHandle* OutputPinHandle = CurrentNodeAsset->GetPinByName(OutPinName, EGPD_Output);
 			
 			// If pin is not valid skip to next iteration, it cannot be processed.
-			if(!OutputPinHandle->IsValidHandle()) continue;
+			if(OutputPinHandle == nullptr || !OutputPinHandle->IsValidHandle()) continue;
 			
 			for(const auto& Pin : OutputPinHandle->GetConnections())
 			{
@@ -354,7 +354,7 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		}
 		
 		// If pin is not valid skip to next iteration, it cannot be processed.
-		if (!PinHandle->IsValidHandle()) continue;
+		if (PinHandle == nullptr || !PinHandle->IsValidHandle()) continue;
 		
 		for(const auto& ConnectedPinHandle : PinHandle->GetConnections())
 		{

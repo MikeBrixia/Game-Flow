@@ -6,10 +6,9 @@
 #include "GraphEditorActions.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
-#include "Asset/Graph/Actions/FGameFlowNodeSchemaAction_PasteNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Framework/Commands/GenericCommands.h"
-#include "Windows/WindowsPlatformApplicationMisc.h"
+#include "HAL/PlatformApplicationMisc.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -69,7 +68,6 @@ void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 	Graph->SelectNodeSet(SelectedNodes, true);
 }
 
-
 void SGameFlowGraph::OnCopyNode()
 {
 	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
@@ -85,6 +83,14 @@ void SGameFlowGraph::OnCopyNode()
 	// And then copy them to the clipboard.
 	FEdGraphUtilities::ExportNodesToText(Selection, ExportedText);
 	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+
+	UE_LOG(LogGameFlow, Display, TEXT("%s"), *ExportedText)
+	
+	// Trigger post copy logic.
+	for(UGameFlowGraphNode* GraphNode : SelectedNodes)
+	{
+		GraphNode->PostCopy();
+	}
 }
 
 void SGameFlowGraph::OnPasteNode()
@@ -94,7 +100,7 @@ void SGameFlowGraph::OnPasteNode()
 	FString PastedData;
 	// Read data from the clipboard.
 	FPlatformApplicationMisc::ClipboardPaste(PastedData);
-
+	
 	UGameFlowGraph* Graph = CastChecked<UGameFlowGraph>(GetCurrentGraph());
 	Graph->Modify();
 	
@@ -106,14 +112,9 @@ void SGameFlowGraph::OnPasteNode()
 	// Initialize pasted graph node.
 	for(UGameFlowGraphNode* GraphNode : GraphNodes)
 	{
-		GraphNode->CreateNewGuid();
-		
-		Graph->GameFlowAsset->AddNode(GraphNode->GetNodeAsset());
-		
 		const FVector2D PastePosition = GetGraphPanel()->GetPastePosition();
 		GraphNode->NodePosX = PastePosition.X;
 		GraphNode->NodePosY = PastePosition.Y;
-		GraphNode->PostPlacedNewNode();
 	}
 	
 	NotifyGraphChanged();

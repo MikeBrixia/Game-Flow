@@ -37,7 +37,7 @@ public:
 
 	/** Used to uniquely identify a node asset inside the editor.
 	 * ID is shared between instances of a game flow assets. */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, TextExportTransient)
 	FGuid GUID;
 
 	/** If set to true, this node will be debugged independently of the editor debug mode. */
@@ -74,7 +74,7 @@ public:
 	FOnAssetErrorEvent OnErrorEvent;
 
 	/** Use this delegate to notify the editor that the asset is being executed*/
-	UPROPERTY()
+	UPROPERTY(TextExportTransient)
 	FOnAssetExecuted OnAssetExecuted;
 	
 protected:
@@ -90,11 +90,11 @@ protected:
 public:
 
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", Export)
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"), Export)
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
 	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();
@@ -111,7 +111,7 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
 	FORCEINLINE void OnFinishExecute();
 	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
-
+    
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
 	 * @param bFinish If true, this node will be the only output and node will be unloaded.
@@ -156,7 +156,8 @@ public:
 
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
+	virtual void PostDuplicate(bool bDuplicateForPIE) override;
+	
 private:
     UOutPinHandle* CreateExecOutputPin(FName PinName);
     UInputPinHandle* CreateExecInputPin(FName PinName);

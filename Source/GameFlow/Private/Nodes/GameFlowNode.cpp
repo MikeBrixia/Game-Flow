@@ -11,6 +11,7 @@ UGameFlowNode::UGameFlowNode()
 	TypeName = "Default";
 	bIsActive = false;
 	bForceDebugView = false;
+	GUID = FGuid::NewGuid();
 }
 
 void UGameFlowNode::TryExecute(FName PinName)
@@ -197,6 +198,16 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 				break;
 			}
 		}
+	}
+}
+
+void UGameFlowNode::PostDuplicate(bool bDuplicateForPIE)
+{
+	UObject::PostDuplicate(bDuplicateForPIE);
+
+	if(!bDuplicateForPIE)
+	{
+		GUID = FGuid::NewGuid();
 	}
 }
 

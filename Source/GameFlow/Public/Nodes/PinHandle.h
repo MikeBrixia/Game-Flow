@@ -6,7 +6,7 @@ class UFloatProperty;
 class UGameFlowNode;
 class UPinHandle;
 
-/** Utility structure used to handle game flow logical pins state and connections. */
+/** Utility structure used to handle game flow logical pin states and connections. */
 UCLASS(DefaultToInstanced, Abstract)
 class GAMEFLOW_API UPinHandle : public UObject
 {
@@ -18,11 +18,11 @@ public:
 	FName PinName;
 
 	/** The node who owns this pin. */
-	UPROPERTY(VisibleAnywhere, Export)
+	UPROPERTY(VisibleAnywhere, TextExportTransient)
 	TObjectPtr<UGameFlowNode> PinOwner;
 
 	/** True if this is an output pin, false if it is in input pin. */
-	UPROPERTY(VisibleAnywhere, Export)
+	UPROPERTY(VisibleAnywhere)
 	bool bIsOutput;
 
 private:
@@ -33,19 +33,19 @@ private:
 
 public:
 	/** True when this pin has been marked with a breakpoint, false otherwise. */
-	UPROPERTY()
+	UPROPERTY(TextExportTransient)
 	bool bIsBreakpointEnabled;
 
 	/** True if this pin is active and executing. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, TextExportTransient)
 	bool bIsActive;
 
 	/** Time passed since this pin was activated. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, TextExportTransient)
 	double ActivatedElapsedTime;
 
 	/** Last connections processing time. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, TextExportTransient)
 	double PreviousTime;
 
 #endif

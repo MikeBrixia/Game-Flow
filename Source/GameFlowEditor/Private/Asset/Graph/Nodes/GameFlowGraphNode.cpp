@@ -160,22 +160,10 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 
 	NodeComment = NodeAsset->SavedNodeComment;
 	
-	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
-	// Get node asset info from config.
-	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
-
-	// Listen to game flow asset events.
-	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
-	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
-	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
-	
-	// Listen to Unreal Editor blueprint compilation events.
-	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
-	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
-
 	// Initialize node.
-	AllocateDefaultPins();
+	Initialize();
 	ConfigureContextMenuAction();
+	AllocateDefaultPins();
 }
 
 bool UGameFlowGraphNode::CanDuplicateNode() const
@@ -187,13 +175,28 @@ bool UGameFlowGraphNode::CanDuplicateNode() const
 void UGameFlowGraphNode::PostPasteNode()
 {
 	Super::PostPasteNode();
-	UE_LOG(LogGameFlow, Display, TEXT("Post paste node"))
+	
+	const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+    UGameFlowNode* DuplicatedNodeAsset = DuplicateObject<UGameFlowNode>(NodeAsset, GameFlowGraph->GameFlowAsset);
+	SetNodeAsset(DuplicatedNodeAsset);
+	GameFlowGraph->GameFlowAsset->AddNode(DuplicatedNodeAsset);
+	
+	Initialize();
+	ConfigureContextMenuAction();
 }
 
 void UGameFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
-	UE_LOG(LogGameFlow, Display, TEXT("Prepare for copying"))
+	
+	// Temporarily take ownership of the FlowNode, so that it is not deleted when cutting
+	//NodeAsset->Rename(*GetName(), this, REN_DontCreateRedirectors);
+}
+
+void UGameFlowGraphNode::PostCopy()
+{
+	const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+	//NodeAsset->Rename(*NodeAsset->GetName(), GameFlowGraph->GameFlowAsset, REN_DontCreateRedirectors);
 }
 
 void UGameFlowGraphNode::OnReplacementRequest()
@@ -529,6 +532,24 @@ bool UGameFlowGraphNode::GetCanRenameNode() const
 bool UGameFlowGraphNode::ShowPaletteIconOnNode() const
 {
 	return true;
+}
+
+void UGameFlowGraphNode::Initialize()
+{
+	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
+	// Get node asset info from config.
+	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
+    
+	// Listen to game flow asset events.
+	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
+	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
+	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
+	
+	// Listen to Unreal Editor blueprint compilation events.
+	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
+	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
+
+	ConfigureContextMenuAction();
 }
 
 void UGameFlowGraphNode::ReconstructNode()
