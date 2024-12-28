@@ -302,7 +302,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 			
 			for(const auto& Pin : OutputPinHandle->GetConnections())
 			{
-				const UGameFlowNode* ConnectedNode = Pin->PinOwner;
+				const UGameFlowNode* ConnectedNode = Pin->GetNodeOwner();
 				const FName& ConnectedPinName = Pin->PinName;
 				
 				// If next node is invalid or input pin name is None, skip this iteration.
@@ -358,7 +358,7 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		
 		for(const auto& ConnectedPinHandle : PinHandle->GetConnections())
 		{
-			const UGameFlowNode* ConnectedNode = ConnectedPinHandle->PinOwner;
+			const UGameFlowNode* ConnectedNode = ConnectedPinHandle->GetNodeOwner();
 			const FName& InPinName = PinHandle->PinName;
 			
 			// If next node is invalid or input pin name is None, skip this iteration.

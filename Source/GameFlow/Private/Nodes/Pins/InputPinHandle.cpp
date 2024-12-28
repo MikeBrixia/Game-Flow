@@ -10,7 +10,8 @@ UInputPinHandle::UInputPinHandle()
 
 void UInputPinHandle::TriggerPin()
 {
-	PinOwner->TryExecute(PinName);
+	UGameFlowNode* Node = GetNodeOwner();
+	Node->TryExecute(PinName);
 }
 
 bool UInputPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const

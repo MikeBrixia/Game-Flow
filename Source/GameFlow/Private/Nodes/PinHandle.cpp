@@ -25,13 +25,19 @@ void UPinHandle::TriggerPin()
 	// Input pins instead will directly try to execute the owner.
 	else
 	{
-		PinOwner->TryExecute(PinName);
+		UGameFlowNode* Node = GetNodeOwner();
+		Node->TryExecute(PinName);
 	}
 }
 
 TArray<UPinHandle*> UPinHandle::GetConnections()
 {
 	return Connections;
+}
+
+UGameFlowNode* UPinHandle::GetNodeOwner() const
+{
+	return GetTypedOuter<UGameFlowNode>();
 }
 
 void UPinHandle::AddConnection(UPinHandle* Handle)
@@ -74,7 +80,7 @@ void UPinHandle::CutAllConnections()
 
 bool UPinHandle::IsValidHandle() const
 {
-	return IsValidPinName() && PinOwner != nullptr;
+	return IsValidPinName() && GetNodeOwner() != nullptr;
 }
 
 bool UPinHandle::IsValidPinName() const
@@ -87,7 +93,7 @@ bool UPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 {
 	const bool bValidHandles = IsValidHandle() && OtherPinHandle->IsValidHandle();
 	// Do not allow a connection between two pins on the same node.
-	const bool bRecursiveConnection = PinOwner == OtherPinHandle->PinOwner;
+	const bool bRecursiveConnection = GetNodeOwner() == OtherPinHandle->GetNodeOwner();
 	return bValidHandles && !bRecursiveConnection;
 }
 

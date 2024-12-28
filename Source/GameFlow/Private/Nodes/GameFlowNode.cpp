@@ -218,7 +218,6 @@ UOutPinHandle* UGameFlowNode::CreateExecOutputPin(FName PinName)
 	
 	UOutPinHandle* NewOutPin = NewObject<UOutPinHandle>(this, FullPinName);
 	NewOutPin->PinName = PinName;
-	NewOutPin->PinOwner = this;
     
 	return NewOutPin;
 }
@@ -230,7 +229,6 @@ UInputPinHandle* UGameFlowNode::CreateExecInputPin(FName PinName)
 	
 	UInputPinHandle* NewInputPin = NewObject<UInputPinHandle>(this, FullPinName);
 	NewInputPin->PinName = PinName;
-	NewInputPin->PinOwner = this;
 
 	return NewInputPin;
 }

@@ -16,11 +16,7 @@ public:
 	/** The name of the handled pin. */
 	UPROPERTY(VisibleAnywhere)
 	FName PinName;
-
-	/** The node who owns this pin. */
-	UPROPERTY(VisibleAnywhere, TextExportTransient)
-	TObjectPtr<UGameFlowNode> PinOwner;
-
+	
 	/** True if this is an output pin, false if it is in input pin. */
 	UPROPERTY(VisibleAnywhere)
 	bool bIsOutput;
@@ -59,6 +55,9 @@ public:
 	/** Get an array of pins connected to this pin. */
 	virtual TArray<UPinHandle*> GetConnections();
 
+	/** Get the node who owns this pin. */
+	UGameFlowNode* GetNodeOwner() const;
+	
 protected:
 	virtual void AddConnection(UPinHandle* Handle);
 	virtual void RemoveConnection(UPinHandle* Handle);
