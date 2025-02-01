@@ -34,14 +34,17 @@ public:
 
 	/** True if the asset inside this is being executed, false otherwise. */
 	bool bIsActive = false;
+
+	/** True if we're currently performing a copy-paste operation on this node. */
+	bool bIsBeingCopyPasted = false;
 	
 private:
 	/** The game flow node asset encapsulated inside this graph node. */
-	UPROPERTY()
+	UPROPERTY(Instanced)
 	TObjectPtr<UGameFlowNode> NodeAsset;
 	
 	/** Node asset info red from global GameFlow plugin settings. */
-	UPROPERTY()
+	UPROPERTY(TextExportTransient)
 	FGameFlowNodeInfo Info;
 
 	/** List of game flow graph node context menu command actions. */
@@ -95,7 +98,7 @@ public:
 	virtual bool CanDuplicateNode() const override;
 	virtual void PostPasteNode() override;
 	virtual void PrepareForCopying() override;
-	virtual void PostCopy();
+	virtual void PostEditImport() override;
 	
 	virtual void PostPlacedNewNode() override;
 	virtual void DestroyNode() override;

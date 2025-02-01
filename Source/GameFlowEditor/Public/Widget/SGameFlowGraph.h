@@ -28,11 +28,13 @@ public:
 	UGameFlowGraph* GetGameFlowGraph() const;
 	
 protected:
+	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	
 	virtual void RegisterGraphCommands();
     virtual void OnSelectionChange(const TSet<UObject*>& Selection);
 	
-	virtual void OnCopyNode();
-	virtual void OnPasteNode();
+	virtual void OnCopyNodes();
+	virtual void OnPasteNodes();
     virtual void OnDeleteNodes();
 	
 	void UndoGraphAction();
@@ -43,6 +45,7 @@ protected:
 
 private:
 	TSharedPtr<FUICommandList> CommandList;
+	FVector2D LastClickPosition;
 };
 
 

@@ -63,7 +63,17 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
 	
 	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass, NodeName, RF_Transactional);
-	NewNode->GUID = FGuid::NewGuid();
+
+	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
+	if(FromPin != nullptr)
+	{
+		// Connect the dragged pin to the new graph node default pin.
+		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode);
+	}
+	
+	// Initialize GUID.
+	GraphNode->CreateNewGuid();
+	NewNode->GUID = GraphNode->NodeGuid;
 	
 	if(NewNode->IsA(UGameFlowNode_Input::StaticClass()))
 	{
@@ -77,17 +87,7 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UC
 	}
 	GameFlowAsset->AddNode(NewNode);
 	
-	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
-	if(FromPin != nullptr)
-	{
-		// Connect the dragged pin to the new graph node default pin.
-		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode);
-	}
-	
-	// Initialize UedGraphNode properties.
-	GraphNode->CreateNewGuid();
-	
-	// Create asset and respective graph node
+	// Assign node asset to graph node.
 	GraphNode->SetNodeAsset(NewNode);
 	
 	// Add the graph node to the outer graph.

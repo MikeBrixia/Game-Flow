@@ -175,12 +175,8 @@ bool UGameFlowGraphNode::CanDuplicateNode() const
 void UGameFlowGraphNode::PostPasteNode()
 {
 	Super::PostPasteNode();
-	
-	const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-    UGameFlowNode* DuplicatedNodeAsset = DuplicateObject<UGameFlowNode>(NodeAsset, GameFlowGraph->GameFlowAsset);
-	SetNodeAsset(DuplicatedNodeAsset);
-	GameFlowGraph->GameFlowAsset->AddNode(DuplicatedNodeAsset);
-	
+
+	// Initialize pasted node.
 	Initialize();
 	ConfigureContextMenuAction();
 }
@@ -188,15 +184,17 @@ void UGameFlowGraphNode::PostPasteNode()
 void UGameFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
-	
-	// Temporarily take ownership of the FlowNode, so that it is not deleted when cutting
-	//NodeAsset->Rename(*GetName(), this, REN_DontCreateRedirectors);
+
+	bIsBeingCopyPasted = true;
 }
 
-void UGameFlowGraphNode::PostCopy()
+void UGameFlowGraphNode::PostEditImport()
 {
+	Super::PostEditImport();
+	
 	const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-	//NodeAsset->Rename(*NodeAsset->GetName(), GameFlowGraph->GameFlowAsset, REN_DontCreateRedirectors);
+	UGameFlowNode* DuplicatedNodeAsset = DuplicateObject<UGameFlowNode>(NodeAsset, GameFlowGraph->GameFlowAsset);
+	SetNodeAsset(DuplicatedNodeAsset);
 }
 
 void UGameFlowGraphNode::OnReplacementRequest()
@@ -558,10 +556,14 @@ void UGameFlowGraphNode::ReconstructNode()
 	
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
-	
-	BreakAllNodeLinks();
-	Pins.Empty();
-	AllocateDefaultPins();
+
+	// Reconstruct pins only outside of copy-paste operations.
+	if(!bIsBeingCopyPasted)
+	{
+		BreakAllNodeLinks();
+		Pins.Empty();
+		AllocateDefaultPins();
+	}
 	
 	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
 	// Recompile node and recreate it's node connections.
@@ -637,7 +639,7 @@ UGameFlowNode* UGameFlowGraphNode::GetInspectedNodeInstance() const
 	const UGameFlowAsset* DebuggedAssetInstance = CastChecked<UGameFlowGraph>(GetGraph())->DebuggedAssetInstance;
 	if(DebuggedAssetInstance != nullptr)
 	{
-		return DebuggedAssetInstance->GetNodeByGUID(NodeAsset->GUID);
+		return DebuggedAssetInstance->GetNodeByGUID(NodeGuid);
 	}
 	return nullptr;
 }

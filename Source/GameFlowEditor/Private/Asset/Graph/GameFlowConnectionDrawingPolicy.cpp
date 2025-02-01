@@ -35,8 +35,7 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 	if (GraphObj->DebuggedAssetInstance != nullptr)
 	{
 		const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
-		const UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(
-			FromNode->GetNodeAsset()->GUID);
+		const UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(FromNode->NodeGuid);
 		
 		UPinHandle* FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
 

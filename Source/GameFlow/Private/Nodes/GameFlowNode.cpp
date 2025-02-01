@@ -11,7 +11,6 @@ UGameFlowNode::UGameFlowNode()
 	TypeName = "Default";
 	bIsActive = false;
 	bForceDebugView = false;
-	GUID = FGuid::NewGuid();
 }
 
 void UGameFlowNode::TryExecute(FName PinName)
@@ -30,7 +29,7 @@ void UGameFlowNode::TryExecute(FName PinName)
     if(OwnerAsset->TemplateAsset != nullptr)
     {
     	const UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
-    	if(TemplateNode!= nullptr && TemplateNode->OnAssetExecuted.IsBound())
+    	if(TemplateNode != nullptr && TemplateNode->OnAssetExecuted.IsBound())
     	{
     		TemplateNode->OnAssetExecuted.Broadcast(Inputs.FindRef(PinName));
     	}
@@ -198,16 +197,6 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 				break;
 			}
 		}
-	}
-}
-
-void UGameFlowNode::PostDuplicate(bool bDuplicateForPIE)
-{
-	UObject::PostDuplicate(bDuplicateForPIE);
-
-	if(!bDuplicateForPIE)
-	{
-		GUID = FGuid::NewGuid();
 	}
 }
 

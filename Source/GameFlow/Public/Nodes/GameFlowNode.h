@@ -156,7 +156,6 @@ public:
 
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostDuplicate(bool bDuplicateForPIE) override;
 	
 private:
     UOutPinHandle* CreateExecOutputPin(FName PinName);
