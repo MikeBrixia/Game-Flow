@@ -37,6 +37,11 @@ public:
 
 	/** True if we're currently performing a copy-paste operation on this node. */
 	bool bIsBeingCopyPasted = false;
+
+	/** If this node has been copy-pasted, this property will be set to
+	    the node it was copied from. */
+	UPROPERTY()
+	TObjectPtr<UGameFlowGraphNode> SrcNode;
 	
 private:
 	/** The game flow node asset encapsulated inside this graph node. */

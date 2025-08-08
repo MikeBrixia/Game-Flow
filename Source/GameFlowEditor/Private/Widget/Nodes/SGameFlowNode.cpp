@@ -112,7 +112,7 @@ void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
 	// Create the node pin widget. by default GameFlow will create an
 	// exec pin for the node.
-	const TSharedRef<SGraphPin> PinWidget = SNew(SGameFlowNodePin, Pin)
+	const TSharedRef<SGameFlowNodePin> PinWidget = SNew(SGameFlowNodePin, Pin)
 	                                         .ExecPinColor(FLinearColor::White)
 	                                         .PinDiffColor(FLinearColor::White);
 	// Add the pin to this node.

@@ -77,6 +77,7 @@ void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 void SGameFlowGraph::OnCopyNodes()
 {
 	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
+	
 	// Prepare each node for copying operation.
 	for(UGameFlowGraphNode* GraphNode : SelectedNodes)
 	{
@@ -124,9 +125,10 @@ void SGameFlowGraph::OnPasteNodes()
 		// Copy paste operation has ended.
 		GraphNode->bIsBeingCopyPasted = false;
 	}
-	NotifyGraphChanged();
-	
 	Graph->GameFlowAsset->MarkPackageDirty();
+	NotifyGraphChanged();
+
+	FEdGraphUtilities::PostProcessPastedNodes(CopiedNodes);
 }
 
 void SGameFlowGraph::OnDeleteNodes()

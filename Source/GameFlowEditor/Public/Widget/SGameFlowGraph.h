@@ -28,6 +28,7 @@ public:
 	UGameFlowGraph* GetGameFlowGraph() const;
 	
 protected:
+
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	
 	virtual void RegisterGraphCommands();

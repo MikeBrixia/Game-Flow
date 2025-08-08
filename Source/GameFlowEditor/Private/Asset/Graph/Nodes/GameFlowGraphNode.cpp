@@ -1,6 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+
+#include "EdGraphUtilities.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorActions.h"
@@ -179,12 +181,29 @@ void UGameFlowGraphNode::PostPasteNode()
 	// Initialize pasted node.
 	Initialize();
 	ConfigureContextMenuAction();
+    
+	// Try rebuilding connections
+	for(UEdGraphPin* Pin : SrcNode->Pins)
+	{
+		for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
+		{
+			auto ConnectedNode = GetGraph()->Nodes.FindByPredicate([=](UEdGraphNode* Node)
+			{
+				UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
+				return GraphNode->NodeGuid == ConnectedPin->GetOwningNode()->NodeGuid && !GraphNode->bIsBeingCopyPasted;
+			});
+			Pin->MakeLinkTo(ConnectedNode->Get()->FindPinById(ConnectedPin->PinId));
+		}
+	}
+	
+	GetGraph()->NotifyGraphChanged();
 }
 
 void UGameFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
 
+	this->SrcNode = this;
 	bIsBeingCopyPasted = true;
 }
 
@@ -383,11 +402,11 @@ void UGameFlowGraphNode::AllocateDefaultPins()
 
 void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
-	Super::GetNodeContextMenuActions(Menu, Context);
-	
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
 	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
+	
+	Super::GetNodeContextMenuActions(Menu, Context);
 	
 	// When only the node is selected, show available context actions.
 	if(Context->Pin != nullptr)

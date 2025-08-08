@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EdGraph/EdGraphPin.h"
 #include "KismetPins/SGraphPinExec.h"
 #include "Widgets/SCompoundWidget.h"
 
@@ -20,7 +21,7 @@ public:
 	SLATE_ARGUMENT(FLinearColor, ExecPinColor)
 	SLATE_ARGUMENT(FLinearColor, PinDiffColor)
 	SLATE_END_ARGS()
-
+	
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs, UEdGraphPin* Pin);
 
