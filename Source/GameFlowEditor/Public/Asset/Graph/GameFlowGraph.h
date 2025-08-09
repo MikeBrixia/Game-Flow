@@ -10,7 +10,7 @@
 
 class GameFlowAssetToolkit;
 
-DECLARE_DELEGATE_OneParam(FOnGraphNodesSelected, TSet<UGameFlowGraphNode*>)
+DECLARE_DELEGATE_OneParam(FOnGraphNodesSelected, TSet<const UGameFlowGraphNode*>)
 DECLARE_DELEGATE_TwoParams(FOnBreakpointHit, UGameFlowGraphNode*, UEdGraphPin*)
 
 /**
@@ -99,8 +99,8 @@ public:
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 
 protected:
-	virtual void OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes);
-	virtual void OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes);
+	virtual void OnNodesAdded(const TSet<const UGameFlowGraphNode*> AddedNodes);
+	virtual void OnNodesRemoved(const TSet<const UGameFlowGraphNode*> RemovedNodes);
 };
 
 

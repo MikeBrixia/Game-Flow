@@ -34,6 +34,8 @@ protected:
 	
 	virtual void RegisterGraphCommands();
     virtual void OnSelectionChange(const TSet<UObject*>& Selection);
+
+	virtual void OnGraphChanged(const struct FEdGraphEditAction& InAction) override;
 	
 	virtual void OnCopyNodes();
 	virtual void OnPasteNodes();

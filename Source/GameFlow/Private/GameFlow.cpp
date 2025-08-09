@@ -3,7 +3,6 @@
 #include "GameFlow.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowModule"
-DEFINE_LOG_CATEGORY(LogGameFlow)
 
 void FGameFlowModule::StartupModule()
 {
