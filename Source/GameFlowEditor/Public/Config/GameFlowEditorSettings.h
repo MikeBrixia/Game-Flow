@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "FGameFlowNodeInfo.h"
 #include "UObject/Object.h"
-#include "Nodes/GameFlowNode.h"
 #include "GameFlowEditorSettings.generated.h"
 
 /**
@@ -17,6 +16,7 @@ class GAMEFLOWEDITOR_API UGameFlowEditorSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
+	UGameFlowEditorSettings();
 	
 	UPROPERTY(Config, EditAnywhere, Category="Nodes")
 	bool bEditNodesStyles;
