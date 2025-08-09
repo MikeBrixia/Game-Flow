@@ -35,7 +35,9 @@ public:
 
 protected:
 
+#if ENGINE_MINOR_VERSION >= 4
 	virtual bool OnRequestClose(EAssetEditorCloseReason InCloseReason) override;
+#endif
 	virtual bool OnRequestClose() override;
 	virtual void ConfigureInputs();
 	virtual void CreateGraph();
@@ -79,7 +81,7 @@ private:
     /** Apply undo/redo registered actions to game flow editor. */
 	void ExecuteUndoRedo();
 	/** Display selected nodes inside node details panel. */
-	void DisplaySelectedNodes(TSet<UGameFlowGraphNode*> Nodes);
+	void DisplaySelectedNodes(TSet<const UGameFlowGraphNode*> Nodes);
 	
 	// ---------------------- EDITOR LAYOUT -------------------------------------------------------
 

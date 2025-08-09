@@ -26,7 +26,7 @@ void SGameFlowGraph::Construct(const FArguments& InArgs, const TSharedPtr<GameFl
 	Arguments._ShowGraphStateOverlay = true;
 	
 	// Initialize Graph editor callbacks.
-	Arguments._GraphEvents.OnSelectionChanged = FOnSelectionChanged::CreateSP(this, &SGameFlowGraph::OnSelectionChange);
+	Arguments._GraphEvents.OnSelectionChanged.BindSP(this, &SGameFlowGraph::OnSelectionChange);
 	
 	// Create base SGraphEditor widget.
 	SGraphEditor::Construct(Arguments);
@@ -52,11 +52,11 @@ void SGameFlowGraph::RegisterGraphCommands()
 	CommandList = MakeShareable(new FUICommandList);
 
 	CommandList->MapAction(GenericCommands.Copy,
-		                   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnCopyNodes));
+		                   FExecuteAction::CreateSP(this, &SGameFlowGraph::OnCopyNodes));
 	CommandList->MapAction(GenericCommands.Paste,
-						   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnPasteNodes));
+						   FExecuteAction::CreateSP(this, &SGameFlowGraph::OnPasteNodes));
 	CommandList->MapAction(GenericCommands.Delete,
-						   FExecuteAction::CreateRaw(this, &SGameFlowGraph::OnDeleteNodes));
+						   FExecuteAction::CreateSP(this, &SGameFlowGraph::OnDeleteNodes));
 	
 	// Generic Node commands
 	CommandList->MapAction(GenericCommands.Undo,
@@ -68,10 +68,25 @@ void SGameFlowGraph::RegisterGraphCommands()
 
 void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 {
-	const TSet<const UEdGraphNode*> SelectedNodes = reinterpret_cast<const TSet<const UEdGraphNode*>&>(Selection);
-	UEdGraph* Graph = GetCurrentGraph();
-	// Tell logic graph to select the already selected UI nodes.
-	Graph->SelectNodeSet(SelectedNodes, true);
+	TSet<const UEdGraphNode*> SelectedNodes;
+	for (UObject* Obj : Selection)
+	{
+		if (const UEdGraphNode* Node = Cast<UEdGraphNode>(Obj))
+		{
+			SelectedNodes.Add(Node);
+		}
+	}
+
+	if (UEdGraph* Graph = GetCurrentGraph())
+	{
+		Graph->SelectNodeSet(SelectedNodes);
+		UE_LOG(LogGameFlow, Display, TEXT("Selection!"))
+	}
+}
+
+void SGameFlowGraph::OnGraphChanged(const struct FEdGraphEditAction& InAction)
+{
+	SGraphEditor::OnGraphChanged(InAction);
 }
 
 void SGameFlowGraph::OnCopyNodes()
@@ -125,6 +140,7 @@ void SGameFlowGraph::OnPasteNodes()
 		// Copy paste operation has ended.
 		GraphNode->bIsBeingCopyPasted = false;
 	}
+	
 	Graph->GameFlowAsset->MarkPackageDirty();
 	NotifyGraphChanged();
 
