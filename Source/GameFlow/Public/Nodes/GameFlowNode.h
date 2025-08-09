@@ -1,8 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 #pragma once
 
+
 #include "CoreMinimal.h"
 #include "PinHandle.h"
+#include "Animation/AnimInstanceProxy.h"
 #include "Pins/InputPinHandle.h"
 #include "Pins/OutPinHandles.h"
 #include "GameFlowNode.generated.h"

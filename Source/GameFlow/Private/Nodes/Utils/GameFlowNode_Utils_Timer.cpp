@@ -2,6 +2,8 @@
 
 #include "Nodes/Utils/GameFlowNode_Utils_Timer.h"
 
+#include "TimerManager.h"
+
 UGameFlowNode_Utils_Timer::UGameFlowNode_Utils_Timer()
 {
 	TypeName = "Latent";
@@ -49,14 +51,14 @@ void UGameFlowNode_Utils_Timer::StartTimer()
 	GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Purple, FString::SanitizeFloat(GetWorld()->DeltaTimeSeconds));
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	
-	TimerManager.SetTimer(CompletionTimerHandle, [=]()
+	TimerManager.SetTimer(CompletionTimerHandle, [this]()
 	{
 		TriggerOutputPin("Completed");
 	},Time, true);
 
 	if(StepTime > 0.f)
 	{
-		TimerManager.SetTimer(StepTimerHandle, [=]()
+		TimerManager.SetTimer(StepTimerHandle, [this]()
 		{
 			TriggerOutputPin("Step");
 		}, StepTime, true);

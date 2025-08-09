@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Asset/GameFlowAssetTypeAction.h"
 #include "Config/FGameFlowNodeInfo.h"
+#include "EdGraph/EdGraphNode.h"
 #include "Nodes/GameFlowNode.h"
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"

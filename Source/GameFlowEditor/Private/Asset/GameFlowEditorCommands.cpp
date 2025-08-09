@@ -1,13 +1,16 @@
 ﻿#include "Asset/GameFlowEditorCommands.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
+#include "Framework/Commands/Commands.h"
 
 #define LOCTEXT_NAMESPACE "GameFlowGraphCommands"
 
-FGameFlowEditorCommands::FGameFlowEditorCommands() : TCommands<FGameFlowEditorCommands>("GameFlowCommands",
-	                                                                                   INVTEXT("Commands for the Game Flow editor"),
-	                                                                                   NAME_None, FGameFlowEditorStyle::TypeName)
+FGameFlowEditorCommands::FGameFlowEditorCommands() : ::TCommands<FGameFlowEditorCommands>("GameFlowCommands",
+                                                                                          INVTEXT("Commands for the Game Flow editor"),
+                                                                                          NAME_None, FGameFlowEditorStyle::TypeName)
 {
 }
+
+
 
 void FGameFlowEditorCommands::RegisterCommands()
 {
@@ -24,6 +27,7 @@ void FGameFlowEditorCommands::RegisterCommands()
 	FUICommandInfo::MakeCommandInfo(SharedThis(this), SelectAssetInstance, "World Instance", INVTEXT("World Instance"),
 								 INVTEXT("Select a specific asset instance to inspect"),
 								  FSlateIcon(), EUserInterfaceActionType::Button, FInputChord());
+	
 }
 
 #undef LOCTEXT_NAMESPACE

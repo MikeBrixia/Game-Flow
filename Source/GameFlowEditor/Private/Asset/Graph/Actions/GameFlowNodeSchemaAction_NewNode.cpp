@@ -1,6 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
+
+#include "ScopedTransaction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 
 UEdGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin,

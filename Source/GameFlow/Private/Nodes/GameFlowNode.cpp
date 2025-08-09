@@ -58,6 +58,8 @@ void UGameFlowNode::TriggerOutputPin(FName PinName)
 
 #if WITH_EDITOR
 
+#include "EdGraph/EdGraphNode.h"
+
 TArray<FName> UGameFlowNode::GetInputPinsNames() const
 {
 	TArray<FName> InputPins;

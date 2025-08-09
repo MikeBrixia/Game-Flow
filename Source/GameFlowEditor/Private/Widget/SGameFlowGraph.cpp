@@ -4,6 +4,7 @@
 #include "EdGraphUtilities.h"
 #include "GameFlowEditor.h"
 #include "GraphEditorActions.h"
+#include "ScopedTransaction.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"

@@ -2,10 +2,13 @@
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 
+#include "EdGraphSchema_K2.h"
 #include "EdGraphUtilities.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorActions.h"
+#include "ScopedTransaction.h"
+#include "ToolMenu.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"

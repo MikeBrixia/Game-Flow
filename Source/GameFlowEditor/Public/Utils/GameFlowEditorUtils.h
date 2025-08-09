@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include "Framework/Docking/TabManager.h"
+#include "Templates/SharedPointer.h"
+
 class GameFlowEditorUtils
 {
 	

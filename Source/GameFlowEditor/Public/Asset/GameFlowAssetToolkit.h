@@ -1,9 +1,11 @@
 ﻿#pragma once
 
+#include "EditorUndoClient.h"
 #include "GameFlowAsset.h"
 #include "Templates/SharedPointer.h"
 #include "Toolkits/AssetEditorToolkit.h"
 
+class UEdGraphPin;
 class SGameFlowGraph;
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetSaved)

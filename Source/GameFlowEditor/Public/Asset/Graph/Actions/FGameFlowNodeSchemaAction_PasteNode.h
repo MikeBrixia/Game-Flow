@@ -1,5 +1,7 @@
 ﻿#pragma once
+#include "EdGraph/EdGraphSchema.h"
 #include "Nodes/GameFlowNode.h"
+#include "Templates/SubclassOf.h"
 
 struct FGameFlowNodeSchemaAction_PasteNode : public FEdGraphSchemaAction
 {

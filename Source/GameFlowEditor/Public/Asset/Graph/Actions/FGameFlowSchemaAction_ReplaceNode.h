@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "../GameFlowGraph.h"
+#include "EdGraph/EdGraphSchema.h"
 #include "Nodes/GameFlowNode.h"
 
 struct GAMEFLOWEDITOR_API FGameFlowSchemaAction_ReplaceNode : public FEdGraphSchemaAction

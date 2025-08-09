@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Framework/Commands/Commands.h"
 
 class FGameFlowGraphNodeCommands : public TCommands<FGameFlowGraphNodeCommands>
 {

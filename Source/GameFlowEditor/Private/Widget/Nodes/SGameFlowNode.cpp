@@ -7,6 +7,7 @@
 #include "GraphEditorSettings.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
+#include "Animation/AnimInstanceProxy.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Widget/Nodes/SGameFlowNodePin.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"

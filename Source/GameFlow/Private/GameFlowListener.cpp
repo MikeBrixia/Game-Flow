@@ -2,6 +2,8 @@
 
 #include "GameFlowListener.h"
 #include "GameFlowSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 
 // Sets default values for this component's properties
 UGameFlowListener::UGameFlowListener()

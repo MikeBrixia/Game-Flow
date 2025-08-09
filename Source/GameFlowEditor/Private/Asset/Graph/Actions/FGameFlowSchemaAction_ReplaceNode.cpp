@@ -1,5 +1,6 @@
 ﻿#include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "GameFlowEditor.h"
+#include "ScopedTransaction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 

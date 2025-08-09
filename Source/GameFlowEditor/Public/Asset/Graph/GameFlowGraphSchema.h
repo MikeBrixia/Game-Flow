@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFlowGraph.h"
-#include "UObject/Object.h"
+#include "EdGraph/EdGraphSchema.h"
 #include "GameFlowGraphSchema.generated.h"
 
 UCLASS(NotBlueprintable, NotBlueprintType)

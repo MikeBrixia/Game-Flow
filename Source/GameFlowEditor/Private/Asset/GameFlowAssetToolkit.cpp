@@ -1,13 +1,20 @@
 ﻿#include "Asset/GameFlowAssetToolkit.h"
+
+#include "EditorUndoClient.h"
 #include "GameFlowEditor.h"
 #include "GameFlowSubsystem.h"
+#include "PropertyEditorModule.h"
+#include "ToolMenus.h"
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "Utils/GameFlowFactory.h"
 #include "Widget/SGameFlowGraph.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/Input/SComboButton.h"
 
 GameFlowAssetToolkit::GameFlowAssetToolkit()
 {
@@ -134,7 +141,7 @@ TSharedRef<SWidget> GameFlowAssetToolkit::CreatePIEDebugToolbarSection()
 			.ButtonContent()
 			[
 				SNew(STextBlock)
-				.Text_Lambda([=]
+				.Text_Lambda([this]
 				{
 					return PIE_SelectedWorld != nullptr? FText::FromString(PIE_SelectedWorld->GetMapName())
 												   : FText::FromString("None");
@@ -156,7 +163,7 @@ TSharedRef<SWidget> GameFlowAssetToolkit::CreatePIEDebugToolbarSection()
 			.ButtonContent()
 			[
 				SNew(STextBlock)
-				.Text_Lambda([=]
+				.Text_Lambda([this]
 				{
 					return PIE_SelectedAssetInstance != nullptr? FText::FromString(PIE_SelectedAssetInstance->GetName())
 												   : FText::FromString("None");
@@ -344,7 +351,7 @@ void GameFlowAssetToolkit::OnPIEDebuggedInstanceInvalidated(UGameFlowAsset* Debu
 		// a small delay to allow graph drawing policy to highlight executed connections
 		// before invalidating the debug asset instance following asset execution end.
 		FTimerHandle TimerHandle;
-		PIE_SelectedWorld->GetTimerManager().SetTimer(TimerHandle, [=]
+		PIE_SelectedWorld->GetTimerManager().SetTimer(TimerHandle, [this]
 		{
 			PIE_SelectedAssetInstance->OnFinish.RemoveAll(this);
 	        this->PIE_SelectedAssetInstance = nullptr;
@@ -423,7 +430,7 @@ TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectPIEWorldMenu()
 		const FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(i);
 		UWorld* PIE_PlayWorld = WorldContext->World();
 		OptionsMenuBuilder.AddMenuEntry(FText::FromString(PIE_PlayWorld->GetMapName()), FText::GetEmpty(),
-			FSlateIcon(), FExecuteAction::CreateLambda([=]
+			FSlateIcon(), FExecuteAction::CreateLambda([this, PIE_PlayWorld]
 			{
 				// Make sure to unselect all PIE world and asset at once.
 				if(PIE_PlayWorld == nullptr)
@@ -446,7 +453,7 @@ TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectAssetInstanceMenu()
 		for(UGameFlowAsset* Instance : Subsystem->GetRunningFlows())
 		{
 			OptionsMenuBuilder.AddMenuEntry(FText::FromString(Instance->GetName()), FText::GetEmpty(),
-			FSlateIcon(), FExecuteAction::CreateLambda([=]
+			FSlateIcon(), FExecuteAction::CreateLambda([this, Instance]
 			{
 				SelectPIEAssetInstance(Instance);
 			}));
@@ -489,7 +496,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	NodesDetailsView = CreateAssetNodeDetails();
 	// Create palette tab, responsible for displaying all available GameFlow nodes.
 	FTabSpawnerEntry& NodeDetailsTab = InTabManager->RegisterTabSpawner(NodeDetailsTabName,
-		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
+		FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs&)
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
 		[
@@ -502,7 +509,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 	
 	// Register asset graph tab. This area will be used by developers to create GameFlow logic.
 	FTabSpawnerEntry& GraphTab = InTabManager->RegisterTabSpawner(GraphTabName,
-		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
+		FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs&)
 	{
 		TSharedRef<SDockTab> Tab = SNew(SDockTab)
 		[
@@ -515,7 +522,7 @@ void GameFlowAssetToolkit::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 
 	// Register details tab responsible for letting developers edit asset exposed properties.
 	FTabSpawnerEntry& DetailsTab = InTabManager->RegisterTabSpawner(DetailsTabName,
-		FOnSpawnTab::CreateLambda([=](const FSpawnTabArgs&)
+		FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs&)
 		{
 			TSharedRef<SDockTab> Tab = SNew(SDockTab)
 			[

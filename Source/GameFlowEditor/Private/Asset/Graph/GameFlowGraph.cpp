@@ -155,7 +155,7 @@ void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 
 #if WITH_LIVE_CODING
 
-void UGameFlowGraph::OnLiveCompile(FName Name)
+void UGameFlowGraph::OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStatus Status)
 {
 	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
 	for(UGameFlowGraphNode* Node : ReloadedNodes)

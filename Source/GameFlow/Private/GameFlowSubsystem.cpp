@@ -2,6 +2,7 @@
 
 #include "GameFlowSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "Engine/World.h"
 #include "GameFramework/GameSession.h"
 #include "Kismet/GameplayStatics.h"
 #include "Nodes/World/GameFlowNode_WorldListener.h"

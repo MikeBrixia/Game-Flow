@@ -5,6 +5,9 @@
 #include "ClassViewerFilter.h"
 #include "ClassViewerModule.h"
 #include "SlateOptMacros.h"
+#include "Modules/ModuleManager.h"
+#include "Widgets/Input/SCheckBox.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowReplaceNodeWindow"
 
@@ -34,7 +37,7 @@ TSharedRef<SVerticalBox> SGameFlowReplaceNodeDialog::CreateDialogContent()
 	FClassViewerModule& ClassViewerModule = FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer");
 	// Create class viewer widget with specified options.
 	const TSharedRef<SWidget> ClassViewerWidget = ClassViewerModule.CreateClassViewer(GetOptions(),
-		FOnClassPicked::CreateLambda([=](UClass* PickedClass)
+		FOnClassPicked::CreateLambda([this](UClass* PickedClass)
 	{
 		this->PickedClass = PickedClass;
 	}));

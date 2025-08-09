@@ -3,6 +3,7 @@
 #include "GameFlowSubsystem.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Misc/App.h"
 
 FConnectionDrawingPolicy* FGameFlowGraphConnectionDrawingPolicyFactory::CreateConnectionPolicy(
 	const UEdGraphSchema* Schema, int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor,

@@ -6,8 +6,7 @@ public class GameFlowEditor : ModuleRules
 {
 	public GameFlowEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		CppStandard = CppStandardVersion.Cpp17;
+
 		
 		PublicIncludePaths.AddRange(
 			new string[] {

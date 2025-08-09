@@ -3,6 +3,7 @@
 #include "GameFlow/Public/Nodes/World/GameFlowNode_WorldListener.h"
 #include "GameFlow.h"
 #include "GameFlowSubsystem.h"
+#include "Engine/GameInstance.h"
 
 UGameFlowNode_WorldListener::UGameFlowNode_WorldListener()
 {

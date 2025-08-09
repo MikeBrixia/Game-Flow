@@ -6,6 +6,7 @@
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
+#include "UObject/UObjectIterator.h"
 
 FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID,
                                                                               float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements,

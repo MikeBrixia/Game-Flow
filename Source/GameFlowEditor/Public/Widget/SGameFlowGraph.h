@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GraphEditor.h"
 #include "Asset/Graph/GameFlowGraph.h"
 #include "Asset/GameFlowAssetToolkit.h"
 #include "Widgets/SCompoundWidget.h"

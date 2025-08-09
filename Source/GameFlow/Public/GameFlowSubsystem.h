@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFlowAsset.h"
 #include "GameFlowListener.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 #include "UObject/Object.h"
 #include "GameFlowSubsystem.generated.h"
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFlowAsset.h"
+#include "EdGraph/EdGraph.h"
 #include "Nodes/GameFlowGraphNode.h"
 #include "GameFlowGraph.generated.h"
 
@@ -92,7 +93,7 @@ public:
 	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
 #endif
 #if WITH_LIVE_CODING
-	void OnLiveCompile(FName Name);
+	void OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStatus Status);
 #endif
 	void RebuildGraphFromAsset();
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;

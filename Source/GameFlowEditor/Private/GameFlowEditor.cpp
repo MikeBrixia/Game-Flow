@@ -8,6 +8,7 @@
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Config/GameFlowSettings.h"
+#include "HAL/PlatformFileManager.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
 

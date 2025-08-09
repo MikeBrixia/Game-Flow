@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "../GameFlowGraph.h"
+#include "EdGraph/EdGraphSchema.h"
 #include "Nodes/GameFlowNode.h"
 
 /**

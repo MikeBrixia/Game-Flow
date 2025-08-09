@@ -2,6 +2,7 @@
 
 #include "Nodes/World/GameFlowNode_WorldListener_NotifyListeners.h"
 #include "GameFlowSubsystem.h"
+#include "Engine/GameInstance.h"
 
 UGameFlowNode_WorldListener_NotifyListeners::UGameFlowNode_WorldListener_NotifyListeners()
 {

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Factories/Factory.h"
 #include "Nodes/GameFlowNode.h"
 #include "UObject/Object.h"
 #include "UGameFlowNodeFactory.generated.h"
