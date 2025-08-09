@@ -1,14 +1,15 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SGameFlowNode.h"
-#include "GameFlowEditor.h"
+
+#include "GameFlow.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorSettings.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Widget/Nodes/SGameFlowNodePin.h"
-#include "Slate/Public/Widgets/Text/SInlineEditableTextBlock.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FGameFlowReplaceNodeWindow"
 
@@ -115,6 +116,7 @@ void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 	const TSharedRef<SGameFlowNodePin> PinWidget = SNew(SGameFlowNodePin, Pin)
 	                                         .ExecPinColor(FLinearColor::White)
 	                                         .PinDiffColor(FLinearColor::White);
+
 	// Add the pin to this node.
 	this->AddPin(PinWidget);
 }

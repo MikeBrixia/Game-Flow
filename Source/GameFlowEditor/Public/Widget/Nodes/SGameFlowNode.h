@@ -53,6 +53,7 @@ protected:
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> InputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
+	
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	virtual FString GetNodeComment() const override;
 	

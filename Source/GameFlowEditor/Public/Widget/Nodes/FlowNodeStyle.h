@@ -26,7 +26,7 @@ public:
 	virtual const FName GetTypeName() const override { return TypeName; }
 	
 	/** Get the GameFlow node slate style. */
-	ISlateStyle& FFlowNodeStyle::GetStyle() const;
+	ISlateStyle& GetStyle() const;
 	
 	/* Get Flow Node Style singleton instance. */
 	static const FFlowNodeStyle& GetDefault();

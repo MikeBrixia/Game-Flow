@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FGameFlowNodeInfo.h"
 #include "UObject/Object.h"
 #include "Nodes/GameFlowNode.h"
 #include "GameFlowEditorSettings.generated.h"

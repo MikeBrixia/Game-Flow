@@ -38,7 +38,7 @@ public:
 	FOnBreakpointHit OnBreakpointHitRequest;
 
 	/** The editor toolkit in which this graph is displayed. */
-	TObjectPtr<GameFlowAssetToolkit> EditorToolkit;
+	GameFlowAssetToolkit* EditorToolkit;
 	
 	UGameFlowGraph();
 	

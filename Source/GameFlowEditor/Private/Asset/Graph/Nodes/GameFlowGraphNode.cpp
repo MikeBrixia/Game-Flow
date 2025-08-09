@@ -405,7 +405,8 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
 	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
-	
+
+	UE_LOG(LogGameFlow, Display, TEXT("Creating node contextual menu..."))
 	Super::GetNodeContextMenuActions(Menu, Context);
 	
 	// When only the node is selected, show available context actions.

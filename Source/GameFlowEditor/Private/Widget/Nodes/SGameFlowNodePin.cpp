@@ -30,6 +30,12 @@ void SGameFlowNodePin::Construct(const FArguments& InArgs, UEdGraphPin* Pin)
 	this->bShowLabel = !(PinName.Contains("Exec") || PinName.Contains("Out"));
 }
 
+FReply SGameFlowNodePin::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	UE_LOG(LogGameFlow, Display, TEXT("OnMouseButtonDown"));
+	return SGraphPinExec::OnMouseButtonDown(MyGeometry, MouseEvent);
+}
+
 void SGameFlowNodePin::SetPinDisplayName(const FName& PinName)
 {
 	GraphPinObj->PinFriendlyName = FText::FromName(PinName);

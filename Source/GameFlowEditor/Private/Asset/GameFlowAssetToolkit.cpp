@@ -39,6 +39,12 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	FEditorDelegates::EndPIE.AddRaw(this, &GameFlowAssetToolkit::OnPIEFinish);
 }
 
+bool GameFlowAssetToolkit::OnRequestClose(EAssetEditorCloseReason InCloseReason)
+{
+	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
+	return FAssetEditorToolkit::OnRequestClose(InCloseReason);
+}
+
 bool GameFlowAssetToolkit::OnRequestClose()
 {
 	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());

@@ -1,8 +1,10 @@
 ﻿#pragma once
 
 #include "GameFlowAsset.h"
+#include "Templates/SharedPointer.h"
 #include "Toolkits/AssetEditorToolkit.h"
-#include "Widget/SGameFlowGraph.h"
+
+class SGameFlowGraph;
 
 DECLARE_MULTICAST_DELEGATE(FOnAssetSaved)
 
@@ -32,7 +34,8 @@ public:
 	void InitEditor(const TArray<UObject*>& InObjects);
 
 protected:
-	
+
+	virtual bool OnRequestClose(EAssetEditorCloseReason InCloseReason) override;
 	virtual bool OnRequestClose() override;
 	virtual void ConfigureInputs();
 	virtual void CreateGraph();

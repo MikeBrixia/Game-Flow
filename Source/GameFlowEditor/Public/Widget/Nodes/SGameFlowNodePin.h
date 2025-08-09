@@ -25,5 +25,7 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs, UEdGraphPin* Pin);
 
+	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	
 	void SetPinDisplayName(const FName& PinName);
 };
