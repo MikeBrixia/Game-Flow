@@ -2,13 +2,11 @@
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 
-#include "EdGraphSchema_K2.h"
 #include "EdGraphUtilities.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorActions.h"
-#include "ScopedTransaction.h"
-#include "ToolMenu.h"
+#include "NodeFactory.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
@@ -167,8 +165,8 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 	
 	// Initialize node.
 	Initialize();
-	ConfigureContextMenuAction();
 	AllocateDefaultPins();
+	ConfigureContextMenuAction();
 }
 
 bool UGameFlowGraphNode::CanDuplicateNode() const
@@ -498,8 +496,9 @@ TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 	const FText TitleText = GetNodeTitle(ENodeTitleType::EditableTitle);
 	
 	TSharedRef<SGameFlowNode> NodeWidget = SNew(SGameFlowNode)
-		                                   .Node(this)
-		                                   .TitleText(TitleText);
+		                                    .Node(this)
+		                                    .TitleText(TitleText);
+	
 	return NodeWidget;
 }
 
@@ -569,8 +568,6 @@ void UGameFlowGraphNode::Initialize()
 	// Listen to Unreal Editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
-
-	ConfigureContextMenuAction();
 }
 
 void UGameFlowGraphNode::ReconstructNode()
@@ -579,13 +576,22 @@ void UGameFlowGraphNode::ReconstructNode()
 	
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
-
+	
+	TArray<UEdGraphPin*> OldPins(Pins);
+	
 	// Reconstruct pins only outside of copy-paste operations.
 	if(!bIsBeingCopyPasted)
 	{
-		BreakAllNodeLinks();
-		Pins.Empty();
+		Pins.Reset();
 		AllocateDefaultPins();
+	}
+
+	// Destroy old pins
+	for (UEdGraphPin* OldPin : OldPins)
+	{
+		OldPin->Modify();
+		OldPin->BreakAllPinLinks();
+		DestroyPin(OldPin);
 	}
 	
 	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
