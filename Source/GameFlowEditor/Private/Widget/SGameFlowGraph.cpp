@@ -80,7 +80,6 @@ void SGameFlowGraph::OnSelectionChange(const TSet<UObject*>& Selection)
 	if (UEdGraph* Graph = GetCurrentGraph())
 	{
 		Graph->SelectNodeSet(SelectedNodes);
-		UE_LOG(LogGameFlow, Display, TEXT("Selection!"))
 	}
 }
 

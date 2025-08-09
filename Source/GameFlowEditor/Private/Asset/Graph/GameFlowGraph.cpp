@@ -174,8 +174,7 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	{
 		ModifiedNodes.Add(CastChecked<const UGameFlowGraphNode>(Node));
 	}
-    
-	UE_LOG(LogGameFlow, Display, TEXT("Notify graph changed!"))
+	
 	// We rebuild the graph only on Add and remove node actions, selection node
 	// will keep it as it is to avoid bGraphDataInvalid error.
 	switch(Action.Action)

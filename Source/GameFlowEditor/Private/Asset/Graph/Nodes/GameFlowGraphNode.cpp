@@ -496,8 +496,8 @@ TSharedPtr<SGraphNode> UGameFlowGraphNode::CreateVisualWidget()
 	const FText TitleText = GetNodeTitle(ENodeTitleType::EditableTitle);
 	
 	TSharedRef<SGameFlowNode> NodeWidget = SNew(SGameFlowNode)
-	                                   .Node(this)
-		                                   .TitleText(TitleText);
+		                                    .Node(this)
+		                                    .TitleText(TitleText);
 	
 	return NodeWidget;
 }
