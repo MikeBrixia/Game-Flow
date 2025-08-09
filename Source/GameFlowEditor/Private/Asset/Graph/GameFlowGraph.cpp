@@ -168,10 +168,15 @@ void UGameFlowGraph::OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStat
 
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
-	Super::NotifyGraphChanged(Action);
 	// We want to use a set of UGameFlowGraphNode type.
-	const TSet<UGameFlowGraphNode*> ModifiedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(Action.Nodes);
+	TSet<const UGameFlowGraphNode*> ModifiedNodes;
+	for (const UEdGraphNode* Node : Action.Nodes)
+	{
+		ModifiedNodes.Add(CastChecked<const UGameFlowGraphNode>(Node));
+	}
 	
+	// We rebuild the graph only on Add and remove node actions, selection node
+	// will keep it as it is to avoid bGraphDataInvalid error.
 	switch(Action.Action)
 	{
 		case GRAPHACTION_SelectNode:
@@ -181,11 +186,13 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 			}
 	    case GRAPHACTION_AddNode:
 			{
+				Super::NotifyGraphChanged(Action);
 				OnNodesAdded(ModifiedNodes);
 				break;
 			}
 	    case GRAPHACTION_RemoveNode:
 			{
+				Super::NotifyGraphChanged(Action);
 				OnNodesRemoved(ModifiedNodes);
 				break;
 			}
@@ -221,9 +228,9 @@ void UGameFlowGraph::OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin*
 	OnBreakpointHitRequest.Execute(GraphNode, GraphPin);
 }
 
-void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes)
+void UGameFlowGraph::OnNodesRemoved(const TSet<const UGameFlowGraphNode*> RemovedNodes)
 {
-	for(UGameFlowGraphNode* GraphNode : RemovedNodes)
+	for(const UGameFlowGraphNode* GraphNode : RemovedNodes)
 	{
 		// Remove node from the game flow asset.
 		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
@@ -231,7 +238,7 @@ void UGameFlowGraph::OnNodesRemoved(const TSet<UGameFlowGraphNode*> RemovedNodes
 	}
 }
 
-void UGameFlowGraph::OnNodesAdded(const TSet<UGameFlowGraphNode*> AddedNodes)
+void UGameFlowGraph::OnNodesAdded(const TSet<const UGameFlowGraphNode*> AddedNodes)
 {
 	for(const UGameFlowGraphNode* GraphNode : AddedNodes)
 	{

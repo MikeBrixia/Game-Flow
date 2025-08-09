@@ -46,11 +46,16 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	FEditorDelegates::EndPIE.AddRaw(this, &GameFlowAssetToolkit::OnPIEFinish);
 }
 
+
+#if ENGINE_MINOR_VERSION >= 4
+
 bool GameFlowAssetToolkit::OnRequestClose(EAssetEditorCloseReason InCloseReason)
 {
 	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
 	return FAssetEditorToolkit::OnRequestClose(InCloseReason);
 }
+
+#endif
 
 bool GameFlowAssetToolkit::OnRequestClose()
 {
@@ -192,7 +197,7 @@ void GameFlowAssetToolkit::CreateGraph()
 {
 	// Create the graph.
 	UGameFlowGraph* Graph = UGameFlowFactory::CreateGraph<UGameFlowGraph, UGameFlowGraphSchema>(Asset);
-
+	
 	// Listen for game flow graph events.
 	Graph->OnGraphNodesSelected.BindRaw(this, &GameFlowAssetToolkit::DisplaySelectedNodes);
 	Graph->OnBreakpointHitRequest.BindRaw(this, &GameFlowAssetToolkit::OnBreakpointHit);
@@ -470,8 +475,9 @@ void GameFlowAssetToolkit::ExecuteUndoRedo()
 	FSlateApplication::Get().DismissAllMenus();
 }
 
-void GameFlowAssetToolkit::DisplaySelectedNodes(TSet<UGameFlowGraphNode*> Nodes)
+void GameFlowAssetToolkit::DisplaySelectedNodes(TSet<const UGameFlowGraphNode*> Nodes)
 {
+	UE_LOG(LogGameFlow, Display, TEXT("Displaying selected nodes: %d"), Nodes.Num());
 	// Array of selected nodes assets.
 	TArray<UObject*> SelectedAssets;
 	
@@ -481,7 +487,7 @@ void GameFlowAssetToolkit::DisplaySelectedNodes(TSet<UGameFlowGraphNode*> Nodes)
 		UGameFlowNode* NodeAsset = SelectedNode->GetNodeAsset();
 		SelectedAssets.Add(NodeAsset);
 	}
-
+    
 	// Inspect selected nodes inside editor nodes details view.
 	NodesDetailsView->SetObjects(SelectedAssets);
 }
