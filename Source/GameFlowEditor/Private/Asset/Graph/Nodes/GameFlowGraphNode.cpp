@@ -1,12 +1,18 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Nodes/GameFlowGraphNode.h"
-
-#include "EdGraphUtilities.h"
 #include "GameFlowEditor.h"
 #include "GameFlowAsset.h"
 #include "GraphEditorActions.h"
-#include "NodeFactory.h"
+
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION >= 6
+
+#include "EdGraphSchema_K2.h"
+#include "ScopedTransaction.h"
+#include "ToolMenu.h"
+
+#endif
+
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
