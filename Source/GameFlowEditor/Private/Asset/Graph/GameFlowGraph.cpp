@@ -153,9 +153,20 @@ void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 
 #endif
 
-#if WITH_LIVE_CODING
+#if WITH_LIVE_CODING && (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION > 5
 
 void UGameFlowGraph::OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStatus Status)
+{
+	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
+	for(UGameFlowGraphNode* Node : ReloadedNodes)
+	{
+		Node->OnLiveOrHotReloadCompile();
+	}
+}
+
+#else if WITH_LIVE_CODING && (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4) || ENGINE_MAJOR_VERSION < 5
+
+void UGameFlowGraph::OnLiveCompile(FName Name)
 {
 	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
 	for(UGameFlowGraphNode* Node : ReloadedNodes)
