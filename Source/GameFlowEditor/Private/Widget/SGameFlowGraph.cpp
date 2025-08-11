@@ -11,6 +11,8 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "HAL/PlatformApplicationMisc.h"
 
+FVector2D SGameFlowGraph::SelectionRectCenter = FVector2D::ZeroVector;
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SGameFlowGraph::Construct(const FArguments& InArgs, const TSharedPtr<GameFlowAssetToolkit> AssetEditor)
@@ -105,6 +107,10 @@ void SGameFlowGraph::OnCopyNodes()
 	// And then copy them to the clipboard.
 	FEdGraphUtilities::ExportNodesToText(Selection, ExportedText);
 	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+
+	FSlateRect SelectionRect;
+	GetBoundsForSelectedNodes(SelectionRect, 0);
+	SelectionRectCenter = SelectionRect.GetCenter();
 }
 
 void SGameFlowGraph::OnPasteNodes()
@@ -123,13 +129,20 @@ void SGameFlowGraph::OnPasteNodes()
 	FEdGraphUtilities::ImportNodesFromText(Graph, PastedData, CopiedNodes);
 	
 	const TArray<UGameFlowGraphNode*> GraphNodes = reinterpret_cast<TSet<UGameFlowGraphNode*>&>(CopiedNodes).Array();
+	SGraphPanel* GraphPanel = GetGraphPanel();
+	
 	// Initialize pasted graph node.
-	for(UGameFlowGraphNode* GraphNode : GraphNodes)
+	for(int i = 0; i < GraphNodes.Num(); ++i)
 	{
-		const FVector2D SourceNodePosition = FVector2D(GraphNode->NodePosX, GraphNode->NodePosY);
-		const FVector2D PastePosition = GetGraphPanel()->GetPastePosition() + LastClickPosition + SourceNodePosition;
-		GraphNode->NodePosX = PastePosition.X;
-		GraphNode->NodePosY = PastePosition.Y;
+		UGameFlowGraphNode* GraphNode = GraphNodes[i];
+		
+		const FVector2D NodeOldPosition = FVector2D(GraphNode->NodePosX, GraphNode->NodePosY);
+		FVector2D PastePosition = GraphPanel->GetPastePosition();
+		FVector2D DeltaPosition = NodeOldPosition - SelectionRectCenter;
+		
+		FVector2D FinalPosition = PastePosition + DeltaPosition;
+		GraphNode->NodePosX = FinalPosition.X;
+		GraphNode->NodePosY = FinalPosition.Y;
 		
 		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 		GraphNode->CreateNewGuid();
@@ -143,8 +156,6 @@ void SGameFlowGraph::OnPasteNodes()
 	
 	Graph->GameFlowAsset->MarkPackageDirty();
 	NotifyGraphChanged();
-
-	FEdGraphUtilities::PostProcessPastedNodes(CopiedNodes);
 }
 
 void SGameFlowGraph::OnDeleteNodes()

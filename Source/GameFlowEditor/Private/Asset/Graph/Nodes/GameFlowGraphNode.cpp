@@ -184,33 +184,18 @@ bool UGameFlowGraphNode::CanDuplicateNode() const
 void UGameFlowGraphNode::PostPasteNode()
 {
 	Super::PostPasteNode();
-
-	// Initialize pasted node.
-	Initialize();
-	ConfigureContextMenuAction();
-    
-	// Try rebuilding connections
-	for(UEdGraphPin* Pin : SrcNode->Pins)
-	{
-		for(UEdGraphPin* ConnectedPin : Pin->LinkedTo)
-		{
-			auto ConnectedNode = GetGraph()->Nodes.FindByPredicate([=](UEdGraphNode* Node)
-			{
-				UGameFlowGraphNode* GraphNode = CastChecked<UGameFlowGraphNode>(Node);
-				return GraphNode->NodeGuid == ConnectedPin->GetOwningNode()->NodeGuid && !GraphNode->bIsBeingCopyPasted;
-			});
-			Pin->MakeLinkTo(ConnectedNode->Get()->FindPinById(ConnectedPin->PinId));
-		}
-	}
 	
-	GetGraph()->NotifyGraphChanged();
+	// Force pins handles connections to match copy-paste graph node connections.
+	for (UEdGraphPin* Pin : Pins)
+	{
+		PinConnectionListChanged(Pin);
+	}
 }
 
 void UGameFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
-
-	this->SrcNode = this;
+	
 	bIsBeingCopyPasted = true;
 }
 
@@ -221,6 +206,21 @@ void UGameFlowGraphNode::PostEditImport()
 	const UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
 	UGameFlowNode* DuplicatedNodeAsset = DuplicateObject<UGameFlowNode>(NodeAsset, GameFlowGraph->GameFlowAsset);
 	SetNodeAsset(DuplicatedNodeAsset);
+
+    // New pins default object should be the duplicated node asset.
+	for (UEdGraphPin* Pin : Pins)
+	{
+		if (Pin)
+		{
+			Pin->Modify();
+			Pin->DefaultObject = DuplicatedNodeAsset;
+		}
+	}
+
+	
+	// Initialize pasted node.
+	Initialize();
+	ConfigureContextMenuAction();
 }
 
 void UGameFlowGraphNode::OnReplacementRequest()
@@ -394,14 +394,15 @@ void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
+	UE_LOG(LogGameFlow, Display, TEXT("Allocating default pins..."))
 	// Read input pins names from node asset and create graph pins.
-	for(const FName& PinName : NodeAsset->GetInputPinsNames())
+	for (const FName& PinName : NodeAsset->GetInputPinsNames())
 	{
 		CreateNodePin(EGPD_Input, PinName, false);
 	}
 
 	// Read output pins names from node asset and create graph pins.
-	for(const FName& PinName : NodeAsset->GetOutputPinsNames())
+	for (const FName& PinName : NodeAsset->GetOutputPinsNames())
 	{
 		CreateNodePin(EGPD_Output, PinName, false);
 	}
@@ -583,26 +584,16 @@ void UGameFlowGraphNode::ReconstructNode()
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
-	TArray<UEdGraphPin*> OldPins(Pins);
-	
 	// Reconstruct pins only outside of copy-paste operations.
 	if(!bIsBeingCopyPasted)
 	{
 		Pins.Reset();
 		AllocateDefaultPins();
-	}
 
-	// Destroy old pins
-	for (UEdGraphPin* OldPin : OldPins)
-	{
-		OldPin->Modify();
-		OldPin->BreakAllPinLinks();
-		DestroyPin(OldPin);
+		const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
+		// Recompile node and recreate it's node connections.
+		GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
 	}
-	
-	const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
-	// Recompile node and recreate it's node connections.
-	GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
 }
 
 bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)

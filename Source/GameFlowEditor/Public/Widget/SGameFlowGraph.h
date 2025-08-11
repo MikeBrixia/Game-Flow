@@ -48,6 +48,7 @@ protected:
 	virtual FGraphAppearanceInfo GetGraphAppearanceInfo();
 
 private:
+	static FVector2D SelectionRectCenter;
 	TSharedPtr<FUICommandList> CommandList;
 	FVector2D LastClickPosition;
 };

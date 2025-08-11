@@ -153,6 +153,34 @@ UPinHandle* UGameFlowNode::GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDi
 	return PinHandle;
 }
 
+TArray<UPinHandle*> UGameFlowNode::GetPinsByDirection(TEnumAsByte<EEdGraphPinDirection> Direction) const
+{
+	TArray<UPinHandle*> Pins;
+	
+	switch (Direction)
+	{
+	default: break;
+
+	case EGPD_Input:
+		{
+			TArray<UInputPinHandle*> InputPins;
+			Inputs.GenerateValueArray(InputPins);
+			Pins.Append(InputPins);
+			break;
+		}
+
+	case EGPD_Output:
+		{
+			TArray<UOutPinHandle*> OutputPins;
+			Outputs.GenerateValueArray(OutputPins);
+			Pins.Append(OutputPins);
+			break;
+		}
+	}
+
+	return Pins;
+}
+
 void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);

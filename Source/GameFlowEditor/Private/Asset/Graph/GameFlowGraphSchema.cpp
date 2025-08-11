@@ -32,6 +32,15 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 		return ConnectionResponse;
 	}
 
+	// Ensure owning nodes are valid; otherwise we must disallow connection.
+	if (!IsValid(A->GetOwningNode()) || !IsValid(B->GetOwningNode()))
+	{
+		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
+		ConnectionResponse.Message = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "The node which owns one of the two pins is invalid!");
+		return ConnectionResponse;
+	}
+
+	
 	// Are we trying to establish a connection from an input pin source to an output pin destination?
 	const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
 	// Are we trying to establish a connection from an output pin source to an input pin destination?
@@ -293,13 +302,10 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 		const UGameFlowNode* CurrentNodeAsset = CurrentNode->GetNodeAsset();
 		CurrentNode->bIsRebuilding = true;
 		
-		for(const FName& OutPinName : CurrentNodeAsset->GetOutputPinsNames())
+		for(UPinHandle* OutputPinHandle: CurrentNodeAsset->GetPinsByDirection(EGPD_Output))
 		{
-			// Find the node and pin to which the current node is connected to.
-			UPinHandle* OutputPinHandle = CurrentNodeAsset->GetPinByName(OutPinName, EGPD_Output);
-			
 			// If pin is not valid skip to next iteration, it cannot be processed.
-			if(OutputPinHandle == nullptr || !OutputPinHandle->IsValidHandle()) continue;
+			if(!OutputPinHandle->IsValidHandle()) continue;
 			
 			for(const auto& Pin : OutputPinHandle->GetConnections())
 			{
@@ -313,7 +319,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 				UGameFlowGraphNode* GraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
                 GraphNode->bIsRebuilding = true;
 				
-				UEdGraphPin* FromPin = CurrentNode->FindPin(OutPinName);
+				UEdGraphPin* FromPin = CurrentNode->FindPin(OutputPinHandle->PinName);
 				UEdGraphPin* DestinationPin = GraphNode->FindPin(ConnectedPinName);
 				
 				// After finding the current node output pin and the next node input pin,
@@ -363,9 +369,13 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 			const FName& InPinName = PinHandle->PinName;
 			
 			// If next node is invalid or input pin name is None, skip this iteration.
-			if (ConnectedNode == nullptr || InPinName.IsEqual(EName::None)) continue;
+			if (!IsValid(ConnectedNode) || InPinName.IsEqual(EName::None))
+				continue;
 			
 			const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
+
+			if (!IsValid(ConnectedGraphNode)) continue;
+
 			UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
 		
 			// After finding the current node output pin and the next node input pin,

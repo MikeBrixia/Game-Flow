@@ -22,7 +22,11 @@ public:
 	bool bIsOutput;
 
 private:
-	UPROPERTY(VisibleAnywhere)
+	/** Game flow unique identifier. */
+	UPROPERTY(VisibleAnywhere, TextExportTransient)
+    FGuid GUID;
+	
+	UPROPERTY(VisibleAnywhere, TextExportTransient, DuplicateTransient)
 	TArray<UPinHandle*> Connections;
 
 #if WITH_EDITORONLY_DATA

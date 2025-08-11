@@ -38,6 +38,7 @@ public:
 	bool bIsActive = false;
 
 	/** True if we're currently performing a copy-paste operation on this node. */
+	UPROPERTY()
 	bool bIsBeingCopyPasted = false;
 
 	/** If this node has been copy-pasted, this property will be set to

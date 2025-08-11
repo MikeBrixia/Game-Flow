@@ -92,11 +92,11 @@ protected:
 public:
 
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
 	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
 	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();
@@ -137,6 +137,7 @@ public:
     void RemoveOutputPin(FName PinName);
 	
 	UPinHandle* GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const;
+	TArray<UPinHandle*> GetPinsByDirection(TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<FName> GetInputPinsNames() const;
 	TArray<FName> GetOutputPinsNames() const;
 	
