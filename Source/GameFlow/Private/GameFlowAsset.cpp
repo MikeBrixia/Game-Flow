@@ -91,7 +91,7 @@ TArray<UGameFlowNode*> UGameFlowAsset::GetNodes() const
 
 UGameFlowNode* UGameFlowAsset::GetNodeByGUID(FGuid GUID) const
 {
-	return GUID.IsValid()? Nodes.FindChecked(GUID) : nullptr;
+	return GUID.IsValid()? Nodes.FindRef(GUID) : nullptr;
 }
 
 #endif

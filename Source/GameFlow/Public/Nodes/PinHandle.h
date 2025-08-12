@@ -26,7 +26,7 @@ private:
 	UPROPERTY(VisibleAnywhere, TextExportTransient)
     FGuid GUID;
 	
-	UPROPERTY(VisibleAnywhere, TextExportTransient, DuplicateTransient)
+	UPROPERTY(VisibleAnywhere, TextExportTransient)
 	TArray<UPinHandle*> Connections;
 
 #if WITH_EDITORONLY_DATA

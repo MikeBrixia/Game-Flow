@@ -267,7 +267,7 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	// e.g. their input pins have no links.
 	for(UGameFlowNode* NodeAsset : GameFlowAsset->GetNodes())
 	{
-		UGameFlowGraphNode* GraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(NodeAsset, this);
+		UGameFlowGraphNode* GraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::RecreateNode(NodeAsset, this);
 		GraphNode->NodePosX = NodeAsset->GraphPosition.X;
 		GraphNode->NodePosY = NodeAsset->GraphPosition.Y;
 	}

@@ -131,3 +131,25 @@ UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UG
 	
 	return GraphNode;
 }
+
+UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::RecreateNode(UGameFlowNode* NodeAsset,
+	UGameFlowGraph* GameFlowGraph, FName NodeName, UEdGraphPin* FromPin)
+{
+	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NodeName, RF_Transactional);
+	// This ensures that we can find a given graph node by using
+	// the node asset GUID.
+	GraphNode->NodeGuid = NodeAsset->GUID;
+
+	// Create asset and respective graph node
+	GraphNode->SetNodeAsset(NodeAsset);
+	
+	// Add the graph node to the outer graph.
+	GameFlowGraph->AddNode(GraphNode, false, false);
+	
+	// Once we've completed creation and initialization process,
+	// notify graph node that it has successfully been placed
+	// inside the graph.
+	GraphNode->PostPlacedNewNode();
+
+	return GraphNode;
+}

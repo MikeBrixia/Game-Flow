@@ -33,10 +33,12 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 	FConnectionDrawingPolicy::DetermineWiringStyle(OutputPin, InputPin, Params);
 	
 	// Apply custom game flow connection style only when there is a debugged asset instance.
-	if (GraphObj->DebuggedAssetInstance != nullptr)
+	if (IsValid(GraphObj->DebuggedAssetInstance))
 	{
 		const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
 		const UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(FromNode->NodeGuid);
+
+		checkf(FromNodeAsset, TEXT("Node '%s' could not be found in the debugged asset instance"), *FromNode->GetName());
 		
 		UPinHandle* FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
 
