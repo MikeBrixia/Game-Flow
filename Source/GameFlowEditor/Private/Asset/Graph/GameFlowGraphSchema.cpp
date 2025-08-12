@@ -153,7 +153,7 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 		UEdGraphPin* SubstituteNodePin = SubstituteNode->FindPin(Pin->PinName);
 		// Have we found a pin with the same name in the substitute node?
 		// If not, try creating it.
-		if(SubstituteNodePin == nullptr)
+		if(!IsValid(SubstituteNode))
 		{
 			const bool bShouldAddInputPin = Pin->Direction == EGPD_Input && SubstituteNodeAsset->bCanAddInputPin
 								            && CurrentInputPinsNum > SubstituteInputPinsNum;
@@ -302,18 +302,27 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 		const UGameFlowNode* CurrentNodeAsset = CurrentNode->GetNodeAsset();
 		CurrentNode->bIsRebuilding = true;
 		
-		for(UPinHandle* OutputPinHandle: CurrentNodeAsset->GetPinsByDirection(EGPD_Output))
+		for(UPinHandle* OutputPinHandle : CurrentNodeAsset->GetPinsByDirection(EGPD_Output))
 		{
-			// If pin is not valid skip to next iteration, it cannot be processed.
-			if(!OutputPinHandle->IsValidHandle()) continue;
+			const bool bIsValidHandle = IsValid(OutputPinHandle) && OutputPinHandle->IsValidHandle();
+			// If the output pin is not valid, skip to the next iteration; it cannot be processed.
+			ensureMsgf(bIsValidHandle,
+				TEXT("Ensure condition failed: One of %s output pin handles is invalid; Pin rebuild was skipped."), *CurrentNodeAsset->GetName());
+			if(!bIsValidHandle) continue;
 			
 			for(const auto& Pin : OutputPinHandle->GetConnections())
 			{
 				const UGameFlowNode* ConnectedNode = Pin->GetNodeOwner();
 				const FName& ConnectedPinName = Pin->PinName;
 				
-				// If next node is invalid or input pin name is None, skip this iteration.
-				if(ConnectedNode == nullptr || ConnectedPinName.IsEqual(EName::None)) continue;
+				const bool bIsValidConnection = IsValid(ConnectedNode);
+				const bool bIsValidPinName = !ConnectedPinName.IsEqual(EName::None);
+				// If the next node is invalid or an input pin name is None, log a warning to the Unreal console and skip this iteration.
+				ensureMsgf(bIsValidConnection, TEXT("Ensure condition failed: %s output pin of %s node is connected to an invalid node."),
+					*OutputPinHandle->PinName.ToString(), *CurrentNodeAsset->GetName());
+				ensureMsgf(bIsValidPinName, TEXT("Ensure condition failed: %s output pin of %s node is connected to a PinHandle with an invalid pin name: '%s'"),
+					*OutputPinHandle->PinName.ToString(), *CurrentNodeAsset->GetName(), *ConnectedPinName.ToString());
+				if(!bIsValidConnection || !bIsValidPinName) continue;
 				
 				// Get connected graph node.
 				UGameFlowGraphNode* GraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
@@ -359,25 +368,35 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		{
 			PinHandle = NodeAsset->Inputs.FindRef(Pin->PinName);
 		}
-		
+
+		const bool bIsValidHandle = IsValid(PinHandle) && PinHandle->IsValidHandle();
 		// If pin is not valid skip to next iteration, it cannot be processed.
+		ensureMsgf(bIsValidHandle, TEXT("Ensure condition failed: '%s' pin handle of '%s' node is invalid; Pin rebuild was skipped."),
+			*Pin->PinName.ToString(), *NodeAsset->GetName());
 		if (PinHandle == nullptr || !PinHandle->IsValidHandle()) continue;
 		
 		for(const auto& ConnectedPinHandle : PinHandle->GetConnections())
 		{
 			const UGameFlowNode* ConnectedNode = ConnectedPinHandle->GetNodeOwner();
 			const FName& InPinName = PinHandle->PinName;
-			
+
+			const bool bIsValidNode = IsValid(ConnectedNode);
+			const bool bIsValidPinName = !InPinName.IsEqual(EName::None);
 			// If next node is invalid or input pin name is None, skip this iteration.
-			if (!IsValid(ConnectedNode) || InPinName.IsEqual(EName::None))
+			ensureMsgf(bIsValidNode, TEXT("Ensure condition failed: '%s' pin of '%s' node is connected to an invalid node."),
+				*PinHandle->PinName.ToString(), *NodeAsset->GetName());
+			ensureMsgf(bIsValidPinName, TEXT("Ensure condition failed: '%s' pin of '%s' node is connected to a PinHandle with an invalid pin name: '%s'"),
+				*PinHandle->PinName.ToString(), *NodeAsset->GetName(), *InPinName.ToString());
+			if (!bIsValidNode || !bIsValidPinName)
 				continue;
 			
 			const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
-
+			// If the connected node asset does not have a graph representation, skip connections rebuild. 
+			ensureMsgf(ConnectedGraphNode, TEXT("Ensure condition failed: node '%s' has no matching graph representation. Graph connection rebuild skipped"),
+				*ConnectedNode->GetName());
 			if (!IsValid(ConnectedGraphNode)) continue;
 
 			UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
-		
 			// After finding the current node output pin and the next node input pin,
 			// create a connection between the two.
 			TryCreateConnection(Pin, OtherPin);

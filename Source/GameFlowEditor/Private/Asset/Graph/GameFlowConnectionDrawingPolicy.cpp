@@ -38,7 +38,11 @@ void FGameFlowConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputP
 		const UGameFlowGraphNode* FromNode = CastChecked<UGameFlowGraphNode>(OutputPin->GetOwningNode());
 		const UGameFlowNode* FromNodeAsset = GraphObj->DebuggedAssetInstance->GetNodeByGUID(FromNode->NodeGuid);
 
-		checkf(FromNodeAsset, TEXT("Node '%s' could not be found in the debugged asset instance"), *FromNode->GetName());
+		const bool bIsValidSrcAsset = IsValid(FromNodeAsset);
+		// If src node asset is invalid log a warning and abort wire debugging.
+		ensureMsgf(bIsValidSrcAsset, TEXT("Ensure condition failed: node '%s' logical instance could not be found in the debugged asset instance, wire debug was aborted"),
+			*FromNode->GetName());
+		if (!bIsValidSrcAsset) return;
 		
 		UPinHandle* FromPinHandle = FromNodeAsset->GetPinByName(OutputPin->PinName, EGPD_Output);
 
