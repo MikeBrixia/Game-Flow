@@ -185,6 +185,14 @@ void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 	{
 		ModifiedNodes.Add(CastChecked<const UGameFlowGraphNode>(Node));
 	}
+
+	// Handle the case where added nodes are selected upon creation.
+	if(Action.Action == (EEdGraphActionType)(GRAPHACTION_AddNode | GRAPHACTION_SelectNode))
+	{
+		Super::NotifyGraphChanged(Action);
+		OnNodesAdded(ModifiedNodes);
+		OnGraphNodesSelected.ExecuteIfBound(ModifiedNodes);
+	}
 	
 	// We rebuild the graph only on Add and remove node actions, selection node
 	// will keep it as it is to avoid bGraphDataInvalid error.
@@ -253,8 +261,18 @@ void UGameFlowGraph::OnNodesAdded(const TSet<const UGameFlowGraphNode*> AddedNod
 {
 	for(const UGameFlowGraphNode* GraphNode : AddedNodes)
 	{
-		// Add node to the game flow asset.
-		GameFlowAsset->AddNode(GraphNode->GetNodeAsset());
+		UGameFlowNode* Node = GraphNode->GetNodeAsset();
+		// Input and output nodes are also stored in separates maps, so we need to register them.
+		if(Node->IsA(UGameFlowNode_Input::StaticClass()))
+		{
+			GameFlowAsset->CustomInputs.Add(Node->GetFName(), CastChecked<UGameFlowNode_Input>(Node));
+		}
+		else if(Node->IsA(UGameFlowNode_Output::StaticClass()))
+		{
+			GameFlowAsset->CustomOutputs.Add(Node->GetFName(), CastChecked<UGameFlowNode_Output>(Node));
+		}
+		// Register observed node inside game flow asset.
+		GameFlowAsset->AddNode(Node);
 	}
 }
 

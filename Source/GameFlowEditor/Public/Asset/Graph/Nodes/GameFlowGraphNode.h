@@ -41,18 +41,13 @@ public:
 	UPROPERTY()
 	bool bIsBeingCopyPasted = false;
 
-	/** If this node has been copy-pasted, this property will be set to
-	    the node it was copied from. */
-	UPROPERTY()
-	TObjectPtr<UGameFlowGraphNode> SrcNode;
-	
 private:
 	/** The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY(Instanced)
 	TObjectPtr<UGameFlowNode> NodeAsset;
 	
 	/** Node asset info red from global GameFlow plugin settings. */
-	UPROPERTY(TextExportTransient)
+	UPROPERTY()
 	FGameFlowNodeInfo Info;
 
 	/** List of game flow graph node context menu command actions. */
@@ -109,6 +104,7 @@ public:
 	virtual void PostEditImport() override;
 	
 	virtual void PostPlacedNewNode() override;
+	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
 	virtual void DestroyNode() override;
 	virtual void OnRenameNode(const FString& NewName) override;
 	virtual void ReconstructNode() override;

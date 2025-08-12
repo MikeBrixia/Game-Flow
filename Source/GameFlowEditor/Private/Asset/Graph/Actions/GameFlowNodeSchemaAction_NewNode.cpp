@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
-
 #include "ScopedTransaction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 
@@ -23,10 +22,8 @@ UEdGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction(UEdGr
 	}
 
 	// Create the actual graph node.
-	UGameFlowGraphNode* GraphNode = CreateNode(NodeClass, GameFlowGraph, EName::None, FromPin);
-    // Position it at mouse click position.
-	GraphNode->NodePosX = Location.X;
-	GraphNode->NodePosY = Location.Y;
+	UGameFlowGraphNode* GraphNode = CreateNode(NodeClass, GameFlowGraph, Location, EName::None, FromPin);
+	
 	return GraphNode;
 }
 
@@ -59,97 +56,46 @@ void FGameFlowNodeSchemaAction_CreateOrDestroyNode::PerformAction_DestroyNode(UG
 }
 
 UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph,
-                                                                  FName NodeName, UEdGraphPin* FromPin)
+   FVector2D Location, FName NodeName, UEdGraphPin* FromPin)
 {
 	UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
-	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
 	
 	UGameFlowNode* NewNode = NewObject<UGameFlowNode>(GameFlowAsset, NodeClass, NodeName, RF_Transactional);
-
-	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NAME_None, RF_Transactional);
-	if(FromPin != nullptr)
-	{
-		// Connect the dragged pin to the new graph node default pin.
-		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode);
-	}
+	UGameFlowGraphNode* NewGraphNode = CreateNode(NewNode, GameFlowGraph, Location, NodeName, FromPin);
 	
-	// Initialize GUID.
-	GraphNode->CreateNewGuid();
-	NewNode->GUID = GraphNode->NodeGuid;
-	
-	if(NewNode->IsA(UGameFlowNode_Input::StaticClass()))
-	{
-		// Register input node inside game flow asset.
-		GameFlowAsset->CustomInputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Input>(NewNode));
-	}
-	else if(NewNode->IsA(UGameFlowNode_Output::StaticClass()))
-	{
-		// Register output node inside game flow asset.
-		GameFlowAsset->CustomOutputs.Add(NewNode->GetFName(), CastChecked<UGameFlowNode_Output>(NewNode));
-	}
-	GameFlowAsset->AddNode(NewNode);
-	
-	// Assign node asset to graph node.
-	GraphNode->SetNodeAsset(NewNode);
-	
-	// Add the graph node to the outer graph.
-	GameFlowGraph->AddNode(GraphNode, false, false);
-	
-	// Once we've completed creation and initialization process,
-	// notify graph node that it has successfully been placed
-	// inside the graph.
-	GraphNode->PostPlacedNewNode();
-	
-	return GraphNode;
+	return NewGraphNode;
 }
 
 UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode* NodeAsset,
-	UGameFlowGraph* GameFlowGraph, FName NodeName, UEdGraphPin* FromPin)
+	UGameFlowGraph* GameFlowGraph, FVector2D Location, FName NodeName, UEdGraphPin* FromPin)
 {
-	const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GameFlowGraph->GetSchema());
-	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NodeName, RF_Transactional);
-
-	if(FromPin != nullptr)
-	{
-		// Connect the dragged pin to the new graph node default pin.
-		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, GraphNode);
-	}
+	const FName FullNodeName = NodeName.IsNone()?  NodeName : FName("GameFlowGraphNode_" + NodeName.ToString());
+	UGameFlowGraphNode* TemplateGraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, FullNodeName, RF_Transactional);
 	
-	// Initialize UedGraphNode properties.
-	GraphNode->CreateNewGuid();
+	// Node asset must be set on the template node before creating the final
+	// node with the schema action.
+	TemplateGraphNode->SetNodeAsset(NodeAsset);
+	TemplateGraphNode->CreateNewGuid();
+	NodeAsset->GUID = TemplateGraphNode->NodeGuid;
 	
-	// Create asset and respective graph node
-	GraphNode->SetNodeAsset(NodeAsset);
-	
-	// Add the graph node to the outer graph.
-	GameFlowGraph->AddNode(GraphNode, false, false);
-	
-	// Once we've completed creation and initialization process,
-	// notify graph node that it has successfully been placed
-	// inside the graph.
-	GraphNode->PostPlacedNewNode();
-	
-	return GraphNode;
+	UEdGraphNode* NewNode = FEdGraphSchemaAction_NewNode::CreateNode(GameFlowGraph, FromPin, Location, TemplateGraphNode);
+	// Workaround to ensure Graph node and logical node shares the same GUID
+	// while also maintaining Unreal ed graph creation workflow.
+	NewNode->NodeGuid = NodeAsset->GUID;
+	return CastChecked<UGameFlowGraphNode>(NewNode);
 }
 
 UGameFlowGraphNode* FGameFlowNodeSchemaAction_CreateOrDestroyNode::RecreateNode(UGameFlowNode* NodeAsset,
-	UGameFlowGraph* GameFlowGraph, FName NodeName, UEdGraphPin* FromPin)
+	UGameFlowGraph* GameFlowGraph, FName NodeName)
 {
-	UGameFlowGraphNode* GraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, NodeName, RF_Transactional);
-	// This ensures that we can find a given graph node by using
-	// the node asset GUID.
-	GraphNode->NodeGuid = NodeAsset->GUID;
-
+	const FName FullNodeName = NodeName.IsNone()?  NodeName : FName("GameFlowGraphNode_" + NodeName.ToString());
+	UGameFlowGraphNode* TemplateGraphNode = NewObject<UGameFlowGraphNode>(GameFlowGraph, FullNodeName, RF_Transactional);
 	// Create asset and respective graph node
-	GraphNode->SetNodeAsset(NodeAsset);
+	TemplateGraphNode->SetNodeAsset(NodeAsset);
 	
-	// Add the graph node to the outer graph.
-	GameFlowGraph->AddNode(GraphNode, false, false);
-	
-	// Once we've completed creation and initialization process,
-	// notify graph node that it has successfully been placed
-	// inside the graph.
-	GraphNode->PostPlacedNewNode();
+	UEdGraphNode* NewNode = FEdGraphSchemaAction_NewNode::CreateNode(GameFlowGraph, nullptr, NodeAsset->GraphPosition, TemplateGraphNode);
+	// This ensures that we can find a given graph node by using the node asset GUID.
+	NewNode->NodeGuid = NodeAsset->GUID;
 
-	return GraphNode;
+	return CastChecked<UGameFlowGraphNode>(NewNode);;
 }

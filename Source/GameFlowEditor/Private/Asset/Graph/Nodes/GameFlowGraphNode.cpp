@@ -171,8 +171,18 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 	
 	// Initialize node.
 	Initialize();
-	AllocateDefaultPins();
 	ConfigureContextMenuAction();
+}
+
+void UGameFlowGraphNode::AutowireNewNode(UEdGraphPin* FromPin)
+{
+	Super::AutowireNewNode(FromPin);
+
+	if (FromPin != nullptr && !FromPin->IsPendingKill())
+	{
+		const UGameFlowGraphSchema* GameFlowGraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
+		GameFlowGraphSchema->ConnectToDefaultPin(FromPin, this);
+	}
 }
 
 bool UGameFlowGraphNode::CanDuplicateNode() const

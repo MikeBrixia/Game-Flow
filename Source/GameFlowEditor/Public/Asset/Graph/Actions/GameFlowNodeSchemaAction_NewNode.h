@@ -53,7 +53,7 @@ public:
 	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
 	 * @return A brand new and ready-to-use game flow graph node.
 	 */
-	static UGameFlowGraphNode* CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph, FName NodeName =EName::None, UEdGraphPin* FromPin = nullptr);
+	static UGameFlowGraphNode* CreateNode(UClass* NodeClass, UGameFlowGraph* GameFlowGraph, FVector2D Location, FName NodeName = EName::None, UEdGraphPin* FromPin = nullptr);
 
 	/**
 	 * Create a brand new game flow node.
@@ -62,7 +62,7 @@ public:
 	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
 	 * @return A brand new and ready-to-use game flow graph node.
 	 */
-	static UGameFlowGraphNode* CreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, FName NodeName =EName::None, UEdGraphPin* FromPin = nullptr);
+	static UGameFlowGraphNode* CreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, FVector2D Location, FName NodeName = EName::None, UEdGraphPin* FromPin = nullptr);
 
 	/**
 	 * Recreate a graph node using asset data. Should be used when reconstructing the graph.
@@ -71,5 +71,5 @@ public:
 	 * @param FromPin valid if this node has been created by dragging another node pin, nullptr otherwise; Can be nullptr.
 	 * @return The reconstructed graph node or nullptr if it could not be reconstructed safely.
 	 */
-	static UGameFlowGraphNode* RecreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, FName NodeName =EName::None, UEdGraphPin* FromPin = nullptr);
+	static UGameFlowGraphNode* RecreateNode(UGameFlowNode* NodeAsset, UGameFlowGraph* GameFlowGraph, FName NodeName = EName::None);
 };

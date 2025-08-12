@@ -108,11 +108,12 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
 
 	// Create standard input node.
-	FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Input::StaticClass(), GameFlowGraph, "Start");
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Input::StaticClass(), GameFlowGraph,
+		FVector2D::ZeroVector, "Start");
 	
 	// Create standard output node.
-	UGameFlowGraphNode* OutputGraphNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Output::StaticClass(), GameFlowGraph, "Finish");
-	OutputGraphNode->NodePosX += 600.f;
+	FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Output::StaticClass(), GameFlowGraph,
+		FVector2D(600, 0), "Finish");
 
 	// Mark the asset as already been opened at least one time.
 	// Doing this will avoid creating duplicate default nodes.
@@ -138,10 +139,8 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 		return PinObj->Direction == EGPD_Output;
 	}).Num();
 	
-	UGameFlowGraphNode* SubstituteNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(SubstituteNodeAsset, GameFlowGraph);
-	// Place the new node at the same position of the old one.
-	SubstituteNode->NodePosX = Node->NodePosX;
-	SubstituteNode->NodePosY = Node->NodePosY;
+	UGameFlowGraphNode* SubstituteNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(SubstituteNodeAsset,
+		GameFlowGraph, FVector2D(Node->NodePosX, Node->NodePosY));
 	
 	// If substitute node has variable pins, try to match the
 	// image of the old node.
