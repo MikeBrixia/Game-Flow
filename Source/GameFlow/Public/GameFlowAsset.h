@@ -55,7 +55,7 @@ public:
 	 * Create an instance from this game flow asset.
 	 */
     UGameFlowAsset* CreateInstance(UObject* Context);
-
+	
 protected:
 	
 	/**
@@ -77,7 +77,7 @@ public:
 	
 	/** The source asset from which this node was duplicated. nullptr if this node is the source asset. */
 	UPROPERTY()
-	TObjectPtr<UGameFlowAsset> TemplateAsset;
+	TSoftObjectPtr<UGameFlowAsset> TemplateAsset;
 	
 private:
 	/* The nodes currently being executed. */

@@ -110,8 +110,6 @@ void FGameFlowEditorModule::ForwardEditorSettingsToRuntimeSettings()
 	EditorSettings->NodesTypes.GenerateKeyArray(Options);
 	RuntimeSettings->Options = Options;
 	RuntimeSettings->WireHighlightDuration = EditorSettings->WireHighlightDuration;
-
-	UE_LOG(LogGameFlow, Display, TEXT("At init time: %f"), RuntimeSettings->WireHighlightDuration)
 }
 
 void FGameFlowEditorModule::RemoveCppScriptTemplates()

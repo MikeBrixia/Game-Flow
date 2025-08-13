@@ -33,7 +33,6 @@ void SGameFlowNodePin::Construct(const FArguments& InArgs, UEdGraphPin* Pin)
 
 FReply SGameFlowNodePin::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	UE_LOG(LogGameFlow, Display, TEXT("OnMouseButtonDown"));
 	return SGraphPinExec::OnMouseButtonDown(MyGeometry, MouseEvent);
 }
 

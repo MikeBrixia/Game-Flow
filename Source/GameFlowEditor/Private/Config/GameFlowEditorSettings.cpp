@@ -12,7 +12,6 @@ UGameFlowEditorSettings::UGameFlowEditorSettings()
 
 	if (NodesTypes.Num() == 0)
 	{
-		UE_LOG(LogGameFlow, Display, TEXT("Initializing Game Flow node types"));
 		FGameFlowNodeInfo ConditionalNodeInfo;
 		ConditionalNodeInfo.TitleBarColor = FLinearColor::Gray;
 		NodesTypes.Add(TEXT("Conditional"), ConditionalNodeInfo);
@@ -41,6 +40,8 @@ UGameFlowEditorSettings::UGameFlowEditorSettings()
 		DebugNodeInfo.TitleBarColor = FLinearColor(0.21, 0.0, 0.22, 1.0);
 		NodesTypes.Add(TEXT("Debug"), DebugNodeInfo);
 	}
+
+	UE_LOG(LogGameFlow, Display, TEXT("Game Flow default settings initialized successfully!"));
 }
 
 

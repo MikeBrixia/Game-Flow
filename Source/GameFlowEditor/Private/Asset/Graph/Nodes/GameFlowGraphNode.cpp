@@ -404,7 +404,6 @@ void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
-	UE_LOG(LogGameFlow, Display, TEXT("Allocating default pins..."))
 	// Read input pins names from node asset and create graph pins.
 	for (const FName& PinName : NodeAsset->GetInputPinsNames())
 	{
@@ -423,8 +422,7 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
 	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
-
-	UE_LOG(LogGameFlow, Display, TEXT("Creating node contextual menu..."))
+	
 	Super::GetNodeContextMenuActions(Menu, Context);
 	
 	// When only the node is selected, show available context actions.

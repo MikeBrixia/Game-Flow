@@ -60,7 +60,7 @@ UGameFlowGraphNode* FGameFlowSchemaAction_ReplaceNode::ReplaceNode(UGameFlowGrap
 	}
 	else
 	{
-		UE_LOG(LogGameFlow, Error, TEXT("'%s' cannot be replaced! try overriding it's CanBeReplaced() function"),
+		UE_LOG(LogGameFlow, Warning, TEXT("'%s' cannot be replaced! try overriding the CanBeReplaced() function"),
 			*Node_ToReplace->GetName())
 	}
 

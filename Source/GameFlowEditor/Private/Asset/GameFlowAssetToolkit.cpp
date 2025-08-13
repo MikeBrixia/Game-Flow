@@ -28,7 +28,7 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	// The asset being edited.
 	Asset = CastChecked<UGameFlowAsset>(InObjects[0]);
 	
-	// Create logical and graphical game flow graph.
+	// Create the logical and graphical game flow graph.
 	CreateGraph();
 	
 	// Initialize all different components of the Game Flow editor.
@@ -42,8 +42,8 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	CreateAssetToolbar();
     
 	GEditor->RegisterForUndo(this);
-	FEditorDelegates::PostPIEStarted.AddRaw(this, &GameFlowAssetToolkit::OnPostPIEStarted);
-	FEditorDelegates::EndPIE.AddRaw(this, &GameFlowAssetToolkit::OnPIEFinish);
+	FEditorDelegates::PostPIEStarted.AddSP(this, &GameFlowAssetToolkit::OnPostPIEStarted);
+	FEditorDelegates::EndPIE.AddSP(this, &GameFlowAssetToolkit::OnPIEFinish);
 }
 
 
@@ -477,7 +477,6 @@ void GameFlowAssetToolkit::ExecuteUndoRedo()
 
 void GameFlowAssetToolkit::DisplaySelectedNodes(TSet<const UGameFlowGraphNode*> Nodes)
 {
-	UE_LOG(LogGameFlow, Display, TEXT("Displaying selected nodes: %d"), Nodes.Num());
 	// Array of selected nodes assets.
 	TArray<UObject*> SelectedAssets;
 	

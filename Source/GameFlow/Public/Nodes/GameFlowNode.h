@@ -35,11 +35,11 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 public:
 
 	/** All the node input pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
 	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();

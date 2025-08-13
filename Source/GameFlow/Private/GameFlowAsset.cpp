@@ -36,20 +36,21 @@ void UGameFlowAsset::TerminateExecution()
 	}
 }
 
-#if WITH_EDITOR
-
-
 UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context)
 {
 	UGameFlowAsset* Instance = nullptr;
 	if(Context != nullptr && IsAsset())
 	{
 		Instance = DuplicateObject(this, Context);
+#if WITH_EDITOR
 		Instance->TemplateAsset = this;
+#endif
 	}
 	
 	return Instance;
 }
+
+#if WITH_EDITOR
 
 void UGameFlowAsset::AddActiveNode(UGameFlowNode* Node)
 {

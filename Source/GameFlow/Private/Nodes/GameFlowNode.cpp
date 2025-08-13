@@ -3,6 +3,7 @@
 #include "Nodes/GameFlowNode.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
+#include "Engine/StreamableManager.h"
 #include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
@@ -265,7 +266,9 @@ void UGameFlowNode::TryExecute(FName PinName)
 	// If we've hit a breakpoint, try opening the asset editor if it is closed.
 	if(bBreakpointEnabled)
 	{
-		AssetViewUtils::OpenEditorForAsset(OwnerAsset->TemplateAsset);
+		FStreamableManager StreamableManager;
+		UGameFlowAsset* LoadedTemplate = StreamableManager.LoadSynchronous(OwnerAsset->TemplateAsset);
+		AssetViewUtils::OpenEditorForAsset(LoadedTemplate);
 	}
 	
 	if(OwnerAsset->TemplateAsset != nullptr)

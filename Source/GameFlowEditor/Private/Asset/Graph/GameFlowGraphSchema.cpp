@@ -381,7 +381,7 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 
 			const bool bIsValidNode = IsValid(ConnectedNode);
 			const bool bIsValidPinName = !InPinName.IsEqual(EName::None);
-			// If next node is invalid or input pin name is None, skip this iteration.
+			// If the next node is invalid or the input pin name is None, skip this iteration.
 			ensureMsgf(bIsValidNode, TEXT("Ensure condition failed: '%s' pin of '%s' node is connected to an invalid node."),
 				*PinHandle->PinName.ToString(), *NodeAsset->GetName());
 			ensureMsgf(bIsValidPinName, TEXT("Ensure condition failed: '%s' pin of '%s' node is connected to a PinHandle with an invalid pin name: '%s'"),
