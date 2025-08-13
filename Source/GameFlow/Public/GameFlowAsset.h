@@ -13,7 +13,7 @@ class UGameFlowNode_FlowControl_Subgraph;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnFinish, UGameFlowAsset*)
 
 /**
- * Game Flow Asset are designed to help designer create their
+ * Game Flow asset is designed to help designer create their
  * own scripts to handle world and game events in a node-based
  * editor
  */
@@ -93,8 +93,8 @@ public:
 
 	/**
 	 * @brief Deactivate a node by removing it from the active nodes
-	 *        list(Marking it as finished).
-	 * @param Node The node to deactivate(Mark as finished).
+	 *        list (Marking it as finished).
+	 * @param Node The node to deactivate (Mark as finished).
 	 */
 	void RemoveActiveNode(UGameFlowNode* Node);
 	
@@ -104,7 +104,6 @@ public:
 	 * @remarks Editor-only.
 	 * @return The currently executed node
 	 */
-	UFUNCTION(BlueprintGetter, Category="Game Flow")
 	TArray<UGameFlowNode*> GetActiveNodes() const { return ActiveNodes; }
 	
 	void AddNode(UGameFlowNode* Node);
@@ -112,7 +111,7 @@ public:
 	TArray<UGameFlowNode*> GetNodes() const;
 	
 	/**
-	 * Get a node by it's globally unique identifier.
+	 * Get a node by its globally unique identifier.
 	 * @remarks Editor-only.
 	 */
 	UGameFlowNode* GetNodeByGUID(FGuid GUID) const;

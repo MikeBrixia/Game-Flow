@@ -59,13 +59,17 @@ protected:
     
 	/**
 	 * @brief Call this function to trigger an output and execute the next node.
-	 * @param bFinish If true, this node will be the only output and node will be unloaded.
+	 * @param bFinish If true, this node will be the only output and will be unloaded.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
 	FORCEINLINE void FinishExecute(bool bFinish);
 
 	UFUNCTION(BlueprintCallable, Category="Game Flow")
 	FORCEINLINE void TriggerOutputPin(FName PinName);
+	
+	/** Returns a list of all types of nodes defined inside Project Setting at Plugins/GameFlow. */
+	UFUNCTION(BlueprintGetter, CallInEditor)
+	TArray<FName> GetNodeTypeOptions() const;
 	
 // Editor-only functionality used by external editors to manipulate this node.
 #if WITH_EDITORONLY_DATA
@@ -143,10 +147,6 @@ public:
 	 * @returns True if node is currently running, false otherwise.
 	 */
 	bool IsActiveNode() const;
-
-	/** Returns a list of all types of nodes defined inside Project Setting at Plugins/GameFlow. */
-	UFUNCTION(CallInEditor)
-	TArray<FName> GetNodeTypeOptions() const;
     
 	/** Defines the tint and icon path for the node. */
 	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
