@@ -40,16 +40,19 @@ public:
 	 * @param Asset The asset the graph will be responsible to edit.
 	 * @return A pointer to the created graph.
 	 */
-	template<typename TGraphType, typename TGraphSchemaType>
+	template<
+		     typename TGraphType = UGameFlowGraph,
+	         typename TGraphSchemaType = UGameFlowGraphSchema,
+	         typename = TEnableIf<TIsDerivedFrom<TGraphType, UGameFlowGraph>::Value>::Type,
+	         typename = TEnableIf<TIsDerivedFrom<TGraphSchemaType, UGameFlowGraphSchema>::Value>::Type
+	        >
 	static TGraphType* CreateGraph(UObject* Asset)
 	{
 		UClass* GraphClass = TGraphType::StaticClass();
 		UClass* SchemaClass = TGraphSchemaType::StaticClass();
-
-		// Make sure we're trying to create a valid graph.
-		checkf(Asset, TEXT("Asset cannot be nullptr when creating graph"));
-		checkf(GraphClass != nullptr && GraphClass->IsChildOf(UEdGraph::StaticClass()), TEXT("Invalid graph class! Your graph class should derive from UEdGraph"));
-		checkf(SchemaClass != nullptr && SchemaClass->IsChildOf(UEdGraphSchema::StaticClass()), TEXT("Invalid schema class! Your schema class should derive from UEdGraphSchema"));
+		
+		ensureMsgf(Asset, TEXT("Ensure condition failed: Asset cannot be nullptr when creating graph"));
+		if (!Asset->IsValidLowLevel()) return nullptr;
 
 		// Create and initialize the Game Flow graph.
 		UGameFlowGraph* Graph = Cast<UGameFlowGraph>(FBlueprintEditorUtils::CreateNewGraph(Asset, "Flow Graph", GraphClass, SchemaClass));

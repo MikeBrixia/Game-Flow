@@ -10,7 +10,7 @@
 
 /**
  * Start execution of a game flow asset from another graph.
- * @remark Instanced subgraph will be a child of current graph.
+ * @remark Instanced subgraph will be a child of the current graph.
  */
 UCLASS(NotBlueprintType, Blueprintable, DisplayName="Subgraph", meta=(Category="Flow Control"))
 class GAMEFLOW_API UGameFlowNode_FlowControl_Subgraph : public UGameFlowNode
@@ -18,22 +18,23 @@ class GAMEFLOW_API UGameFlowNode_FlowControl_Subgraph : public UGameFlowNode
 	GENERATED_BODY()
 
 public:
-
-	/** Reference to the asset you want to instance. */
+	/** The asset you want to instance. */
 	UPROPERTY(EditAnywhere, Category="Game Flow|Subgraph", meta=(GF_Debuggable="enabled"))
 	TSoftObjectPtr<UGameFlowAsset> Asset;
 
+private:
+	/** The instance of the referenced asset. */
+	UPROPERTY(DuplicateTransient, Transient)
+	TObjectPtr<UGameFlowAsset> InstancedAsset;
+
+public:
 	UGameFlowNode_FlowControl_Subgraph();
-	
 	virtual void Execute_Implementation(const FName PinName) override;
 
 #if WITH_EDITOR
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
-	/** The instance of the referenced asset. */
-	TObjectPtr<UGameFlowAsset> InstancedAsset;
-	
 	void ReconstructSubgraph();
     void ConstructInputPins();
     void ConstructOutputPins();

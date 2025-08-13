@@ -13,7 +13,7 @@ class UGameFlowNode_FlowControl_Subgraph;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnFinish, UGameFlowAsset*)
 
 /**
- * Game Flow InstancedAsset are designed to help designer create their
+ * Game Flow Asset are designed to help designer create their
  * own scripts to handle world and game events in a node-based
  * editor
  */
@@ -26,30 +26,8 @@ class GAMEFLOW_API UGameFlowAsset : public UObject
 	
 	GENERATED_BODY()
 
-#if WITH_EDITORONLY_DATA
-	
 public:
-	/** All nodes assets instanced by the user.*/
-	UPROPERTY(VisibleAnywhere)
-	TMap<FGuid, UGameFlowNode*> Nodes;
-	
-	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
-	UPROPERTY()
-	bool bHasAlreadyBeenOpened;
-	
-	/** The source asset from which this node was duplicated. nullptr if this node is the source asset. */
-	UPROPERTY()
-	TObjectPtr<UGameFlowAsset> TemplateAsset;
-	
-private:
-	/* The nodes currently being executed. */
-	UPROPERTY(BlueprintGetter="GetActiveNodes")
-	TArray<UGameFlowNode*> ActiveNodes;
-
-#endif
-
-public:
-	/** If true, game flow subsystem will not be allowed to create more than one instance of this asset.*/
+	/** If true, the game flow subsystem will not be allowed to create more than one instance of this asset.*/
 	UPROPERTY(EditDefaultsOnly, Category="Config")
 	bool bShouldBeSingleton;
 	
@@ -72,19 +50,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Game Flow", meta=(AdvancedDisplay="EntryPointName"))
 	void Execute(FName EntryPointName = "Start");
-	
-	/**
-	 * @brief Mark a game flow node as active(currently being executed).
-	 * @param Node The new current executed node.
-	 */
-	void AddActiveNode(UGameFlowNode* Node);
-
-	/**
-	 * @brief Deactivate a node by removing it from the active nodes
-	 *        list(Marking it as finished).
-	 * @param Node The node to deactivate(Mark as finished).
-	 */
-	void RemoveActiveNode(UGameFlowNode* Node);
 
 	/**
 	 * Create an instance from this game flow asset.
@@ -96,12 +61,43 @@ protected:
 	/**
 	* @brief Call this method when you need to terminate
 	* the execution of this GameFlow object.
-	 */
+	*/
 	void TerminateExecution();
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
+
+public:
+	/** All the node assets instanced by the user.*/
+	UPROPERTY(VisibleAnywhere)
+	TMap<FGuid, UGameFlowNode*> Nodes;
+	
+	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
+	UPROPERTY()
+	bool bHasAlreadyBeenOpened;
+	
+	/** The source asset from which this node was duplicated. nullptr if this node is the source asset. */
+	UPROPERTY()
+	TObjectPtr<UGameFlowAsset> TemplateAsset;
+	
+private:
+	/* The nodes currently being executed. */
+	UPROPERTY(DuplicateTransient, Transient)
+	TArray<UGameFlowNode*> ActiveNodes;
 	
 public:
+	/**
+     * @brief Mark a game flow node as active(currently being executed).
+     * @param Node The new current executed node.
+     */
+	void AddActiveNode(UGameFlowNode* Node);
+
+	/**
+	 * @brief Deactivate a node by removing it from the active nodes
+	 *        list(Marking it as finished).
+	 * @param Node The node to deactivate(Mark as finished).
+	 */
+	void RemoveActiveNode(UGameFlowNode* Node);
+	
 	/**
 	 * @brief Get the nodes which are currently being executed
 	 *        by the Game Flow asset.

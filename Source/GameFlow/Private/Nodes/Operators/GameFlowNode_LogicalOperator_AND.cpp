@@ -5,12 +5,17 @@
 
 UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
 {
-	// Initialize AND node as a conditional node.
-	TypeName = "Conditional";
-
 	// Initialize AND operator I/O default ports
 	ConditionalPorts.Add(false);
 	ConditionalPorts.Add(false);
+
+	ActiveInputs = 0;
+	
+#if WITH_EDITOR
+	// Initialize properties.
+	TypeName = "Conditional";
+	bCanAddInputPin = true;
+	
 	for(int i = 0; i < ConditionalPorts.Num(); i++)
 	{
 		const int PortNumber = i + 1;
@@ -19,9 +24,9 @@ UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
 		AddInputPin(PortName);
 	}
 	bCanAddInputPin = true;
-	ActiveInputs = 0;
 	
 	AddOutputPin("Out");
+#endif
 }
 
 void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName PinName)

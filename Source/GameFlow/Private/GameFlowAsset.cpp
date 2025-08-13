@@ -5,7 +5,9 @@
 
 UGameFlowAsset::UGameFlowAsset()
 {
+#if WITH_EDITOR
 	this->bHasAlreadyBeenOpened = false;
+#endif
 }
 
 void UGameFlowAsset::Execute(FName EntryPointName)
@@ -14,22 +16,6 @@ void UGameFlowAsset::Execute(FName EntryPointName)
 	if(RootNode != nullptr)
 	{
 		RootNode->TryExecute("Exec");
-	}
-}
-
-void UGameFlowAsset::AddActiveNode(UGameFlowNode* Node)
-{
-	if(Node != nullptr)
-	{
-		ActiveNodes.Add(Node);
-	}
-}
-
-void UGameFlowAsset::RemoveActiveNode(UGameFlowNode* Node)
-{
-	if(Node != nullptr)
-	{
-		ActiveNodes.Remove(Node);
 	}
 }
 
@@ -50,6 +36,9 @@ void UGameFlowAsset::TerminateExecution()
 	}
 }
 
+#if WITH_EDITOR
+
+
 UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context)
 {
 	UGameFlowAsset* Instance = nullptr;
@@ -62,7 +51,21 @@ UGameFlowAsset* UGameFlowAsset::CreateInstance(UObject* Context)
 	return Instance;
 }
 
-#if WITH_EDITOR
+void UGameFlowAsset::AddActiveNode(UGameFlowNode* Node)
+{
+	if(Node != nullptr)
+	{
+		ActiveNodes.Add(Node);
+	}
+}
+
+void UGameFlowAsset::RemoveActiveNode(UGameFlowNode* Node)
+{
+	if(Node != nullptr)
+	{
+		ActiveNodes.Remove(Node);
+	}
+}
 
 void UGameFlowAsset::AddNode(UGameFlowNode* Node)
 {

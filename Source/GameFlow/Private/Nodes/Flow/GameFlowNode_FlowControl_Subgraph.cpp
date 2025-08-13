@@ -6,7 +6,9 @@
 
 UGameFlowNode_FlowControl_Subgraph::UGameFlowNode_FlowControl_Subgraph()
 {
+#if WITH_EDITOR
 	TypeName = "Conditional";
+#endif
 }
 
 void UGameFlowNode_FlowControl_Subgraph::Execute_Implementation(const FName PinName)

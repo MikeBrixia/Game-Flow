@@ -5,14 +5,17 @@
 
 UGameFlowNode_Debug_Log::UGameFlowNode_Debug_Log()
 {
+	
+#if WITH_EDITOR
 	AddInputPin("Exec");
 	AddOutputPin("Out");
+	TypeName = "Debug";
+#endif
 	
 	bShouldLogToConsole = false;
 	DebugMessage = "Hello!";
 	Time = 5.f;
 	DebugMessageColor = FColor::Cyan;
-	TypeName = "Debug";
 }
 
 void UGameFlowNode_Debug_Log::Execute_Implementation(const FName PinName)

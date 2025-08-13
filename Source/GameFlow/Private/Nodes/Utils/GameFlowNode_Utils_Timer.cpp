@@ -6,13 +6,9 @@
 
 UGameFlowNode_Utils_Timer::UGameFlowNode_Utils_Timer()
 {
+#if WITH_EDITOR
 	TypeName = "Latent";
 
-	Time = 2.f;
-	StepTime = 0.f;
-	
-	bLoop = false;
-	
 	AddInputPin("Start");
 	AddInputPin("Stop");
 	AddInputPin("Skip");
@@ -22,6 +18,12 @@ UGameFlowNode_Utils_Timer::UGameFlowNode_Utils_Timer()
 	AddOutputPin("Stopped");
 	AddOutputPin("Step");
 	AddOutputPin("Skipped");
+
+#endif
+	Time = 2.f;
+	StepTime = 0.f;
+	
+	bLoop = false;
 }
 
 void UGameFlowNode_Utils_Timer::Execute_Implementation(const FName PinName)

@@ -7,6 +7,7 @@
 #include "ScopedTransaction.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
+#include "Asset/Graph/Actions/GameFlowNodeSchemaAction_DestroyNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "HAL/PlatformApplicationMisc.h"
@@ -163,8 +164,10 @@ void SGameFlowGraph::OnDeleteNodes()
 	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
 	for(UGameFlowGraphNode* SelectedNode : SelectedNodes)
 	{
-		FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
-		DestroyNodeAction.PerformAction_DestroyNode(SelectedNode);
+		FGameFlowNodeSchemaAction_DestroyNode DestroyNodeAction;
+		DestroyNodeAction.NodeToDestroy = SelectedNode;
+		DestroyNodeAction.PerformAction(SelectedNode->GetGraph(), nullptr,
+			FVector2D(SelectedNode->NodePosX, SelectedNode->NodePosY), false);
 	}
 }
 

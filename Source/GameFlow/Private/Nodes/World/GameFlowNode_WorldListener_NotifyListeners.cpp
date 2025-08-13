@@ -6,10 +6,12 @@
 
 UGameFlowNode_WorldListener_NotifyListeners::UGameFlowNode_WorldListener_NotifyListeners()
 {
+#if WITH_EDITOR
 	TypeName = "Event";
 
 	AddInputPin("Exec");
 	AddOutputPin("Out");
+#endif
 }
 
 void UGameFlowNode_WorldListener_NotifyListeners::Execute_Implementation(const FName PinName)

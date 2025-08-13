@@ -2,6 +2,7 @@
 #include "GameFlowEditor.h"
 #include "ScopedTransaction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Asset/Graph/Actions/GameFlowNodeSchemaAction_DestroyNode.h"
 #include "Asset/Graph/Actions/GameFlowNodeSchemaAction_NewNode.h"
 
 UEdGraphNode* FGameFlowSchemaAction_ReplaceNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin,
@@ -52,8 +53,10 @@ UGameFlowGraphNode* FGameFlowSchemaAction_ReplaceNode::ReplaceNode(UGameFlowGrap
 		ReplacementNode = CastChecked<UGameFlowGraphNode>(
 			GraphSchema->CreateSubstituteNode(NodeToReplace, Node_ToReplace->GetGraph(), &ObjectInstancingGraph, InOutExtraNames));
 		
-		FGameFlowNodeSchemaAction_CreateOrDestroyNode DestroyNodeAction;
-		DestroyNodeAction.PerformAction_DestroyNode(Node_ToReplace);
+		FGameFlowNodeSchemaAction_DestroyNode DestroyNodeAction;
+		DestroyNodeAction.NodeToDestroy = Node_ToReplace;
+		DestroyNodeAction.PerformAction(Node_ToReplace->GetGraph(), nullptr,
+			FVector2D(NodeToReplace->NodePosX, NodeToReplace->NodePosY), false);
 	}
 	else
 	{

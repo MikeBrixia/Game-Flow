@@ -4,6 +4,7 @@
 
 UGameFlowNode_FlowControl_DoN::UGameFlowNode_FlowControl_DoN()
 {
+#if WITH_EDITOR
 	// Initialize input pins.
 	AddInputPin("Enter");
 	AddInputPin("Reset");
@@ -12,6 +13,8 @@ UGameFlowNode_FlowControl_DoN::UGameFlowNode_FlowControl_DoN()
 	AddOutputPin("Exit");
 
 	TypeName = "Conditional";
+#endif
+	
 	N = 1;
 	Count = 0;
 }

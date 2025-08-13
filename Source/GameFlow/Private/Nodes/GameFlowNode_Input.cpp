@@ -4,8 +4,10 @@
 
 UGameFlowNode_Input::UGameFlowNode_Input()
 {
+#if WITH_EDITOR
 	TypeName = "Input";
 	AddOutputPin("Out");
+#endif
 }
 
 void UGameFlowNode_Input::Execute_Implementation(const FName PinName)

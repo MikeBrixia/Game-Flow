@@ -1,63 +1,25 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
-#include "AssetViewUtils.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
 {
+#if WITH_EDITOR
 	TypeName = "Default";
 	bIsActive = false;
 	bForceDebugView = false;
-}
-
-void UGameFlowNode::TryExecute(FName PinName)
-{
-#if WITH_EDITOR
-	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
-	// Mark this node as active.
-	OwnerAsset->AddActiveNode(this);
-
-	// If we've hit a breakpoint, try opening the asset editor if it is closed.
-	if(bBreakpointEnabled)
-	{
-		AssetViewUtils::OpenEditorForAsset(OwnerAsset->TemplateAsset);
-	}
-	
-    if(OwnerAsset->TemplateAsset != nullptr)
-    {
-    	const UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
-    	if(TemplateNode != nullptr && TemplateNode->OnAssetExecuted.IsBound())
-    	{
-    		TemplateNode->OnAssetExecuted.Broadcast(Inputs.FindRef(PinName));
-    	}
-    }
+	bBreakpointEnabled = false;
+	bCanAddInputPin = false;
+	bCanAddOutputPin = false;
 #endif
-	Execute(PinName);
-}
-
-void UGameFlowNode::FinishExecute(bool bFinish)
-{
-	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
-	
-	// If node has finished executing, remove it from asset active nodes.
-	if(bFinish && OwnerAsset != nullptr)
-	{
-		OwnerAsset->RemoveActiveNode(this);
-		OnFinishExecute();
-	}
-}
-
-void UGameFlowNode::TriggerOutputPin(FName PinName)
-{
-	UOutPinHandle* OutputPinHandle = Outputs.FindRef(PinName);
-	OutputPinHandle->TriggerPin();
 }
 
 #if WITH_EDITOR
 
+#include "AssetViewUtils.h"
 #include "EdGraph/EdGraphNode.h"
 
 TArray<FName> UGameFlowNode::GetInputPinsNames() const
@@ -264,4 +226,56 @@ FString UGameFlowNode::GetCustomDebugInfo() const
 	return "";
 }
 
+#else
+
+TArray<FName> UGameFlowNode::GetNodeTypeOptions() const
+{
+	return {}; 
+}
+
 #endif
+
+void UGameFlowNode::TriggerOutputPin(FName PinName)
+{
+	UOutPinHandle* OutputPinHandle = Outputs.FindRef(PinName);
+	OutputPinHandle->TriggerPin();
+}
+
+void UGameFlowNode::FinishExecute(bool bFinish)
+{
+	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
+	
+	// If node has finished executing, remove it from asset active nodes.
+	if(bFinish && OwnerAsset != nullptr)
+	{
+#if WITH_EDITOR
+		OwnerAsset->RemoveActiveNode(this);
+#endif
+		OnFinishExecute();
+	}
+}
+
+void UGameFlowNode::TryExecute(FName PinName)
+{
+#if WITH_EDITOR
+	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
+	// Mark this node as active.
+	OwnerAsset->AddActiveNode(this);
+
+	// If we've hit a breakpoint, try opening the asset editor if it is closed.
+	if(bBreakpointEnabled)
+	{
+		AssetViewUtils::OpenEditorForAsset(OwnerAsset->TemplateAsset);
+	}
+	
+	if(OwnerAsset->TemplateAsset != nullptr)
+	{
+		const UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
+		if(TemplateNode != nullptr && TemplateNode->OnAssetExecuted.IsBound())
+		{
+			TemplateNode->OnAssetExecuted.Broadcast(Inputs.FindRef(PinName));
+		}
+	}
+#endif
+	Execute(PinName);
+}

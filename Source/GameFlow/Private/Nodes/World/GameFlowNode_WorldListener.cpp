@@ -7,6 +7,7 @@
 
 UGameFlowNode_WorldListener::UGameFlowNode_WorldListener()
 {
+#if WITH_EDITOR
 	TypeName = "Event";
 	
 	AddInputPin("Start");
@@ -15,7 +16,8 @@ UGameFlowNode_WorldListener::UGameFlowNode_WorldListener()
 	AddOutputPin("Trigger Event");
 	AddOutputPin("Completed");
 	AddOutputPin("Stopped");
-
+#endif
+	
 	Limit = 0;
 	Count = 0;
 }

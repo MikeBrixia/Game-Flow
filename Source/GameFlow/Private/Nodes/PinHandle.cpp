@@ -5,29 +5,13 @@
 
 UPinHandle::UPinHandle()
 {
+#if WITH_EDITOR
 	bIsBreakpointEnabled = false;
+#endif
 }
 
 void UPinHandle::TriggerPin()
 {
-	// Only output pins can broadcast events.
-	if(bIsOutput)
-	{
-		for(const auto& Pin : GetConnections())
-		{
-			Pin->TriggerPin();
-		}
-#if WITH_EDITOR
-		bIsActive = true;
-		ActivatedElapsedTime = UGameFlowSettings::Get()->WireHighlightDuration;
-#endif
-	}
-	// Input pins instead will directly try to execute the owner.
-	else
-	{
-		UGameFlowNode* Node = GetNodeOwner();
-		Node->TryExecute(PinName);
-	}
 }
 
 TArray<UPinHandle*> UPinHandle::GetConnections()

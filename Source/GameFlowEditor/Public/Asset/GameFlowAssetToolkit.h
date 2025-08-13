@@ -37,10 +37,12 @@ public:
 
 protected:
 
-#if ENGINE_MINOR_VERSION >= 4
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
 	virtual bool OnRequestClose(EAssetEditorCloseReason InCloseReason) override;
-#endif
+#else if ENGINE_MAJOR_VERSION <= 5 && ENGINE_MINOR_VERSION < 4
 	virtual bool OnRequestClose() override;
+#endif
+	
 	virtual void ConfigureInputs();
 	virtual void CreateGraph();
 	virtual void CreateAssetMenu();
@@ -75,7 +77,7 @@ public:
     FORCEINLINE UToolMenu* GetToolbar() const;
 	
 private:
-	/** The selected world inside PIE menu. */
+	/** The selected world inside the PIE menu. */
 	UWorld* PIE_SelectedWorld;
 	/** The selected asset instance inside PIE menu. */
 	UGameFlowAsset* PIE_SelectedAssetInstance;
@@ -106,7 +108,6 @@ public:
 	FORCEINLINE virtual FLinearColor GetWorldCentricTabColorScale() const override { return FLinearColor::Yellow; }
 
 private:
-
 	inline static const FName GraphTabName = "GraphTab";
 	inline static const FName DetailsTabName = "DetailsTab";
 	inline static const FName NodeDetailsTabName = "NodeDetailsTab";

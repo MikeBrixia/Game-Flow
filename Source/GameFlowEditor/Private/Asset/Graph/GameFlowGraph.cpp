@@ -112,6 +112,15 @@ TArray<UGameFlowGraphNode*> UGameFlowGraph::GetActiveNodes() const
 	});
 }
 
+bool UGameFlowGraph::Modify(bool bAlwaysMarkDirty)
+{
+	if (GameFlowAsset != nullptr)
+	{
+		GameFlowAsset->Modify();
+	}
+	return Super::Modify(bAlwaysMarkDirty);
+}
+
 void UGameFlowGraph::OnSaveGraph()
 {
 	for(const UGameFlowGraphNode* GraphNode : reinterpret_cast<TArray<TObjectPtr<UGameFlowGraphNode>>&>(Nodes))
@@ -253,6 +262,16 @@ void UGameFlowGraph::OnNodesRemoved(const TSet<const UGameFlowGraphNode*> Remove
 	{
 		// Remove node from the game flow asset.
 		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
+		// Input and output nodes are also stored in separates maps, so we need to unregister them.
+		if(NodeAsset->IsA(UGameFlowNode_Input::StaticClass()))
+		{
+			GameFlowAsset->CustomInputs.Remove(NodeAsset->GetFName());
+		}
+		else if(NodeAsset->IsA(UGameFlowNode_Output::StaticClass()))
+		{
+			GameFlowAsset->CustomOutputs.Remove(NodeAsset->GetFName());
+		}
+		// Unregister node asset from observed game flow asset.
 		GameFlowAsset->RemoveNode(NodeAsset);
 	}
 }

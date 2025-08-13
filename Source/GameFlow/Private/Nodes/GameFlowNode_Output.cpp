@@ -5,8 +5,10 @@
 
 UGameFlowNode_Output::UGameFlowNode_Output()
 {
+#if WITH_EDITOR
 	TypeName = "Output";
 	AddInputPin("Exec");
+#endif
 }
 
 void UGameFlowNode_Output::Execute_Implementation(const FName PinName)

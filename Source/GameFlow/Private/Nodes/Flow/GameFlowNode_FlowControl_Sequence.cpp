@@ -4,11 +4,13 @@
 
 UGameFlowNode_FlowControl_Sequence::UGameFlowNode_FlowControl_Sequence()
 {
+#if WITH_EDITOR
 	bCanAddOutputPin = true;
 	TypeName = "Conditional";
 
 	AddInputPin("Exec");
 	AddOutputPin("0");
+#endif
 }
 
 void UGameFlowNode_FlowControl_Sequence::Execute_Implementation(const FName PinName)

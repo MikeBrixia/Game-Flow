@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "PinHandle.h"
-#include "Animation/AnimInstanceProxy.h"
 #include "Pins/InputPinHandle.h"
 #include "Pins/OutPinHandles.h"
 #include "GameFlowNode.generated.h"
@@ -21,7 +20,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAssetExecuted, UInputPinHandle*, 
 UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default", ClassGroup=(GameFlow))
 class GAMEFLOW_API UGameFlowNode : public UObject
 {
-	// Friending this classes allows the graph editor to freely manipulate this node asset.
+	// Friending these classes allows the graph editor to freely manipulate this node asset.
 	friend class UGameFlowGraphSchema;
 	friend class UGameFlowNodeFactory;
 	friend class UGameFlowGraphNode;
@@ -33,12 +32,48 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 	
 	GENERATED_BODY()
 
+public:
+
+	/** All the node input pins. */
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
+	TMap<FName, UInputPinHandle*> Inputs;
+	
+	/** All node output pins. */
+	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	TMap<FName, UOutPinHandle*> Outputs;
+	
+	UGameFlowNode();
+
+	void TryExecute(FName PinName);
+	
+protected:
+	
+	/** Execute this node */
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
+	FORCEINLINE void Execute(const FName PinName = "Exec");
+	FORCEINLINE virtual void Execute_Implementation(const FName PinName) {}
+	
+	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
+	FORCEINLINE void OnFinishExecute();
+	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
+    
+	/**
+	 * @brief Call this function to trigger an output and execute the next node.
+	 * @param bFinish If true, this node will be the only output and node will be unloaded.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Game Flow")
+	FORCEINLINE void FinishExecute(bool bFinish);
+
+	UFUNCTION(BlueprintCallable, Category="Game Flow")
+	FORCEINLINE void TriggerOutputPin(FName PinName);
+	
+// Editor-only functionality used by external editors to manipulate this node.
 #if WITH_EDITORONLY_DATA
 	
 public:
 
 	/** Used to uniquely identify a node asset inside the editor.
-	 * ID is shared between instances of a game flow assets. */
+	 * ID is shared between instances of game flow asset. */
 	UPROPERTY(VisibleAnywhere, TextExportTransient)
 	FGuid GUID;
 
@@ -81,53 +116,12 @@ public:
 	
 protected:
 	/** True if this node should have a variable amount of input pins. */
-    UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
-    bool bCanAddInputPin;
+	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	bool bCanAddInputPin;
 
 	/** True if this node should have a variable amount of input pins. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
-#endif
-
-public:
-
-	/** All the node input pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O")
-	TMap<FName, UInputPinHandle*> Inputs;
-	
-	/** All node output pins. */
-	UPROPERTY(VisibleAnywhere, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
-	TMap<FName, UOutPinHandle*> Outputs;
-	
-	UGameFlowNode();
-
-	void TryExecute(FName PinName);
-	
-protected:
-	
-	/** Execute this node */
-	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	FORCEINLINE void Execute(const FName PinName = "Exec");
-	FORCEINLINE virtual void Execute_Implementation(const FName PinName) {}
-	
-	UFUNCTION(BlueprintNativeEvent, Category="Game Flow")
-	FORCEINLINE void OnFinishExecute();
-	FORCEINLINE virtual void OnFinishExecute_Implementation() {}
-    
-	/**
-	 * @brief Call this function to trigger an output and execute the next node.
-	 * @param bFinish If true, this node will be the only output and node will be unloaded.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	FORCEINLINE void FinishExecute(bool bFinish);
-
-	UFUNCTION(BlueprintCallable, Category="Game Flow")
-	FORCEINLINE void TriggerOutputPin(FName PinName);
-	
-private:
-	
-// Editor-only functionality used by external editors to manipulate this node.
-#if WITH_EDITOR
 	
 public:
 	FORCEINLINE void AddInputPin(FName PinName);
@@ -170,6 +164,7 @@ private:
 	 * properties which are not stored as UPROPERTY on the node or to add more
 	 * complex debug behaviors. */
     virtual FString GetCustomDebugInfo() const;
+	
 #endif
 };
 

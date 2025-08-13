@@ -14,8 +14,12 @@ void UInputPinHandle::TriggerPin()
 	Node->TryExecute(PinName);
 }
 
+#if WITH_EDITOR
+
 bool UInputPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 {
 	const bool bIsOutPin = OtherPinHandle->IsA(UOutPinHandle::StaticClass());
 	return bIsOutPin && Super::CanCreateConnection(OtherPinHandle);
 }
+
+#endif

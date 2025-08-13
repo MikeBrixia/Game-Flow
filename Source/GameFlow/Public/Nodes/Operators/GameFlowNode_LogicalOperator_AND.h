@@ -27,6 +27,7 @@ public:
 	UGameFlowNode_LogicalOperator_AND();
 	virtual void Execute_Implementation(const FName PinName) override;
     virtual void OnFinishExecute_Implementation() override;
+	
 private:
 	void Reset();
 };

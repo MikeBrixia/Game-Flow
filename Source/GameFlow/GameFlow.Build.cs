@@ -39,11 +39,21 @@ public class GameFlow : ModuleRules
 				"Slate",
 				"SlateCore",
 				"DeveloperSettings",
-				"AssetManagerEditor",
-				"AssetTools"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
+
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"AssetManagerEditor",
+					"AssetTools"
+					// ... add private dependencies that you statically link with here ...	
+				}
+			);
+		}
 		
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]

@@ -22,31 +22,10 @@ public:
 	bool bIsOutput;
 
 private:
-	/** Game flow unique identifier. */
-	UPROPERTY(VisibleAnywhere, TextExportTransient)
-    FGuid GUID;
-	
-	UPROPERTY(VisibleAnywhere, TextExportTransient)
+	UPROPERTY(TextExportTransient)
 	TArray<UPinHandle*> Connections;
 
 #if WITH_EDITORONLY_DATA
-
-public:
-	/** True when this pin has been marked with a breakpoint, false otherwise. */
-	UPROPERTY(TextExportTransient)
-	bool bIsBreakpointEnabled;
-
-	/** True if this pin is active and executing. */
-	UPROPERTY(Transient, TextExportTransient)
-	bool bIsActive;
-
-	/** Time passed since this pin was activated. */
-	UPROPERTY(Transient, TextExportTransient)
-	double ActivatedElapsedTime;
-
-	/** Last connections processing time. */
-	UPROPERTY(Transient, TextExportTransient)
-	double PreviousTime;
 
 #endif
 
@@ -66,9 +45,24 @@ protected:
 	virtual void AddConnection(UPinHandle* Handle);
 	virtual void RemoveConnection(UPinHandle* Handle);
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 
 public:
+	/** True when this pin has been marked with a breakpoint, false otherwise. */
+	UPROPERTY(TextExportTransient)
+	bool bIsBreakpointEnabled;
+
+	/** True if this pin is active and executing. */
+	UPROPERTY(Transient, TextExportTransient)
+	bool bIsActive;
+
+	/** Time passed since this pin was activated. */
+	UPROPERTY(Transient, TextExportTransient)
+	double ActivatedElapsedTime;
+
+	/** Last connections processing time. */
+	UPROPERTY(Transient, TextExportTransient)
+	double PreviousTime;
 	
 	/** Create a connection between this handle and another pin handle. */
 	void CreateConnection(UPinHandle* OtherPinHandle);
@@ -87,13 +81,13 @@ public:
 
 	/**
 	 * Does this pin have a valid name?
-	 * @return True if pin name is considered valid, false otherwise.
+	 * @return True if the pin name is considered valid, false otherwise.
 	 */
 	bool IsValidPinName() const;
 
 	/**
 	 * Check if you're allowed to create a connection between this and another node.
-	 * @return True if connection can be created, false otherwise.
+	 * @return True if the connection can be created, false otherwise.
 	 */
 	virtual bool CanCreateConnection(const UPinHandle* OtherPinHandle) const;
 

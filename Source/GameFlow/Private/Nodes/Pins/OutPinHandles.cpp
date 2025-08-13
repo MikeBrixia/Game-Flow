@@ -22,8 +22,12 @@ void UOutPinHandle::TriggerPin()
 #endif
 }
 
+#if WITH_EDITOR
+
 bool UOutPinHandle::CanCreateConnection(const UPinHandle* OtherPinHandle) const
 {
 	const bool bIsExecPin = OtherPinHandle->IsA(UInputPinHandle::StaticClass());
 	return bIsExecPin && Super::CanCreateConnection(OtherPinHandle);
 }
+
+#endif

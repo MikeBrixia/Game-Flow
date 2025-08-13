@@ -82,7 +82,8 @@ public:
 	 * @return An array of all currently active nodes in the graph, empty if none could be found.
 	 */
 	TArray<UGameFlowGraphNode*> GetActiveNodes() const;
-	
+
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	void OnSaveGraph();
 	void OnValidateGraph();
 	void OnDebugModeUpdated(bool bEnabled);

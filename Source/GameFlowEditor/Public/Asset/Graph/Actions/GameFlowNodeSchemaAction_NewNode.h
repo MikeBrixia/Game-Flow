@@ -38,13 +38,6 @@ public:
 	
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode) override;
 	virtual UEdGraphNode* PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode) override;
-
-	/**
-	 * Destroy a game flow node and record a transaction for it.
-	 * @param GraphNode The node to destroy
-	 * @return true if node was destroyed and transaction recorded successfully, false otherwise.
-	 */
-    virtual void PerformAction_DestroyNode(UGameFlowGraphNode* GraphNode);
 	
 	/**
 	 * Create a brand new game flow node.
