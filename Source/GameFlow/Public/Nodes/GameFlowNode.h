@@ -35,11 +35,11 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 public:
 
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
+	UPROPERTY(EditDefaultsOnly, Instanced, Category="Game Flow|I/O")
 	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	UPROPERTY(EditDefaultsOnly, Instanced, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
 	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();
@@ -153,6 +153,7 @@ public:
 
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	
 private:
     UOutPinHandle* CreateExecOutputPin(FName PinName);

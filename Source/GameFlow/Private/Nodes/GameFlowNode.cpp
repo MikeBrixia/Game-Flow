@@ -4,6 +4,7 @@
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Engine/StreamableManager.h"
+#include "GameFlowEditor/Public/GameFlowEditor.h"
 #include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
@@ -147,47 +148,73 @@ TArray<UPinHandle*> UGameFlowNode::GetPinsByDirection(TEnumAsByte<EEdGraphPinDir
 void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);
-
-	// Check if modified property is valid.
+	
+	// Check if the modified property is valid.
 	// FProperty could be null when replacing game flow node references,
-	// in particular if pins connections differs between deleted and replacement nodes.
+	// in particular if pin connections differ between deleted and replacement nodes.
 	if(PropertyChangedEvent.Property != nullptr)
 	{
-		const FName PinName = PropertyChangedEvent.GetPropertyName();
+		const FName PropertyName = PropertyChangedEvent.GetPropertyName();
 		TMap<FName, UPinHandle*> Pins;
-		
+        
 		switch(PropertyChangedEvent.ChangeType)
 		{
 			
 		default: break;
-
-			// Handle details panel input/output pins addition.
+		
 		case EPropertyChangeType::ArrayAdd:
 			{
-				if(PinName.IsEqual("Inputs"))
-				{
-				}
-				else if(PinName.IsEqual("Outputs"))
-				{
-				}
-			}
-
-			// Handle pins renames in details panel.
-		case EPropertyChangeType::ValueSet:
-			{
-				for(const auto& Pair : Pins)
-				{
-					UPinHandle* PinHandle = Pair.Value;
-					PinHandle->PinName = Pair.Key;
-				}
-				break;
+			    break;
 			}
 			
-			// Notify listeners(usually the associated graph node) this asset has been compiled/redirected.
+			// Handle the pin renames in the details panel.
+		case EPropertyChangeType::ValueSet:
+			{
+			}
+			
+			// Node blueprint has been compiled.
 		case EPropertyChangeType::Redirected:
 			{
-				OnAssetRedirected.Broadcast();
+				//OnAssetRedirected.Broadcast();
 				break;
+			}
+		}
+	}
+}
+
+void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
+{
+	UObject::PostEditChangeChainProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.ChangeType == EPropertyChangeType::ArrayAdd)
+	{
+		auto PinsContainerProperty = PropertyChangedEvent.PropertyChain.GetActiveMemberNode();
+
+		if (FMapProperty* MapProperty = CastField<FMapProperty>(PinsContainerProperty->GetValue()))
+		{
+			FScriptMapHelper_InContainer MapHelper(MapProperty, this);
+
+			int LastIndex = MapHelper.GetMaxIndex() - 1;
+			uint8* PinNamePtr = MapHelper.GetKeyPtr(LastIndex);
+            uint8* PinHandlePtr = MapHelper.GetValuePtr(LastIndex);
+			
+			if (FNameProperty* PinNameProperty = CastField<FNameProperty>(MapProperty->KeyProp))
+			{
+				const FName PinName = PinNameProperty->GetPropertyValue(PinNamePtr);
+				PinNameProperty->SetPropertyValue(PinNamePtr, "NewPin");
+				
+				UPinHandle* PinHandle = nullptr;
+				if(MapProperty->GetName().Equals("Inputs"))
+				{
+					PinHandle = CreateExecInputPin(PinName);
+				}
+				else if(MapProperty->GetName().Equals("Outputs"))
+				{
+					PinHandle = CreateExecOutputPin(PinName);
+				}
+
+				FObjectProperty* ObjProperty = CastField<FObjectProperty>(MapProperty->ValueProp);
+				ObjProperty->SetObjectPropertyValue(PinHandlePtr, PinHandle);
 			}
 		}
 	}

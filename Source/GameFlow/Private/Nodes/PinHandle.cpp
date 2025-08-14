@@ -40,7 +40,7 @@ void UPinHandle::CreateConnection(UPinHandle* OtherPinHandle)
 {
 	if(CanCreateConnection(OtherPinHandle))
 	{
-		// Create a two way connection between the nodes.
+		// Create a two-way connection between the nodes.
 		AddConnection(OtherPinHandle);
 		OtherPinHandle->AddConnection(this);
 	}
@@ -48,7 +48,7 @@ void UPinHandle::CreateConnection(UPinHandle* OtherPinHandle)
 
 void UPinHandle::CutConnection(UPinHandle* OtherPinHandle)
 {
-	// Cut connection between these two nodes.
+	// Cut the connection between these two nodes.
 	RemoveConnection(OtherPinHandle);
 	OtherPinHandle->RemoveConnection(this);
 }

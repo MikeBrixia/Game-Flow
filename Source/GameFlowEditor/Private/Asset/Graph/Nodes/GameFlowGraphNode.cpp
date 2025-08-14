@@ -226,7 +226,6 @@ void UGameFlowGraphNode::PostEditImport()
 			Pin->DefaultObject = DuplicatedNodeAsset;
 		}
 	}
-
 	
 	// Initialize pasted node.
 	Initialize();
@@ -369,7 +368,7 @@ void UGameFlowGraphNode::OnAssetValidated()
 
 void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
 {
-	// Mark as pending compilation on cpp compile(live coding or hot reload).
+	// Mark as pending compilation on cpp compile (live coding or hot reload).
 	bPendingCompilation = true;
 	// Call default asset compilation callback.
 	OnAssetCompiled();
@@ -377,11 +376,11 @@ void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
 
 void UGameFlowGraphNode::OnAssetCompiled()
 {
-	// Reconstruct node only if it is pending compile.
+	// Reconstruct the node only if it is pending compile.
 	if(bPendingCompilation)
 	{
 		const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
-		// Ensure compiled asset is valid.
+		// Ensure the compiled asset is valid.
 		GraphSchema->ValidateNodeAsset(this);
 		
 		// reconstruct the compiled asset with the updated properties/logic.
@@ -397,20 +396,20 @@ void UGameFlowGraphNode::OnAssetCompiled()
 
 void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
 {
-	// If the compiled node is the graph encapsulated node, mark it as a pending compile graph node.
+	// If the observed node is being compiled, mark it as pending compiler.
 	bPendingCompilation = Blueprint != nullptr && Blueprint == NodeAsset->GetClass()->ClassGeneratedBy
 	                      && GetGraph()->Nodes.Contains(this);
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()
 {
-	// Read input pins names from node asset and create graph pins.
+	// Read input pins names from the node asset and create graph pins.
 	for (const FName& PinName : NodeAsset->GetInputPinsNames())
 	{
 		CreateNodePin(EGPD_Input, PinName, false);
 	}
 
-	// Read output pins names from node asset and create graph pins.
+	// Read output pins names from the node asset and create graph pins.
 	for (const FName& PinName : NodeAsset->GetOutputPinsNames())
 	{
 		CreateNodePin(EGPD_Output, PinName, false);

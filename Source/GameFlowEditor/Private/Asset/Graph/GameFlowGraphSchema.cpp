@@ -339,7 +339,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 				// TODO | schema does not allow output pins to have more than one connection.
 
 				GraphNode->bIsRebuilding = false;
-				// Enqueue next node, we'll need to rebuild it.
+				// Enqueue the next node, we'll need to rebuild it.
 				ToRebuild.Enqueue(GraphNode);
 			}
 		}

@@ -7,7 +7,7 @@ class UGameFlowNode;
 class UPinHandle;
 
 /** Utility structure used to handle game flow logical pin states and connections. */
-UCLASS(DefaultToInstanced, Abstract)
+UCLASS(DefaultToInstanced, Abstract, EditInlineNew)
 class GAMEFLOW_API UPinHandle : public UObject
 {
 	GENERATED_BODY()
