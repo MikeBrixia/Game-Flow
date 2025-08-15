@@ -16,10 +16,6 @@ public:
 	/** The name of the handled pin. */
 	UPROPERTY(VisibleAnywhere)
 	FName PinName;
-	
-	/** True if this is an output pin, false if it is in input pin. */
-	UPROPERTY(VisibleAnywhere)
-	bool bIsOutput;
 
 private:
 	UPROPERTY(TextExportTransient)
