@@ -161,45 +161,98 @@ void UGameFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeChainProperty(PropertyChangedEvent);
-
-	if (PropertyChangedEvent.ChangeType == EPropertyChangeType::ArrayAdd)
+	
+	switch (PropertyChangedEvent.ChangeType)
 	{
-		auto PinsContainerProperty = PropertyChangedEvent.PropertyChain.GetActiveMemberNode();
-		if (FMapProperty* MapProperty = CastField<FMapProperty>(PinsContainerProperty->GetValue()))
-		{
-			FScriptMapHelper_InContainer MapHelper(MapProperty, this);
+	default: break;
 
-			int LastIndex = MapHelper.GetMaxIndex() - 1; 
-			uint8* PinNamePtr = MapHelper.GetKeyPtr(LastIndex);
-            uint8* PinHandlePtr = MapHelper.GetValuePtr(LastIndex);
+	case EPropertyChangeType::ValueSet:
+		{
+			FProperty* ChangedProperty = PropertyChangedEvent.Property;
+			if (ChangedProperty == nullptr) return;
 			
-			if (FNameProperty* PinNameProperty = CastField<FNameProperty>(MapProperty->KeyProp))
+			// Navigate up the chain
+			for (FProperty* ParentProp : PropertyChangedEvent.PropertyChain)
 			{
-				// Give the map key a default initialization value.
-				PinNameProperty->SetPropertyValue(PinNamePtr, "NewPin");
-				const FName PinName = PinNameProperty->GetPropertyValue(PinNamePtr);
-				
-				UPinHandle* PinHandle = nullptr;
-				// Choose what type of pin to create.
-				if(MapProperty->GetName().Equals("Inputs"))
+				if (FMapProperty* MapProp = CastField<FMapProperty>(ParentProp))
 				{
-					PinHandle = CreateExecInputPin(PinName);
+					// Found the map property
+					void* MapContainer = MapProp->ContainerPtrToValuePtr<void>(this);
+
+					// Access via FScriptMapHelper
+					FScriptMapHelper MapHelper(MapProp, MapContainer);
+
+					// Iterate entries to find the one that contains the ChangedProperty
+					for (int32 i = 0; i < MapHelper.GetMaxIndex(); ++i)
+					{
+						if (!MapHelper.IsValidIndex(i)) continue;
+
+						void* PairPtr = MapHelper.GetPairPtr(i);
+						// Here you can get Key and Value
+						void* KeyPtr = MapHelper.GetKeyPtr(i);
+						void* ValuePtr = MapHelper.GetValuePtr(i);
+						
+						if (FNameProperty* PinNameProperty = CastField<FNameProperty>(MapProp->KeyProp))
+						{
+							const FName PinName = PinNameProperty->GetPropertyValue(KeyPtr);
+							
+							FObjectProperty* ObjProperty = CastField<FObjectProperty>(MapProp->ValueProp);
+							if (FNameProperty* NameProperty = CastField<FNameProperty>(
+								ObjProperty->PropertyClass->FindPropertyByName("PinName")))
+							{
+								UObject* ObjValue = ObjProperty->GetObjectPropertyValue(ValuePtr);
+								TCHAR* NewName = FString::Printf(TEXT("%s.%s.%s"),
+									*GetName(), *ObjValue->GetName(), *PinName.ToString()).GetCharArray().GetData();
+                                ObjValue->Rename(NewName);
+								
+								void* MemberPtr = NameProperty->ContainerPtrToValuePtr<void>(ObjValue);
+								NameProperty->SetPropertyValue(MemberPtr, PinName);
+							}
+						}
+					}
 				}
-				else if(MapProperty->GetName().Equals("Outputs"))
+			}
+			break;
+		}
+		
+	case EPropertyChangeType::ArrayAdd:
+		{
+			auto PinsContainerProperty = PropertyChangedEvent.PropertyChain.GetActiveMemberNode();
+			if (FMapProperty* MapProperty = CastField<FMapProperty>(PinsContainerProperty->GetValue()))
+			{
+				FScriptMapHelper_InContainer MapHelper(MapProperty, this);
+
+				int LastIndex = MapHelper.GetMaxIndex() - 1;
+				uint8* PinNamePtr = MapHelper.GetKeyPtr(LastIndex);
+				uint8* PinHandlePtr = MapHelper.GetValuePtr(LastIndex);
+
+				if (FNameProperty* PinNameProperty = CastField<FNameProperty>(MapProperty->KeyProp))
 				{
-					PinHandle = CreateExecOutputPin(PinName);
+					// Give the map key a default initialization value.
+					PinNameProperty->SetPropertyValue(PinNamePtr, "NewPin");
+					const FName PinName = PinNameProperty->GetPropertyValue(PinNamePtr);
+
+					UPinHandle* PinHandle = nullptr;
+					// Choose what type of pin to create.
+					if (MapProperty->GetName().Equals("Inputs"))
+					{
+						PinHandle = CreateExecInputPin(PinName);
+					}
+					else if (MapProperty->GetName().Equals("Outputs"))
+					{
+						PinHandle = CreateExecOutputPin(PinName);
+					}
+
+					FObjectProperty* ObjProperty = CastField<FObjectProperty>(MapProperty->ValueProp);
+					// Map value property will now point at the created pin handle.
+					ObjProperty->SetObjectPropertyValue(PinHandlePtr, PinHandle);
 				}
-				FObjectProperty* ObjProperty = CastField<FObjectProperty>(MapProperty->ValueProp);
-				// Map value property will now point at the created pin handle.
-				ObjProperty->SetObjectPropertyValue(PinHandlePtr, PinHandle);
 			}
 		}
-	}
-	else if (PropertyChangedEvent.ChangeType == EPropertyChangeType::ValueSet)
-	{
-		
+		break;
 	}
 }
+
 
 UOutPinHandle* UGameFlowNode::CreateExecOutputPin(FName PinName)
 {
