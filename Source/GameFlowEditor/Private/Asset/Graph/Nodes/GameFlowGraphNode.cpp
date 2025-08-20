@@ -325,7 +325,7 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 	
 	// We don't want to touch logical pin handles during a graph node rebuild process,
 	// it could lead to data corruption.
-	if(!bIsRebuilding)
+	if(!bIsRebuilding && !bPendingCompilation)
 	{
 		UPinHandle* PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
 		PinHandle->CutAllConnections();
@@ -591,7 +591,7 @@ void UGameFlowGraphNode::ReconstructNode()
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
 	Info = GameFlowEditorSettings->NodesTypes.FindRef(NodeAsset->TypeName);
 	
-	// Reconstruct pins only outside of copy-paste operations.
+	// Reconstruct pins outside copy-paste operations.
 	if(!bIsBeingCopyPasted)
 	{
 		Pins.Reset();

@@ -225,8 +225,19 @@ void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 					}
 				}
 			}
+			break;
 		}
-		break;
+
+		case EPropertyChangeType::ArrayRemove:
+		{
+			auto PinsContainerProperty = PropertyChangedEvent.PropertyChain.GetActiveMemberNode();
+			if (FMapProperty* MapProperty = CastField<FMapProperty>(PinsContainerProperty->GetValue()))
+			{
+				FScriptMapHelper_InContainer MapHelper(MapProperty, this);
+
+				// TODO: Break pin handle connections on pin removal.
+			}
+		}
 	}
 }
 
