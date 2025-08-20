@@ -9,8 +9,8 @@ UGameFlowNode_WorldListener_NotifyListeners::UGameFlowNode_WorldListener_NotifyL
 #if WITH_EDITOR
 	TypeName = "Event";
 
-	AddInputPin("Exec");
-	AddOutputPin("Out");
+	AddInputPin_CDO("Exec");
+	AddOutputPin_CDO("Out");
 #endif
 }
 

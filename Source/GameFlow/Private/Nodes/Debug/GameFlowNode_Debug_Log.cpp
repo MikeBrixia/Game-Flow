@@ -7,8 +7,8 @@ UGameFlowNode_Debug_Log::UGameFlowNode_Debug_Log()
 {
 	
 #if WITH_EDITOR
-	AddInputPin("Exec");
-	AddOutputPin("Out");
+	AddInputPin_CDO("Exec");
+	AddOutputPin_CDO("Out");
 	TypeName = "Debug";
 #endif
 	

@@ -7,7 +7,7 @@ UGameFlowNode_Output::UGameFlowNode_Output()
 {
 #if WITH_EDITOR
 	TypeName = "Output";
-	AddInputPin("Exec");
+	AddInputPin_CDO("Exec");
 #endif
 }
 

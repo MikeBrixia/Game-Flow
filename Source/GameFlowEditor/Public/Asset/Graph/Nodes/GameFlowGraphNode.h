@@ -41,6 +41,8 @@ public:
 	UPROPERTY()
 	bool bIsBeingCopyPasted = false;
 
+	/** True if the node asset is waiting to be compiled. */
+	bool bPendingCompilation;
 private:
 	/** The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY(Instanced)
@@ -52,9 +54,6 @@ private:
 
 	/** List of game flow graph node context menu command actions. */
 	TSharedPtr<FUICommandList> ContextMenuCommands;
-	
-	/** True if the node asset is waiting to be compiled. */
-	bool bPendingCompilation;
 
 	/** True if debug was enabled for this node. */
 	bool bDebugEnabled = false;

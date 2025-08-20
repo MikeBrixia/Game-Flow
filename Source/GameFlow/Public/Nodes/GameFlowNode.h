@@ -35,11 +35,11 @@ class GAMEFLOW_API UGameFlowNode : public UObject
 public:
 
 	/** All the node input pins. */
-	UPROPERTY(EditDefaultsOnly, Instanced, Category="Game Flow|I/O")
+	UPROPERTY(EditAnywhere, Instanced, Category="Game Flow|I/O")
 	TMap<FName, UInputPinHandle*> Inputs;
 	
 	/** All node output pins. */
-	UPROPERTY(EditDefaultsOnly, Instanced, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
+	UPROPERTY(EditAnywhere, Instanced, Category="Game Flow|I/O", meta=(DisplayAfter="Inputs"))
 	TMap<FName, UOutPinHandle*> Outputs;
 	
 	UGameFlowNode();
@@ -98,7 +98,7 @@ public:
 	FName TypeName;
 	
 	/** 
-	 * True if user has placed a breakpoint on this specific node, false otherwise.
+	 * True if the user has placed a breakpoint on this specific node, false otherwise.
 	 * When true, execution of the game flow asset will be paused on this node and
 	 * should be resumed manually by the user.
 	 */
@@ -119,11 +119,11 @@ public:
 	FOnAssetExecuted OnAssetExecuted;
 	
 protected:
-	/** True if this node should have a variable amount of input pins. */
+	/** True if this node should have a variable number of input pins. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddInputPin;
 
-	/** True if this node should have a variable amount of input pins. */
+	/** True if this node should have a variable number of input pins. */
 	UPROPERTY(EditDefaultsOnly, Category="Game Flow|I/O")
 	bool bCanAddOutputPin;
 	
@@ -143,8 +143,8 @@ public:
 	bool CanAddOutputPin() const;
 
 	/**
-	 * Is this node currently running inside parent asset?
-	 * @returns True if node is currently running, false otherwise.
+	 * Is this node currently running inside the parent asset?
+	 * @returns True if the node is currently running, false otherwise.
 	 */
 	bool IsActiveNode() const;
     
@@ -152,13 +152,14 @@ public:
 	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
 
 protected:
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
-	
+
+	void AddInputPin_CDO(FName PinName);
+	void AddOutputPin_CDO(FName PinName);
 private:
     UOutPinHandle* CreateExecOutputPin(FName PinName);
     UInputPinHandle* CreateExecInputPin(FName PinName);
-    
+	
     FName GeneratePinName(FName PinName) const;
 
 	/** Return user-specified debug info. Use this when you want to debug

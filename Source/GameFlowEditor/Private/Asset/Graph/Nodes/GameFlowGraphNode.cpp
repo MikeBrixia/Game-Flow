@@ -323,8 +323,8 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 	Pin->Modify();
 	NodeAsset->Modify();
 	
-	// We don't want to touch logical pin handles during graph node rebuild process,
-	// it could lead do data corruption.
+	// We don't want to touch logical pin handles during a graph node rebuild process,
+	// it could lead to data corruption.
 	if(!bIsRebuilding)
 	{
 		UPinHandle* PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
@@ -580,7 +580,7 @@ void UGameFlowGraphNode::Initialize()
 	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
 	
 	// Listen to Unreal Editor blueprint compilation events.
-	GEditor->OnBlueprintCompiled().AddUObject(this, &UGameFlowGraphNode::OnAssetCompiled);
+	
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 }
 
@@ -700,7 +700,7 @@ void UGameFlowGraphNode::OnRenameNode(const FString& NewName)
 	
 	const FName NewNodeName (NewName);
 	UGameFlowAsset* GameFlowAsset = NodeAsset->GetTypedOuter<UGameFlowAsset>();
-	// Rename node object only if the supplied name is unique.
+	// Rename the node object only if the supplied name is unique.
 	if(IsUniqueObjectName(NewNodeName, GameFlowAsset)
 		&& GetCanRenameNode())
 	{
@@ -714,12 +714,13 @@ void UGameFlowGraphNode::OnRenameNode(const FString& NewName)
 			GameFlowAsset->CustomOutputs.Remove(NodeAsset->GetFName());
 			GameFlowAsset->CustomOutputs.Add(NewNodeName, OutputNode);
 		}
-		NodeAsset->Rename(*NewName);
+		NodeAsset->Rename(*NewName, this, REN_DontCreateRedirectors);
 	}
 	else
 	{
 		// Notify the user there has been an error with node renaming.
-		UE_LOG(LogGameFlow, Error, TEXT("Object name '%s' is already in use inside '%s' asset!"), *NewName, *GameFlowAsset->GetName())
+		UE_LOG(LogGameFlow, Error, TEXT("Object name '%s' is already in use inside '%s' asset!"),
+			*NewName, *GameFlowAsset->GetName())
 	}
 }
 
@@ -755,7 +756,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 	}
 	
 	UEdGraphPin* Pin = nullptr;
-	// Create pin object only if name is valid.
+	// Create the pin object only if name is valid.
 	if(!PinName.IsEqual(EName::None))
 	{
 		const FEdGraphPinType PinType = GetGraphPinType();

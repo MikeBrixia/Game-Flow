@@ -21,11 +21,11 @@ UGameFlowNode_LogicalOperator_AND::UGameFlowNode_LogicalOperator_AND()
 		const int PortNumber = i + 1;
 		const FName PortName = FName(FString::FromInt(PortNumber));
 		// Initialize input pins.
-		AddInputPin(PortName);
+		AddInputPin_CDO(PortName);
 	}
 	bCanAddInputPin = true;
 	
-	AddOutputPin("Out");
+	AddOutputPin_CDO("Out");
 #endif
 }
 
@@ -41,7 +41,7 @@ void UGameFlowNode_LogicalOperator_AND::Execute_Implementation(const FName PinNa
 	{
 		const int32 PinIndex = UKismetStringLibrary::Conv_StringToInt(PinName.ToString()) - 1;
 		const bool bPortValue = ConditionalPorts[PinIndex];
-		// Is this port false(Has not been executed yet)?
+		// Is this port false (Has not been executed yet)?
 		if(!bPortValue)
 		{
 			// Update node conditional ports state.

@@ -8,8 +8,8 @@ UGameFlowNode_FlowControl_Sequence::UGameFlowNode_FlowControl_Sequence()
 	bCanAddOutputPin = true;
 	TypeName = "Conditional";
 
-	AddInputPin("Exec");
-	AddOutputPin("0");
+	AddInputPin_CDO("Exec");
+	AddOutputPin_CDO("0");
 #endif
 }
 

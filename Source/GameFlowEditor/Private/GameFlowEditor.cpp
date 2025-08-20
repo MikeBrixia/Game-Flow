@@ -6,9 +6,11 @@
 #include "Asset/GameFlowEditorCommands.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
+#include "Asset/Graph/Nodes/GameFlowGraphNode.h"
 #include "Config/GameFlowEditorSettings.h"
 #include "Config/GameFlowSettings.h"
 #include "HAL/PlatformFileManager.h"
+#include "Nodes/GameFlowNode.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Widget/Nodes/FlowNodeStyle.h"
 
@@ -21,6 +23,8 @@ EAssetTypeCategories::Type FGameFlowEditorModule::GameFlowCategory = EAssetTypeC
 // This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 void FGameFlowEditorModule::StartupModule()
 {
+	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FGameFlowEditorModule::OnPostEngineInit);
+	
 	// Register game flow editor commands.
 	FGraphEditorCommands::Register();
 	FGameFlowEditorCommands::Register();
@@ -60,8 +64,8 @@ void FGameFlowEditorModule::StartupModule()
 	// Add Game Flow script templates to the engine.
 	InitializeCppScriptTemplates();
 
-	// On startup we need to forward some data to the runtime settings,
-	// given the plugin setup this is the best way to share it.
+	// On startup, we need to forward some data to the runtime settings;
+	// given the plugin setup, this is the best way to share it.
 	ForwardEditorSettingsToRuntimeSettings();
 }
 
@@ -86,6 +90,72 @@ void FGameFlowEditorModule::ShutdownModule()
 
 	// Remove all game flow cpp script templates from the engine.
 	RemoveCppScriptTemplates();
+}
+
+void FGameFlowEditorModule::OnPostEngineInit()
+{
+	// Hookup to editor blueprint compilation events.
+	GEditor->OnBlueprintCompiled().AddRaw(this, &FGameFlowEditorModule::OnBlueprintCompiled);
+	GEditor->OnBlueprintPreCompile().AddRaw(this, &FGameFlowEditorModule::OnBlueprintPreCompile);
+}
+
+void FGameFlowEditorModule::OnBlueprintCompiled()
+{
+	// Notify the graph editor about the compilation event.
+	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
+	{
+		UGameFlowGraphNode* Instance = *It;
+		// Compile marked nodes
+		if (Instance->bPendingCompilation)
+		{
+			Instance->OnAssetCompiled();
+			// GF Compilation as finished.
+			Instance->bPendingCompilation = false;
+		}
+	}
+}
+
+void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
+{
+	// Fixup and reflect CDO changes to node all node asset instances.
+	for (TObjectIterator<UGameFlowNode> It; It; ++It)
+	{
+		// We're only interested in non-CDO objects.
+		if (!It->HasAnyFlags(RF_ClassDefaultObject))
+		{
+			UGameFlowNode* Instance = *It;
+			UGameFlowNode* Defaults = Cast<UGameFlowNode>(Instance->GetClass()->GetDefaultObject());
+
+			// Propagate changes only to non-CDO objects.
+			if (!Instance->IsTemplate())
+			{
+			    auto OldInputs = Instance->Inputs;
+				Instance->Inputs = Defaults->Inputs;
+				for (auto& Pair : Instance->Inputs)
+				{
+					Pair.Value = OldInputs.FindRef(Pair.Key);
+				}
+
+				auto OldOutputs = Instance->Outputs;
+				Instance->Outputs = Defaults->Outputs;
+				for (auto& Pair : Instance->Outputs)
+				{
+					Pair.Value = OldOutputs.FindRef(Pair.Key);
+				}
+				Instance->Outputs = Defaults->Outputs;
+				Instance->Modify();
+			}
+		}
+	}
+
+	// Notify the graph editor about the compilation event.
+	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
+	{
+		UGameFlowGraphNode* Instance = *It;
+		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
+		// Is the observed node an instance of the compiled blueprint? If true mark it for compilation.
+		Instance->bPendingCompilation = ObservedNode != nullptr && ObservedNode->GetClass()->ClassGeneratedBy == Blueprint;
+	}
 }
 
 void FGameFlowEditorModule::InitializeCppScriptTemplates()

@@ -6,11 +6,11 @@ UGameFlowNode_FlowControl_DoN::UGameFlowNode_FlowControl_DoN()
 {
 #if WITH_EDITOR
 	// Initialize input pins.
-	AddInputPin("Enter");
-	AddInputPin("Reset");
+	AddInputPin_CDO("Enter");
+	AddInputPin_CDO("Reset");
 	
     // Initialize output pins.
-	AddOutputPin("Exit");
+	AddOutputPin_CDO("Exit");
 
 	TypeName = "Conditional";
 #endif

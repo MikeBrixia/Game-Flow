@@ -9,15 +9,15 @@ UGameFlowNode_Utils_Timer::UGameFlowNode_Utils_Timer()
 #if WITH_EDITOR
 	TypeName = "Latent";
 
-	AddInputPin("Start");
-	AddInputPin("Stop");
-	AddInputPin("Skip");
-	AddInputPin("Resume");
+	AddInputPin_CDO("Start");
+	AddInputPin_CDO("Stop");
+	AddInputPin_CDO("Skip");
+	AddInputPin_CDO("Resume");
 
-	AddOutputPin("Completed");
-	AddOutputPin("Stopped");
-	AddOutputPin("Step");
-	AddOutputPin("Skipped");
+	AddOutputPin_CDO("Completed");
+	AddOutputPin_CDO("Stopped");
+	AddOutputPin_CDO("Step");
+	AddOutputPin_CDO("Skipped");
 
 #endif
 	Time = 2.f;

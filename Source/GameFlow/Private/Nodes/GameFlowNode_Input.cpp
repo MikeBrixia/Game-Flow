@@ -6,7 +6,7 @@ UGameFlowNode_Input::UGameFlowNode_Input()
 {
 #if WITH_EDITOR
 	TypeName = "Input";
-	AddOutputPin("Out");
+	AddOutputPin_CDO("Out");
 #endif
 }
 

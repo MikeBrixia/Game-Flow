@@ -22,7 +22,12 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	void OnPostEngineInit();
+	
 private:
+	void OnBlueprintCompiled();
+	void OnBlueprintPreCompile(UBlueprint* Blueprint);
+	
 	void InitializeCppScriptTemplates();
 	void ForwardEditorSettingsToRuntimeSettings();
 	void RemoveCppScriptTemplates();
