@@ -50,7 +50,10 @@ void UPinHandle::CutConnection(UPinHandle* OtherPinHandle)
 {
 	// Cut the connection between these two nodes.
 	RemoveConnection(OtherPinHandle);
-	OtherPinHandle->RemoveConnection(this);
+	if (OtherPinHandle != nullptr)
+	{
+		OtherPinHandle->RemoveConnection(this);	
+	}
 }
 
 void UPinHandle::CutAllConnections()

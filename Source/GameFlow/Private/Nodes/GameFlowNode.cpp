@@ -16,7 +16,6 @@ UGameFlowNode::UGameFlowNode()
 	bBreakpointEnabled = false;
 	bCanAddInputPin = false;
 	bCanAddOutputPin = false;
-    
 #endif
 }
 
@@ -234,7 +233,6 @@ void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 			if (FMapProperty* MapProperty = CastField<FMapProperty>(PinsContainerProperty->GetValue()))
 			{
 				FScriptMapHelper_InContainer MapHelper(MapProperty, this);
-
 				// TODO: Break pin handle connections on pin removal.
 			}
 		}

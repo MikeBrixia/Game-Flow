@@ -18,12 +18,8 @@ public:
 	FName PinName;
 
 private:
-	UPROPERTY(TextExportTransient)
+	UPROPERTY(TextExportTransient, VisibleAnywhere)
 	TArray<UPinHandle*> Connections;
-
-#if WITH_EDITORONLY_DATA
-
-#endif
 
 public:
 	

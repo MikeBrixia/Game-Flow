@@ -44,7 +44,7 @@ void UGameFlowGraph::SetDebuggedInstance(UGameFlowAsset* Instance)
 	// Let pass invalid instances.
 	if(Instance == nullptr || Instance->IsA(GameFlowAsset->GetClass()))
 	{
-		// Finally set the new debugged instance and broadcast the event.
+		// Finally, set the new debugged instance and broadcast the event.
 		this->DebuggedAssetInstance = Instance;
 	}
 }
@@ -52,7 +52,7 @@ void UGameFlowGraph::SetDebuggedInstance(UGameFlowAsset* Instance)
 TArray<UGameFlowGraphNode*> UGameFlowGraph::GetNodesOfClass(const TSubclassOf<UGameFlowNode> NodeClass) const
 {
 	const TArray<UGameFlowGraphNode*> GameFlowGraphNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
-	// Find all graph nodes which encapsulates node assets of the requested type(NodeClass).
+	// Find all graph nodes that encapsulate node assets of the requested type(NodeClass).
 	TArray<UGameFlowGraphNode*> NodesOfRequestedType = GameFlowGraphNodes.FilterByPredicate(
 		[=](const UGameFlowGraphNode* Node)
 		{
@@ -260,7 +260,7 @@ void UGameFlowGraph::OnNodesRemoved(const TSet<const UGameFlowGraphNode*> Remove
 {
 	for(const UGameFlowGraphNode* GraphNode : RemovedNodes)
 	{
-		// Remove node from the game flow asset.
+		// Remove the node from the game flow asset.
 		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 		// Input and output nodes are also stored in separates maps, so we need to unregister them.
 		if(NodeAsset->IsA(UGameFlowNode_Input::StaticClass()))
@@ -300,7 +300,7 @@ void UGameFlowGraph::RebuildGraphFromAsset()
 	const UGameFlowGraphSchema* GameFlowSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	
 	// Recreate all game flow asset registered nodes, including orphan nodes.
-	// Orphans are nodes which does not share connections with any parent node,
+	// Orphans are nodes that do not share connections with any parent node,
 	// e.g. their input pins have no links.
 	for(UGameFlowNode* NodeAsset : GameFlowAsset->GetNodes())
 	{

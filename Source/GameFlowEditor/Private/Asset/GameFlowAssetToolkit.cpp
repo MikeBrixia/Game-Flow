@@ -46,8 +46,7 @@ void GameFlowAssetToolkit::InitEditor(const TArray<UObject*>& InObjects)
 	FEditorDelegates::EndPIE.AddSP(this, &GameFlowAssetToolkit::OnPIEFinish);
 }
 
-
-#if ENGINE_MINOR_VERSION >= 4
+#if ENGINE_MINOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 6
 
 bool GameFlowAssetToolkit::OnRequestClose(EAssetEditorCloseReason InCloseReason)
 {
@@ -55,13 +54,15 @@ bool GameFlowAssetToolkit::OnRequestClose(EAssetEditorCloseReason InCloseReason)
 	return FAssetEditorToolkit::OnRequestClose(InCloseReason);
 }
 
-#endif
+#elif ENGINE_MINOR_VERSION >= 5 && ENGINE_MINOR_VERSION < 6 
 
 bool GameFlowAssetToolkit::OnRequestClose()
 {
 	UE_LOG(LogGameFlow, Display, TEXT("%s asset editor closed succesfully"), *Asset->GetName());
 	return true;
 }
+
+#endif
 
 TSharedRef<FTabManager::FLayout> GameFlowAssetToolkit::CreateEditorLayout()
 {

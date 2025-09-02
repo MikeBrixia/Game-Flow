@@ -58,6 +58,9 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 		
 		ContextMenuCommands->MapAction(GraphNodeCommands.ValidateNode,
 		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
+
+		ContextMenuCommands->MapAction(GraphEditorCommands.ReconstructNodes,
+			                       FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnAssetCompiled));
 	}
 
 	// Configure debug commands
@@ -238,7 +241,7 @@ void UGameFlowGraphNode::OnReplacementRequest()
 	const int32 PressedButtonIndex = ReplaceNodeDialog->ShowModal();
 	UClass* PickedClass = ReplaceNodeDialog->GetPickedClass();
 	
-	// If user has picked a valid and different UCLASS and confirmed replacement, then replace the node.
+	// If the user has picked a valid and different UCLASS and confirmed replacement, then replace the node.
 	if(PressedButtonIndex == 0 && PickedClass != nullptr
 		&& NodeAsset->GetClass() != PickedClass)
 	{
@@ -387,7 +390,7 @@ void UGameFlowGraphNode::OnAssetCompiled()
 		ReconstructNode();
 		
 		// Notify listeners this node has been compiled.
-		OnNodeAssetChanged.Broadcast();
+		//OnNodeAssetChanged.Broadcast();
 
 		// Node has finished compilation, remove the mark from it.
 		bPendingCompilation = false;
@@ -444,6 +447,7 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 			FToolMenuSection& GameFlowSection = Menu->AddSection("GameFlow", NSLOCTEXT("FGameFlowNode", "NodeContextAction", "Node actions"));
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ValidateNode, ContextMenuCommands);
 			GameFlowSection.AddMenuEntryWithCommandList(GraphNodeCommands.ReplaceNode, ContextMenuCommands);
+			GameFlowSection.AddMenuEntryWithCommandList(GraphEditorCommands.ReconstructNodes, ContextMenuCommands);
 			GameFlowSection.AddMenuEntryWithCommandList(GenericCommands.Delete, ContextMenuCommands);
 			GameFlowSection.AddMenuEntryWithCommandList(GenericCommands.Copy, ContextMenuCommands);
 			GameFlowSection.AddMenuEntryWithCommandList(GenericCommands.Paste, ContextMenuCommands);
@@ -530,7 +534,7 @@ FLinearColor UGameFlowGraphNode::GetNodeTitleColor() const
 
 bool UGameFlowGraphNode::IsOrphan() const
 {
-	// Find all input pins which have a connection.
+	// Find all input pins that have a connection.
 	const TArray<UEdGraphPin*> ConnectedInputPins = Pins.FilterByPredicate([] (const UEdGraphPin* Pin)
 	{
 		return Pin->Direction == EGPD_Input && Pin->HasAnyConnections();

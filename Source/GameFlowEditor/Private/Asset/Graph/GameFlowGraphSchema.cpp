@@ -142,7 +142,7 @@ UEdGraphNode* UGameFlowGraphSchema::CreateSubstituteNode(UEdGraphNode* Node, con
 	UGameFlowGraphNode* SubstituteNode = FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(SubstituteNodeAsset,
 		GameFlowGraph, FVector2D(Node->NodePosX, Node->NodePosY));
 	
-	// If substitute node has variable pins, try to match the
+	// If the substitute node has variable pins, try to match the
 	// image of the old node.
 	for(UEdGraphPin* Pin : Node->Pins)
 	{
@@ -205,10 +205,10 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 		if(CanCreateGraphNodeForClass(ChildClass))
 		{
 			FText ClassCategory = ChildClass->GetMetaDataText("Category");
-			// If node class has no defined category, use the default one.
+			// If the node class has no defined category, use the default one.
 			ClassCategory = ClassCategory.IsEmptyOrWhitespace()? INVTEXT("Default") : ClassCategory;
 			
-			// Add context menu action for creating a new node of this class.
+			// Add a context menu action for creating a new node of this class.
 			TSharedRef<FGameFlowNodeSchemaAction_CreateOrDestroyNode> NewNodeAction(new FGameFlowNodeSchemaAction_CreateOrDestroyNode(ChildClass, ClassCategory,
 															   FText::FromString(ChildClass->GetDescription()), ChildClass->GetToolTipText(),0));
 			ContextMenuBuilder.AddAction(NewNodeAction);
@@ -235,7 +235,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 	GraphNode->bHasCompilerMessage = false;
 	GraphNode->ErrorType = 0;
 	
-	// When a node is of a class which has been marked as 'Abstract', proceed
+	// When a node is of a class that has been marked as 'Abstract', proceed
 	// by replacing all associated instances of this class from the Game Flow asset.
 	if (NodeClass->HasAnyClassFlags(CLASS_Abstract))
 	{
@@ -250,6 +250,19 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 		const FString DeprecationMessage = NodeClass->GetMetaData("DeprecationMessage");
 		UE_LOG(LogGameFlow, Warning, TEXT("%s class has been deprecated! %s"), *ClassName, *DeprecationMessage);
 		GraphNode->ReportError(EMessageSeverity::Warning, "Node should be replaced with new version if available");
+	}
+
+	// Ensure pin connections are valid and perform cleanup, if necessary.
+	for (UEdGraphPin* Pin : GraphNode->Pins)
+	{
+		FName PinName = Pin->PinName;
+		const UPinHandle* PinHandle = NodeAsset->GetPinByName(PinName, Pin->Direction);
+		
+		// Is the pin handle invalid?
+		if (PinHandle == nullptr || !PinHandle->IsValidHandle())
+		{
+			Pin->BreakAllPinLinks(true);
+		}
 	}
 }
 
@@ -353,6 +366,8 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 {
 	for (UEdGraphPin* Pin : GraphNode->Pins)
 	{
+		UE_LOG(LogGameFlow, Display, TEXT("Recreating connections for pin '%s' of '%s' node."),
+			*Pin->PinName.ToString(), *GraphNode->GetNodeAsset()->GetName());
 		if (!Directions.Contains(Pin->Direction)) continue;
 
 		const UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
@@ -398,7 +413,12 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 			UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
 			// After finding the current node output pin and the next node input pin,
 			// create a connection between the two.
-			TryCreateConnection(Pin, OtherPin);
+			bool bConnectionRecreated = TryCreateConnection(Pin, OtherPin);
+			if (bConnectionRecreated)
+			{
+				UE_LOG(LogGameFlow, Display, TEXT("Connection between '%s' and '%s' node has been recreated."),
+				*GraphNode->GetNodeAsset()->GetName(), *ConnectedNode->GetName())
+			}
 		}
 	}
 }

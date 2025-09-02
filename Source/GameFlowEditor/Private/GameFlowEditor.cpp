@@ -117,7 +117,7 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 
 void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 {
-	// Fixup and reflect CDO changes to node all node asset instances.
+	// Fix up and reflect CDO changes to all node asset instances.
 	for (TObjectIterator<UGameFlowNode> It; It; ++It)
 	{
 		// We're only interested in non-CDO objects.
@@ -131,18 +131,19 @@ void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 			{
 			    auto OldInputs = Instance->Inputs;
 				Instance->Inputs = Defaults->Inputs;
+				// Propagate input pins changes.
 				for (auto& Pair : Instance->Inputs)
 				{
 					Pair.Value = OldInputs.FindRef(Pair.Key);
 				}
-
+				
 				auto OldOutputs = Instance->Outputs;
 				Instance->Outputs = Defaults->Outputs;
+				// Propagate output pin changes.
 				for (auto& Pair : Instance->Outputs)
 				{
 					Pair.Value = OldOutputs.FindRef(Pair.Key);
 				}
-				Instance->Outputs = Defaults->Outputs;
 				Instance->Modify();
 			}
 		}
@@ -153,8 +154,9 @@ void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 	{
 		UGameFlowGraphNode* Instance = *It;
 		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
-		// Is the observed node an instance of the compiled blueprint? If true mark it for compilation.
-		Instance->bPendingCompilation = ObservedNode != nullptr && ObservedNode->GetClass()->ClassGeneratedBy == Blueprint;
+		// Is the observed node an instance of the compiled blueprint? If true, mark it for compilation.
+		Instance->bPendingCompilation = ObservedNode != nullptr
+		                                && ObservedNode->GetClass()->ClassGeneratedBy == Blueprint;
 	}
 }
 
@@ -166,7 +168,7 @@ void FGameFlowEditorModule::InitializeCppScriptTemplates()
 	IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
 	const bool bCopyResult = FileManager.CopyDirectoryTree(*EngineEditorScriptTemplatesPath, *ScriptTemplatesPath, false);
 	
-	const TCHAR* CopyMsg = bCopyResult? TEXT("Script templates copied succesfully to engine template folder!") :
+	const TCHAR* CopyMsg = bCopyResult? TEXT("Script templates copied successfully to engine template folder!") :
 										TEXT("Script templates could not be copied to engine template folder");
 	UE_LOG(LogGameFlow, Display, TEXT("%s"), CopyMsg);
 }
