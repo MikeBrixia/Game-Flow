@@ -22,13 +22,15 @@ FConnectionDrawingPolicy* UGameFlowGraphSchema::CreateConnectionDrawingPolicy(in
 const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
 {
 	FPinConnectionResponse ConnectionResponse;
-	FText ConnectionMessage;
+	FText ConnectionMessage = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "Unknown response");
 	
     // If one of the two pins is invalid, do not allow connection and return.
 	if(A == nullptr || B == nullptr)
 	{
 		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
 		ConnectionResponse.Message = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "One or both of the pins are invalid!");
+		UE_LOG(LogGameFlow, Display, TEXT("Connection response: %s"),
+		        *ConnectionResponse.Message.ToString());
 		return ConnectionResponse;
 	}
 
@@ -37,9 +39,10 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 	{
 		ConnectionResponse.Response = CONNECT_RESPONSE_DISALLOW;
 		ConnectionResponse.Message = NSLOCTEXT("FGameFlowEditor", "ConnectionMessage", "The node which owns one of the two pins is invalid!");
+		UE_LOG(LogGameFlow, Display, TEXT("Connection response: %s"),
+		*ConnectionResponse.Message.ToString());
 		return ConnectionResponse;
 	}
-
 	
 	// Are we trying to establish a connection from an input pin source to an output pin destination?
 	const bool bFromInputToOutput = A->Direction == EGPD_Input && B->Direction == EGPD_Output;
@@ -81,6 +84,8 @@ const FPinConnectionResponse UGameFlowGraphSchema::CanCreateConnection(const UEd
 		}
 	}
 	ConnectionResponse.Message = ConnectionMessage;
+	UE_LOG(LogGameFlow, Display, TEXT("Connection response: %s"),
+		*ConnectionResponse.Message.ToString());
 	
 	return ConnectionResponse;
 }
@@ -107,11 +112,11 @@ void UGameFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(&Graph);
 	UGameFlowAsset* GameFlowAsset = GameFlowGraph->GameFlowAsset;
 
-	// Create standard input node.
+	// Create the standard input node.
 	FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Input::StaticClass(), GameFlowGraph,
 		FVector2D::ZeroVector, "Start");
 	
-	// Create standard output node.
+	// Create the standard output node.
 	FGameFlowNodeSchemaAction_CreateOrDestroyNode::CreateNode(UGameFlowNode_Output::StaticClass(), GameFlowGraph,
 		FVector2D(600, 0), "Finish");
 
@@ -303,7 +308,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 {
 	TQueue<UGameFlowGraphNode*> ToRebuild;
 	UGameFlowGraphNode* CurrentNode = RootNode;
-	// Start rebuilding graph from an input node.
+	// Start rebuilding the graph from an input node.
 	ToRebuild.Enqueue(CurrentNode);
 	
 	// As long as there are nodes to build, keep iterating.
@@ -356,7 +361,7 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 				ToRebuild.Enqueue(GraphNode);
 			}
 		}
-		// Unmark rebuild when process has finished.
+		// Unmark the rebuild flag when the process has finished.
 		CurrentNode->bIsRebuilding = false;
 	}
 }
@@ -392,11 +397,11 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 		for(const auto& ConnectedPinHandle : PinHandle->GetConnections())
 		{
 			const UGameFlowNode* ConnectedNode = ConnectedPinHandle->GetNodeOwner();
-			const FName& InPinName = PinHandle->PinName;
+			const FName& InPinName = ConnectedPinHandle->PinName;
 
 			const bool bIsValidNode = IsValid(ConnectedNode);
 			const bool bIsValidPinName = !InPinName.IsEqual(EName::None);
-			// If the next node is invalid or the input pin name is None, skip this iteration.
+			// If the next node is invalid or the pin name is None, skip this iteration.
 			ensureMsgf(bIsValidNode, TEXT("Ensure condition failed: '%s' pin of '%s' node is connected to an invalid node."),
 				*PinHandle->PinName.ToString(), *NodeAsset->GetName());
 			ensureMsgf(bIsValidPinName, TEXT("Ensure condition failed: '%s' pin of '%s' node is connected to a PinHandle with an invalid pin name: '%s'"),
@@ -406,19 +411,14 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 			
 			const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
 			// If the connected node asset does not have a graph representation, skip connections rebuild. 
-			ensureMsgf(ConnectedGraphNode, TEXT("Ensure condition failed: node '%s' has no matching graph representation. Graph connection rebuild skipped"),
+			ensureMsgf(ConnectedGraphNode, TEXT("Ensure condition failed: node '%s' has no associated graph node. Graph connection rebuild skipped"),
 				*ConnectedNode->GetName());
 			if (!IsValid(ConnectedGraphNode)) continue;
-
+			
 			UEdGraphPin* OtherPin = ConnectedGraphNode->FindPin(InPinName);
 			// After finding the current node output pin and the next node input pin,
 			// create a connection between the two.
-			bool bConnectionRecreated = TryCreateConnection(Pin, OtherPin);
-			if (bConnectionRecreated)
-			{
-				UE_LOG(LogGameFlow, Display, TEXT("Connection between '%s' and '%s' node has been recreated."),
-				*GraphNode->GetNodeAsset()->GetName(), *ConnectedNode->GetName())
-			}
+			TryCreateConnection(Pin, OtherPin);
 		}
 	}
 }

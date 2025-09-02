@@ -26,12 +26,6 @@ void SGameFlowNode::Construct(const FArguments& InArgs)
 	this->GraphNode = InArgs._Node;
 	this->TitleText = InArgs._TitleText;
 	
-	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
-	// Each a time the encapsulated node asset gets changed, refresh the node widget.
-    GameFlowGraphNode->OnNodeAssetChanged.AddSP(this, &SGameFlowNode::UpdateGraphNode);
-	// Each time the encapsulated node gets validated, setup error info.
-	GameFlowGraphNode->OnValidationResult.AddSP(this, &SGameFlowNode::UpdateGraphNode);
-	
 	// Construct node by reading GraphNode data.
 	UpdateGraphNode();
 	SetupErrorReporting();
@@ -112,7 +106,7 @@ void SGameFlowNode::CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox
 
 void SGameFlowNode::CreateStandardPinWidget(UEdGraphPin* Pin)
 {
-	// Create the node pin widget. by default GameFlow will create an
+	// Create the node pin widget. By default, GameFlow will create an
 	// exec pin for the node.
 	const TSharedRef<SGameFlowNodePin> PinWidget = SNew(SGameFlowNodePin, Pin)
 	                                         .ExecPinColor(FLinearColor::White)
@@ -136,11 +130,11 @@ FReply SGameFlowNode::OnAddOutputPin()
 
 void SGameFlowNode::AddButton_CreatePin(EEdGraphPinDirection PinDirection)
 {
-	// Create new pin for this node.
+	// Create the new pin for this node.
 	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
 	UEdGraphPin* NewPin = GameFlowGraphNode->CreateNodePin(PinDirection);
 	
-	// Create new pin widget.
+	// Create the new pin widget.
 	CreateStandardPinWidget(NewPin);
 }
 
@@ -167,7 +161,7 @@ void SGameFlowNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphIn
 void SGameFlowNode::UpdateErrorInfo()
 {
 	SGraphNode::UpdateErrorInfo();
-	// Change render opacity based on error state.
+	// Change render opacity based on the error state.
 	if(GraphNode->ErrorType == EMessageSeverity::Error)
 	{
 		this->RenderOpacity = .5f;

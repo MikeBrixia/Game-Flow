@@ -96,7 +96,7 @@ void SGameFlowGraph::OnCopyNodes()
 {
 	const TSet<UGameFlowGraphNode*> SelectedNodes = reinterpret_cast<const TSet<UGameFlowGraphNode*>&>(GetSelectedNodes());
 	
-	// Prepare each node for copying operation.
+	// Prepare each node for the copying operation.
 	for(UGameFlowGraphNode* GraphNode : SelectedNodes)
 	{
 		GraphNode->PrepareForCopying();
@@ -147,11 +147,11 @@ void SGameFlowGraph::OnPasteNodes()
 		
 		UGameFlowNode* NodeAsset = GraphNode->GetNodeAsset();
 		GraphNode->CreateNewGuid();
-		// Override with graph node GUID.
+		// Override with the graph node GUID.
 		NodeAsset->GUID = GraphNode->NodeGuid;
 		Graph->GameFlowAsset->AddNode(GraphNode->GetNodeAsset());
 		
-		// Copy paste operation has ended.
+		// Copy-paste operation has ended.
 		GraphNode->bIsBeingCopyPasted = false;
 	}
 	

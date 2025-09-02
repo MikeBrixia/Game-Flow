@@ -60,7 +60,7 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 		                           FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnValidationRequest));
 
 		ContextMenuCommands->MapAction(GraphEditorCommands.ReconstructNodes,
-			                       FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::OnAssetCompiled));
+			                       FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::ReconstructNode));
 	}
 
 	// Configure debug commands
@@ -304,17 +304,24 @@ bool UGameFlowGraphNode::CanDisableBreakpoint() const
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
 {
-	// Break pin graph connections.
-	BreakAllNodeLinks();
-	
-	// Remove logical connections.
-	if(InRemovedPin->Direction == EGPD_Input)
+	const bool bCanEditAsset = !(bIsReconstructing || bIsRebuilding || bPendingCompilation);
+	// Break pin graph connections. if the asset can be edited,
+	// notify all connected nodes.
+	InRemovedPin->BreakAllPinLinks(bCanEditAsset);
+
+	// If the node is reconstructing, rebuilding or being compiled; we
+	// don't want to touch the node asset.
+	if (bCanEditAsset)
 	{
-		NodeAsset->RemoveInputPin(InRemovedPin->PinName);
-	}
-	else if(InRemovedPin->Direction == EGPD_Output)
-	{
-		NodeAsset->RemoveOutputPin(InRemovedPin->PinName);
+		// Remove pin from node asset.
+		if(InRemovedPin->Direction == EGPD_Input)
+		{
+			NodeAsset->RemoveInputPin(InRemovedPin->PinName);
+		}
+		else if(InRemovedPin->Direction == EGPD_Output)
+		{
+			NodeAsset->RemoveOutputPin(InRemovedPin->PinName);
+		}
 	}
 }
 
@@ -328,7 +335,7 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 	
 	// We don't want to touch logical pin handles during a graph node rebuild process,
 	// it could lead to data corruption.
-	if(!bIsRebuilding && !bPendingCompilation)
+	if(!bIsRebuilding && !bPendingCompilation && !bIsReconstructing)
 	{
 		UPinHandle* PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
 		PinHandle->CutAllConnections();
@@ -365,8 +372,8 @@ void UGameFlowGraphNode::OnAssetValidated()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	GraphSchema->ValidateNodeAsset(this);
-	// Notify listeners this node has been validated.
-	OnValidationResult.Broadcast();
+	// Notify listeners this node has been validated to trigger redraw.
+	GetGraph()->NotifyGraphChanged();
 }
 
 void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
@@ -389,9 +396,6 @@ void UGameFlowGraphNode::OnAssetCompiled()
 		// reconstruct the compiled asset with the updated properties/logic.
 		ReconstructNode();
 		
-		// Notify listeners this node has been compiled.
-		//OnNodeAssetChanged.Broadcast();
-
 		// Node has finished compilation, remove the mark from it.
 		bPendingCompilation = false;
 	}
@@ -584,12 +588,13 @@ void UGameFlowGraphNode::Initialize()
 	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
 	
 	// Listen to Unreal Editor blueprint compilation events.
-	
 	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 }
 
 void UGameFlowGraphNode::ReconstructNode()
 {
+	bIsReconstructing = true;
+	
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	
 	const UGameFlowEditorSettings* GameFlowEditorSettings = UGameFlowEditorSettings::Get();
@@ -598,13 +603,27 @@ void UGameFlowGraphNode::ReconstructNode()
 	// Reconstruct pins outside copy-paste operations.
 	if(!bIsBeingCopyPasted)
 	{
-		Pins.Reset();
+		for (int i = Pins.Num() - 1; i >= 0; i--)
+		{
+			RemovePin(Pins[i]);
+		}
 		AllocateDefaultPins();
 
 		const UGameFlowGraph& GameFlowGraph = *CastChecked<UGameFlowGraph>(GetGraph());
-		// Recompile node and recreate it's node connections.
-		GraphSchema->RecreateNodeConnections(GameFlowGraph, this, TArray { EGPD_Input, EGPD_Output });
+		// Recreate node connections for the reconstructed node.
+		GraphSchema->RecreateNodeConnections(GameFlowGraph,
+			this, TArray { EGPD_Input, EGPD_Output });
+
+		for (UEdGraphPin* Pin : Pins)
+		{
+			UE_LOG(LogGameFlow, Display, TEXT("%s Connections num: %d"),
+				*Pin->GetName(), Pin->LinkedTo.Num());	
+		}
 	}
+	
+	bIsReconstructing = false;
+	// Notify node changed to redraw the node.
+	GetGraph()->NotifyGraphChanged();
 }
 
 bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
@@ -624,7 +643,7 @@ void UGameFlowGraphNode::OnNodeAssetExecuted(UInputPinHandle* InputPinHandle)
 
 		UEdGraphPin* GraphPin = FindPin(InputPinHandle->PinName);
         UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-		// Notify graph of the breakpoint hit.
+		// Notify the graph of the breakpoint hit.
 		GameFlowGraph->OnBreakpointHit(this, GraphPin);
 	}
 }
@@ -691,10 +710,7 @@ void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 		Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 	
 		// Notify listeners that the node asset has been changed.
-		if(OnNodeAssetChanged.IsBound())
-		{
-			OnNodeAssetChanged.Broadcast();
-		}
+	    GetGraph()->NotifyNodeChanged(this);	
 	}
 }
 

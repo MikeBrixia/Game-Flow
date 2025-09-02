@@ -10,7 +10,6 @@
 #include "UObject/Object.h"
 #include "GameFlowGraphNode.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnNodeAssetChanged)
 DECLARE_MULTICAST_DELEGATE(FOnValidationEnd)
 
 /**
@@ -25,24 +24,22 @@ class GAMEFLOWEDITOR_API UGameFlowGraphNode : public UEdGraphNode
 	GENERATED_BODY()
 
 public:
-	/** Called when the node asset encapsulated inside this graph node gets changed. */
-	FOnNodeAssetChanged OnNodeAssetChanged;
-	
-	/** Callback for when this node has finished being validated. */
-	FOnValidationEnd OnValidationResult;
-
 	/** True if this node is currently inside a rebuild process. */
 	bool bIsRebuilding = false;
 
 	/** True if the asset inside this is being executed, false otherwise. */
 	bool bIsActive = false;
 
+	/** True if this node is being reconstructed, false otherwise. */
+	bool bIsReconstructing = false;
+	
 	/** True if we're currently performing a copy-paste operation on this node. */
 	UPROPERTY()
 	bool bIsBeingCopyPasted = false;
 
 	/** True if the node asset is waiting to be compiled. */
 	bool bPendingCompilation;
+	
 private:
 	/** The game flow node asset encapsulated inside this graph node. */
 	UPROPERTY(Instanced)
