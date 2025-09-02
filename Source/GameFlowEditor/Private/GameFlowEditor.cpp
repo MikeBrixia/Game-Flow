@@ -134,7 +134,20 @@ void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 				// Propagate input pins changes.
 				for (auto& Pair : Instance->Inputs)
 				{
-					Pair.Value = OldInputs.FindRef(Pair.Key);
+					// CDO input pin name.
+					FName PinName = Pair.Key;
+					UInputPinHandle* PinHandle = OldInputs.FindRef(PinName);
+					// Does the input handle associated with the CDO pin name already exist?
+					if (PinHandle != nullptr)
+					{
+						// If true, simply migrate it to the instance input map.
+						Pair.Value = PinHandle;
+					}
+					else
+					{
+						// If false, add a brand-new input pin with the CDO input pin name.
+						Pair.Value = DuplicateObject(Pair.Value, Instance);
+					}
 				}
 				
 				auto OldOutputs = Instance->Outputs;
@@ -142,7 +155,20 @@ void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 				// Propagate output pin changes.
 				for (auto& Pair : Instance->Outputs)
 				{
-					Pair.Value = OldOutputs.FindRef(Pair.Key);
+					// CDO output pin name.
+					FName PinName = Pair.Key;
+					UOutPinHandle* PinHandle = OldOutputs.FindRef(PinName);
+					// Does the pin handle associated with the CDO pin name already exists?
+					if (PinHandle != nullptr)
+					{
+						// If true, simply migrate it to the instance input map.
+						Pair.Value = PinHandle;
+					}
+					else
+					{
+						// If false, add a brand-new input pin with the CDO input pin name.
+						Pair.Value = DuplicateObject(Pair.Value, Instance);
+					}
 				}
 				Instance->Modify();
 			}

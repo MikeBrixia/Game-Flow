@@ -115,8 +115,11 @@ public:
 	virtual bool GetCanRenameNode() const override;
 	virtual bool ShowPaletteIconOnNode() const override;
 
+protected:
+	/** True if the observed node asset can be edited, false otherwise */
+	virtual bool CanEditNodeAsset() const;
+	
 private:
-
 	void Initialize();
 	
 	void OnReplacementRequest();

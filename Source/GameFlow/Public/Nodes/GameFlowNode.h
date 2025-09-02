@@ -153,7 +153,7 @@ public:
 
 protected:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
-
+    
 	void AddInputPin_CDO(FName PinName);
 	void AddOutputPin_CDO(FName PinName);
 private:

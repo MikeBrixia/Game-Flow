@@ -304,7 +304,7 @@ bool UGameFlowGraphNode::CanDisableBreakpoint() const
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
 {
-	const bool bCanEditAsset = !(bIsReconstructing || bIsRebuilding || bPendingCompilation);
+	const bool bCanEditAsset = CanEditNodeAsset();
 	// Break pin graph connections. if the asset can be edited,
 	// notify all connected nodes.
 	InRemovedPin->BreakAllPinLinks(bCanEditAsset);
@@ -333,9 +333,8 @@ void UGameFlowGraphNode::PinConnectionListChanged(UEdGraphPin* Pin)
 	Pin->Modify();
 	NodeAsset->Modify();
 	
-	// We don't want to touch logical pin handles during a graph node rebuild process,
-	// it could lead to data corruption.
-	if(!bIsRebuilding && !bPendingCompilation && !bIsReconstructing)
+	// Are we allowed to edit the node asset?
+	if(CanEditNodeAsset())
 	{
 		UPinHandle* PinHandle = NodeAsset->GetPinByName(Pin->PinName, Pin->Direction);
 		PinHandle->CutAllConnections();
@@ -576,6 +575,11 @@ bool UGameFlowGraphNode::ShowPaletteIconOnNode() const
 	return true;
 }
 
+bool UGameFlowGraphNode::CanEditNodeAsset() const
+{
+	return !(bIsReconstructing || bIsRebuilding || bPendingCompilation);
+}
+
 void UGameFlowGraphNode::Initialize()
 {
 	UGameFlowEditorSettings* Settings = UGameFlowEditorSettings::Get();
@@ -613,14 +617,7 @@ void UGameFlowGraphNode::ReconstructNode()
 		// Recreate node connections for the reconstructed node.
 		GraphSchema->RecreateNodeConnections(GameFlowGraph,
 			this, TArray { EGPD_Input, EGPD_Output });
-
-		for (UEdGraphPin* Pin : Pins)
-		{
-			UE_LOG(LogGameFlow, Display, TEXT("%s Connections num: %d"),
-				*Pin->GetName(), Pin->LinkedTo.Num());	
-		}
 	}
-	
 	bIsReconstructing = false;
 	// Notify node changed to redraw the node.
 	GetGraph()->NotifyGraphChanged();
