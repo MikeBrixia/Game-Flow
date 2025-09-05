@@ -27,7 +27,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Screen")
 	float Time;
-
+	
 	UGameFlowNode_Debug_Log();
 	
 	virtual void Execute_Implementation(const FName PinName) override;

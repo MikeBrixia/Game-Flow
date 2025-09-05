@@ -28,6 +28,16 @@ private:
 	void OnBlueprintCompiled();
 	void OnBlueprintPreCompile(UBlueprint* Blueprint);
 	
+#if WITH_HOT_RELOAD && ((ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION >= 6)
+	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
+#endif
+	
+#if WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION >= 6)
+	void OnLiveCoding(FName ModuleName , ECompiledInUObjectsRegisteredStatus Status);
+#elif WITH_LIVE_CODING
+	void OnLiveCoding(FName ModuleName);
+#endif	
+	
 	void InitializeCppScriptTemplates();
 	void ForwardEditorSettingsToRuntimeSettings();
 	void RemoveCppScriptTemplates();

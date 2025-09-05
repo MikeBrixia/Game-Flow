@@ -1,5 +1,7 @@
 ﻿
 #include "GameFlowEditor.h"
+
+#include "DiffResults.h"
 #include "EdGraphUtilities.h"
 #include "GraphEditorActions.h"
 #include "ISettingsModule.h"
@@ -97,6 +99,9 @@ void FGameFlowEditorModule::OnPostEngineInit()
 	// Hookup to editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddRaw(this, &FGameFlowEditorModule::OnBlueprintCompiled);
 	GEditor->OnBlueprintPreCompile().AddRaw(this, &FGameFlowEditorModule::OnBlueprintPreCompile);
+
+	FCoreUObjectDelegates::ReloadCompleteDelegate.AddRaw(this, &FGameFlowEditorModule::OnHotReload);
+	FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddRaw(this, &FGameFlowEditorModule::OnLiveCoding);
 }
 
 void FGameFlowEditorModule::OnBlueprintCompiled()
@@ -106,83 +111,107 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 	{
 		UGameFlowGraphNode* Instance = *It;
 		// Compile marked nodes
-		if (Instance->bPendingCompilation)
-		{
-			Instance->OnAssetCompiled();
-			// GF Compilation as finished.
-			Instance->bPendingCompilation = false;
-		}
+		Instance->OnAssetCompiled();
 	}
 }
 
 void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 {
-	// Fix up and reflect CDO changes to all node asset instances.
-	for (TObjectIterator<UGameFlowNode> It; It; ++It)
-	{
-		// We're only interested in non-CDO objects.
-		if (!It->HasAnyFlags(RF_ClassDefaultObject))
-		{
-			UGameFlowNode* Instance = *It;
-			UGameFlowNode* Defaults = Cast<UGameFlowNode>(Instance->GetClass()->GetDefaultObject());
-
-			// Propagate changes only to non-CDO objects.
-			if (!Instance->IsTemplate())
-			{
-			    auto OldInputs = Instance->Inputs;
-				Instance->Inputs = Defaults->Inputs;
-				// Propagate input pins changes.
-				for (auto& Pair : Instance->Inputs)
-				{
-					// CDO input pin name.
-					FName PinName = Pair.Key;
-					UInputPinHandle* PinHandle = OldInputs.FindRef(PinName);
-					// Does the input handle associated with the CDO pin name already exist?
-					if (PinHandle != nullptr)
-					{
-						// If true, simply migrate it to the instance input map.
-						Pair.Value = PinHandle;
-					}
-					else
-					{
-						// If false, add a brand-new input pin with the CDO input pin name.
-						Pair.Value = DuplicateObject(Pair.Value, Instance);
-					}
-				}
-				
-				auto OldOutputs = Instance->Outputs;
-				Instance->Outputs = Defaults->Outputs;
-				// Propagate output pin changes.
-				for (auto& Pair : Instance->Outputs)
-				{
-					// CDO output pin name.
-					FName PinName = Pair.Key;
-					UOutPinHandle* PinHandle = OldOutputs.FindRef(PinName);
-					// Does the pin handle associated with the CDO pin name already exists?
-					if (PinHandle != nullptr)
-					{
-						// If true, simply migrate it to the instance input map.
-						Pair.Value = PinHandle;
-					}
-					else
-					{
-						// If false, add a brand-new input pin with the CDO input pin name.
-						Pair.Value = DuplicateObject(Pair.Value, Instance);
-					}
-				}
-				Instance->Modify();
-			}
-		}
-	}
-
-	// Notify the graph editor about the compilation event.
+	// Then, decide whether a graph node should be marked as pending compile or not.
 	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
 	{
 		UGameFlowGraphNode* Instance = *It;
 		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
 		// Is the observed node an instance of the compiled blueprint? If true, mark it for compilation.
-		Instance->bPendingCompilation = ObservedNode != nullptr
-		                                && ObservedNode->GetClass()->ClassGeneratedBy == Blueprint;
+		if (ObservedNode != nullptr
+			&& ObservedNode->GetClass()->ClassGeneratedBy == Blueprint)
+		{
+			ObservedNode->ApplyCDOChanges();
+			Instance->MarkNodeAsPendingCompilation();
+		}
+	}
+}
+
+void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
+{
+	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
+	{
+	}
+}
+
+void FGameFlowEditorModule::OnLiveCoding(FName ModuleName, ECompiledInUObjectsRegisteredStatus Status)
+{
+	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
+	{
+		UGameFlowGraphNode* Instance = *It;
+		
+		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
+		UClass* RegeneratedClass = ObservedNode->GetClass()->RegenerateClass(ObservedNode->GetClass(),
+			ObservedNode->GetClass()->GetDefaultObject());
+		UGameFlowNode* Reinstance = NewObject<UGameFlowNode>(GetTransientPackage(),
+			RegeneratedClass);
+
+		for (const FName& Name : Reinstance->GetInputPinsNames())
+		{
+			UE_LOG(LogGameFlow, Display, TEXT("Found input pin %s on %s"),
+				*Name.ToString(), *Reinstance->GetName())
+		}
+
+		for (const FName& Name : Reinstance->GetOutputPinsNames())
+		{
+			UE_LOG(LogGameFlow, Display, TEXT("Found output pin %s on %s"),
+				*Name.ToString(), *Reinstance->GetName())
+		}
+		// Reinstance node will be temporary and should not be saved.
+		Reinstance->SetFlags(RF_Transient);
+
+		TArray<FDiffSingleResult> InputPinsDiff;
+		FDiffResults DiffResults = ObservedNode->PinsDiff(Reinstance,InputPinsDiff, EGPD_Input);
+		// If we've found differences between input pins, update the observed node.
+		if (DiffResults.HasFoundDiffs())
+		{
+			for (const FDiffSingleResult& Diff : InputPinsDiff)
+			{
+				UE_LOG(LogGameFlow, Display, TEXT("Found diff on %s"),
+					*Diff.DisplayString.ToString())
+				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
+				{
+					// If we have a pin that the reinstance does not have, remove it.
+					if (Diff.Category == EDiffType::ADDITION)
+					{
+						ObservedNode->RemoveInputPin(FName(Diff.DisplayString.ToString()));
+					}
+					// If we don't have a pin that the reinstance have, add it.
+					else if (Diff.Category == EDiffType::SUBTRACTION)
+					{
+						ObservedNode->AddInputPin(FName(Diff.DisplayString.ToString()));
+					}
+				}
+			}
+		}
+
+		TArray<FDiffSingleResult> OutputPinsDiff;
+		DiffResults = ObservedNode->PinsDiff(Reinstance,OutputPinsDiff, EGPD_Output);
+		if (DiffResults.HasFoundDiffs())
+		{
+			for (const FDiffSingleResult& Diff : OutputPinsDiff)
+			{
+				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
+				{
+					if (Diff.Category == EDiffType::ADDITION)
+					{
+						ObservedNode->RemoveOutputPin(FName(Diff.DisplayString.ToString()));
+					}
+					else if (Diff.Category == EDiffType::SUBTRACTION)
+					{
+						ObservedNode->AddOutputPin(FName(Diff.DisplayString.ToString()));
+					}
+				}
+			}
+		}
+		
+		Instance->MarkNodeAsPendingCompilation();
+		Instance->OnAssetCompiled();
 	}
 }
 

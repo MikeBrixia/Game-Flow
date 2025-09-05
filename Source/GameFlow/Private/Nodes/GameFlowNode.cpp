@@ -1,10 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
+
+#include "DiffResults.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Engine/StreamableManager.h"
-#include "GameFlowEditor/Public/GameFlowEditor.h"
 #include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
@@ -36,6 +37,77 @@ TArray<FName> UGameFlowNode::GetOutputPinsNames() const
 	TArray<FName> OutputPins;
 	Outputs.GenerateKeyArray(OutputPins);
 	return OutputPins;
+}
+
+FDiffResults UGameFlowNode::PinsDiff(const UGameFlowNode* OtherNode, TArray<FDiffSingleResult>& Diffs,
+	EEdGraphPinDirection Direction) const
+{
+	FDiffResults Results (&Diffs);
+
+	if (Direction == EGPD_Input)
+	{
+		// Find all pins that the other node does not possess.
+		for (const FName PinName : GetInputPinsNames())
+		{
+			if (!OtherNode->GetInputPinsNames().Contains(PinName))
+			{
+				FDiffSingleResult PinDiff;
+				PinDiff.Diff = EDiffType::OBJECT_REQUEST_DIFF;
+				PinDiff.Category = EDiffType::ADDITION;
+				PinDiff.Object1 = const_cast<UGameFlowNode*>(this);
+				PinDiff.Object2 = const_cast<UGameFlowNode*>(OtherNode);
+				PinDiff.DisplayString = FText::FromString(PinName.ToString());
+				Results.Add(PinDiff);
+			}
+		}
+
+		// Find all pins that this node does not possess.
+		for (const FName PinName : OtherNode->GetInputPinsNames())
+		{
+			if (!GetInputPinsNames().Contains(PinName))
+			{
+				FDiffSingleResult PinDiff;
+				PinDiff.Diff = EDiffType::OBJECT_REQUEST_DIFF;
+				PinDiff.Category = EDiffType::SUBTRACTION;
+				PinDiff.Object1 = const_cast<UGameFlowNode*>(this);
+				PinDiff.Object2 = const_cast<UGameFlowNode*>(OtherNode);
+				PinDiff.DisplayString = FText::FromString(PinName.ToString());
+				Results.Add(PinDiff);
+			}
+		}	
+	}
+    else if (Direction == EGPD_Output)
+    {
+    	for (const FName PinName : GetOutputPinsNames())
+    	{
+    		if (!OtherNode->Outputs.Contains(PinName))
+    		{
+    			FDiffSingleResult PinDiff;
+    			PinDiff.Diff = EDiffType::OBJECT_REQUEST_DIFF;
+    			PinDiff.Category = EDiffType::ADDITION;
+    			PinDiff.Object1 = const_cast<UGameFlowNode*>(this);
+    			PinDiff.Object2 = const_cast<UGameFlowNode*>(OtherNode);
+    			PinDiff.DisplayString = FText::FromString(PinName.ToString());
+    		}
+    	}
+
+    	for (const FName PinName : OtherNode->GetOutputPinsNames())
+    	{
+    		if (!Outputs.Contains(PinName))
+    		{
+    			FDiffSingleResult PinDiff;
+    			PinDiff.Diff = EDiffType::OBJECT_REQUEST_DIFF;
+    			PinDiff.Category = EDiffType::SUBTRACTION;
+    			PinDiff.Object1 = const_cast<UGameFlowNode*>(this);
+    			PinDiff.Object2 = const_cast<UGameFlowNode*>(OtherNode);
+    			PinDiff.DisplayString = FText::FromString(PinName.ToString());
+    		}
+    	} 
+    }
+
+	
+	
+	return Results;
 }
 
 TArray<FName> UGameFlowNode::GetNodeTypeOptions() const
@@ -239,6 +311,64 @@ void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 	}
 }
 
+void UGameFlowNode::ApplyCDOChanges()
+{
+	if (!HasAnyFlags(RF_ClassDefaultObject)
+		&& GIsEditor && !GWorld->HasBegunPlay())
+	{
+		UGameFlowNode* Defaults = GetClass()->GetDefaultObject<UGameFlowNode>();
+		// Propagate changes only to non-CDO objects.
+		auto OldInputs = Inputs;
+		Inputs = Defaults->Inputs;
+		// Propagate input pins changes.
+		for (auto& Pair : Inputs)
+		{
+			// CDO input pin name.
+			FName PinName = Pair.Key;
+			UInputPinHandle* PinHandle = OldInputs.FindRef(PinName);
+			// Does the input handle associated with the CDO pin name already exist?
+			if (PinHandle != nullptr)
+			{
+				// If true, simply migrate it to the instance input map.
+				Pair.Value = PinHandle;
+			}
+			else
+			{
+				// If false, add a brand-new input pin with the CDO input pin name.
+				Pair.Value = DuplicateObject(Pair.Value, this);
+			}
+		}
+
+		auto OldOutputs = Outputs;
+		Outputs = Defaults->Outputs;
+		// Propagate output pin changes.
+		for (auto& Pair : Outputs)
+		{
+			// CDO output pin name.
+			FName PinName = Pair.Key;
+			UOutPinHandle* PinHandle = OldOutputs.FindRef(PinName);
+			// Does the pin handle associated with the CDO pin name already exist?
+			if (PinHandle != nullptr)
+			{
+				// If true, simply migrate it to the instance input map.
+				Pair.Value = PinHandle;
+			}
+			else
+			{
+				// If false, add a brand-new input pin with the CDO input pin name.
+				Pair.Value = DuplicateObject(Pair.Value, this);
+			}
+		}
+		Modify();
+	}
+}
+
+void UGameFlowNode::PostLoad()
+{
+	UObject::PostLoad();
+
+	UE_LOG(LogTemp, Warning, TEXT("UGameFlowNode::PostLoad() - %s"), *GetName());
+}
 
 UOutPinHandle* UGameFlowNode::CreateExecOutputPin(FName PinName)
 {

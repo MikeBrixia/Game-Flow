@@ -400,11 +400,9 @@ void UGameFlowGraphNode::OnAssetCompiled()
 	}
 }
 
-void UGameFlowGraphNode::OnAssetBlueprintPreCompiled(UBlueprint* Blueprint)
+void UGameFlowGraphNode::MarkNodeAsPendingCompilation()
 {
-	// If the observed node is being compiled, mark it as pending compiler.
-	bPendingCompilation = Blueprint != nullptr && Blueprint == NodeAsset->GetClass()->ClassGeneratedBy
-	                      && GetGraph()->Nodes.Contains(this);
+	bPendingCompilation = true;
 }
 
 void UGameFlowGraphNode::AllocateDefaultPins()
@@ -590,9 +588,6 @@ void UGameFlowGraphNode::Initialize()
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
 	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
 	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
-	
-	// Listen to Unreal Editor blueprint compilation events.
-	GEditor->OnBlueprintPreCompile().AddUObject(this, &UGameFlowGraphNode::OnAssetBlueprintPreCompiled);
 }
 
 void UGameFlowGraphNode::ReconstructNode()

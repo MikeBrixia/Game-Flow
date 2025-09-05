@@ -3,6 +3,7 @@
 
 
 #include "CoreMinimal.h"
+#include "DiffUtils.h"
 #include "PinHandle.h"
 #include "Pins/InputPinHandle.h"
 #include "Pins/OutPinHandles.h"
@@ -138,6 +139,8 @@ public:
 	TArray<UPinHandle*> GetPinsByDirection(TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<FName> GetInputPinsNames() const;
 	TArray<FName> GetOutputPinsNames() const;
+	FDiffResults PinsDiff(const UGameFlowNode* OtherNode, TArray<FDiffSingleResult>& Diffs,
+		EEdGraphPinDirection Direction) const;
 	
 	bool CanAddInputPin() const;
 	bool CanAddOutputPin() const;
@@ -150,10 +153,12 @@ public:
     
 	/** Defines the tint and icon path for the node. */
 	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
-
+    virtual void ApplyCDOChanges();
+    virtual void PostLoad() override;
+	
 protected:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
-    
+	
 	void AddInputPin_CDO(FName PinName);
 	void AddOutputPin_CDO(FName PinName);
 private:

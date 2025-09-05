@@ -266,7 +266,7 @@ void UGameFlowGraphSchema::ValidateNodeAsset(UGameFlowGraphNode* GraphNode) cons
 		// Is the pin handle invalid?
 		if (PinHandle == nullptr || !PinHandle->IsValidHandle())
 		{
-			Pin->BreakAllPinLinks(true);
+			Pin->BreakAllPinLinks(false);
 		}
 	}
 }
@@ -369,6 +369,8 @@ void UGameFlowGraphSchema::RecreateBranchConnections(const UGameFlowGraph& Graph
 void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, UGameFlowGraphNode* GraphNode,
                                                    const TArray<EEdGraphPinDirection> Directions) const
 {
+	GraphNode->bIsRebuilding = true;
+	
 	for (UEdGraphPin* Pin : GraphNode->Pins)
 	{
 		// Skip pins when their direction has not been requested for rebuild.
@@ -402,7 +404,9 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 			if (!bIsValidNode || !bIsValidPinName)
 				continue;
 			
-			const UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
+			UGameFlowGraphNode* ConnectedGraphNode = Graph.GetGraphNodeByAsset(ConnectedNode);
+			ConnectedGraphNode->bIsRebuilding = true;
+			
 			// If the connected node asset does not have a graph representation, skip connections rebuild. 
 			ensureMsgf(ConnectedGraphNode, TEXT("Ensure condition failed: node '%s' has no associated graph node. Graph connection rebuild skipped"),
 				*ConnectedNode->GetName());
@@ -412,8 +416,12 @@ void UGameFlowGraphSchema::RecreateNodeConnections(const UGameFlowGraph& Graph, 
 			// After finding the current node output pin and the next node input pin,
 			// create a connection between the two.
 			TryCreateConnection(Pin, OtherPin);
+
+			ConnectedGraphNode->bIsRebuilding = false;
 		}
 	}
+
+	GraphNode->bIsRebuilding = false;
 }
 
 

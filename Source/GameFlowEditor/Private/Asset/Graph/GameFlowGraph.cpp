@@ -22,8 +22,8 @@ void UGameFlowGraph::InitGraph()
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
 	
 	// Listen to editor events.
-	FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
-	FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
+	//FCoreUObjectDelegates::ReloadCompleteDelegate.AddUObject(this, &UGameFlowGraph::OnHotReload);
+	//FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddUObject(this, &UGameFlowGraph::OnLiveCompile);
 	
 	// Create default nodes only on first-time asset editor opening.
 	if(!GameFlowAsset->bHasAlreadyBeenOpened)
@@ -162,7 +162,7 @@ void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 
 #endif
 
-#if WITH_LIVE_CODING && (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION > 5
+#if WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION > 5)
 
 void UGameFlowGraph::OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStatus Status)
 {

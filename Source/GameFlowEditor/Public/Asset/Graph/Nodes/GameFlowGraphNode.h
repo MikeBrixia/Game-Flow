@@ -68,7 +68,7 @@ public:
 	
 	void OnLiveOrHotReloadCompile();
 	void OnAssetCompiled();
-	void OnAssetBlueprintPreCompiled(UBlueprint* Blueprint);
+	void MarkNodeAsPendingCompilation();
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
