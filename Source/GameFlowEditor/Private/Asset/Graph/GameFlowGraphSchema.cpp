@@ -206,7 +206,7 @@ void UGameFlowGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Cont
 	for(TObjectIterator<UClass> ClassIt; ClassIt; ++ClassIt)
 	{
 		UClass* ChildClass = *ClassIt;
-		// Create context menu actions only for nodes who respects game flow criteria
+		// Create context menu actions only for the nodes who respect game flow criteria
 		if(CanCreateGraphNodeForClass(ChildClass))
 		{
 			FText ClassCategory = ChildClass->GetMetaDataText("Category");

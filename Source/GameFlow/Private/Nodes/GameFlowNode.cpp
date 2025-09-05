@@ -80,7 +80,7 @@ FDiffResults UGameFlowNode::PinsDiff(const UGameFlowNode* OtherNode, TArray<FDif
     {
     	for (const FName PinName : GetOutputPinsNames())
     	{
-    		if (!OtherNode->Outputs.Contains(PinName))
+    		if (!OtherNode->GetOutputPinsNames().Contains(PinName))
     		{
     			FDiffSingleResult PinDiff;
     			PinDiff.Diff = EDiffType::OBJECT_REQUEST_DIFF;
@@ -88,12 +88,13 @@ FDiffResults UGameFlowNode::PinsDiff(const UGameFlowNode* OtherNode, TArray<FDif
     			PinDiff.Object1 = const_cast<UGameFlowNode*>(this);
     			PinDiff.Object2 = const_cast<UGameFlowNode*>(OtherNode);
     			PinDiff.DisplayString = FText::FromString(PinName.ToString());
+    			Results.Add(PinDiff);
     		}
     	}
 
     	for (const FName PinName : OtherNode->GetOutputPinsNames())
     	{
-    		if (!Outputs.Contains(PinName))
+    		if (!GetOutputPinsNames().Contains(PinName))
     		{
     			FDiffSingleResult PinDiff;
     			PinDiff.Diff = EDiffType::OBJECT_REQUEST_DIFF;
@@ -101,6 +102,7 @@ FDiffResults UGameFlowNode::PinsDiff(const UGameFlowNode* OtherNode, TArray<FDif
     			PinDiff.Object1 = const_cast<UGameFlowNode*>(this);
     			PinDiff.Object2 = const_cast<UGameFlowNode*>(OtherNode);
     			PinDiff.DisplayString = FText::FromString(PinName.ToString());
+    			Results.Add(PinDiff);
     		}
     	} 
     }
@@ -148,11 +150,14 @@ void UGameFlowNode::AddInputPin(FName PinName)
 
 void UGameFlowNode::RemoveInputPin(FName PinName)
 {
+	UPinHandle* PinHandle = GetPinByName(PinName, EGPD_Input);
+	PinHandle->CutAllConnections();
 	Inputs.Remove(PinName);
 }
 
 void UGameFlowNode::AddOutputPin(FName PinName)
 {
+	UE_LOG(LogTemp, Warning, TEXT("UGameFlowNode::AddOutputPin() - %s"), *GetName());
 	if(!PinName.IsNone() && PinName.IsValid())
 	{
 		UOutPinHandle* NewOutputPinHandle = CreateExecOutputPin(PinName);
@@ -162,6 +167,8 @@ void UGameFlowNode::AddOutputPin(FName PinName)
 
 void UGameFlowNode::RemoveOutputPin(FName PinName)
 {
+	UPinHandle* PinHandle = GetPinByName(PinName, EGPD_Output);
+	PinHandle->CutAllConnections();
 	Outputs.Remove(PinName);
 }
 

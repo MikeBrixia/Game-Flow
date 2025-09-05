@@ -99,7 +99,7 @@ void FGameFlowEditorModule::OnPostEngineInit()
 	// Hookup to editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddRaw(this, &FGameFlowEditorModule::OnBlueprintCompiled);
 	GEditor->OnBlueprintPreCompile().AddRaw(this, &FGameFlowEditorModule::OnBlueprintPreCompile);
-
+	
 	FCoreUObjectDelegates::ReloadCompleteDelegate.AddRaw(this, &FGameFlowEditorModule::OnHotReload);
 	FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddRaw(this, &FGameFlowEditorModule::OnLiveCoding);
 }
@@ -134,10 +134,81 @@ void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 
 void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 {
+	TArray<UClass*> ClassesToRebuild;
+	
+	for (TObjectIterator<UGameFlowNode> It; It; ++It)
+	{
+		UGameFlowNode* ObservedNode = *It;
+
+		// Re-instance of the observed node class with the post-compilation CDO.
+		UGameFlowNode* REINST_Instance = NewObject<UGameFlowNode>(GetTransientPackage(), ObservedNode->GetClass(), FName("GF_REINST_" + ObservedNode->GetName()), RF_Transient);
+		
+		TArray<FDiffSingleResult> InputPinsDiff;
+		FDiffResults DiffResults = ObservedNode->PinsDiff(REINST_Instance,InputPinsDiff, EGPD_Input);
+		
+		// If input pins have been changed inside the CDO, update the observed node using the REINST obj.
+		if (DiffResults.HasFoundDiffs())
+		{
+			ClassesToRebuild.Add(ObservedNode->GetClass());
+			
+			for (const FDiffSingleResult& Diff : InputPinsDiff)
+			{
+				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
+				{
+					// If we have a pin that the reinstance does not have, remove it from the observed node.
+					if (Diff.Category == EDiffType::ADDITION)
+					{
+						ObservedNode->RemoveInputPin(FName(Diff.DisplayString.ToString()));
+					}
+					// If we don't have a pin that the reinstance have, add it to the observed node.
+					else if (Diff.Category == EDiffType::SUBTRACTION)
+					{
+						ObservedNode->AddInputPin(FName(Diff.DisplayString.ToString()));
+					}
+				}
+			}
+		}
+
+		TArray<FDiffSingleResult> OutputPinsDiff;
+		DiffResults = ObservedNode->PinsDiff(REINST_Instance,OutputPinsDiff, EGPD_Output);
+		// If output pins have been changed inside the CDO, update the observed node using the REINST obj.
+		if (DiffResults.HasFoundDiffs())
+		{
+			ClassesToRebuild.Add(ObservedNode->GetClass());
+			for (const FDiffSingleResult& Diff : OutputPinsDiff)
+			{
+				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
+				{
+					// If we have a pin that the reinstance does not have, remove it from the observed node.
+					if (Diff.Category == EDiffType::ADDITION)
+					{
+						ObservedNode->RemoveOutputPin(FName(Diff.DisplayString.ToString()));
+					}
+					// If we don't have a pin that the reinstance have, add it to the observed node.
+					else if (Diff.Category == EDiffType::SUBTRACTION)
+					{
+						ObservedNode->AddOutputPin(FName(Diff.DisplayString.ToString()));
+					}
+				}
+			}
+		}
+	}
+
+	// After logical node fixups, update the graph nodes associated with objs derived from the modified UClasses.
 	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
 	{
+		UGameFlowGraphNode* Instance = *It;
+		// Update only graph nodes observing updated UClasses nodes.
+		if (Instance->GetNodeAsset() != nullptr &&
+			ClassesToRebuild.Contains(Instance->GetNodeAsset()->GetClass()))
+		{
+			Instance->MarkNodeAsPendingCompilation();
+			Instance->OnAssetCompiled(); 
+		}
 	}
 }
+
+#if WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION >= 6)
 
 void FGameFlowEditorModule::OnLiveCoding(FName ModuleName, ECompiledInUObjectsRegisteredStatus Status)
 {
@@ -214,6 +285,28 @@ void FGameFlowEditorModule::OnLiveCoding(FName ModuleName, ECompiledInUObjectsRe
 		Instance->OnAssetCompiled();
 	}
 }
+
+#elif WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4) || ENGINE_MAJOR_VERSION < 5)
+
+void FGameFlowEditorModule::OnLiveCoding(FName ModuleName)
+{
+	for (TObjectIterator<UGameFlowNode> It; It; ++It)
+	{
+		UGameFlowNode* Instance = *It;
+		/*
+		for (TObjectIterator<UClass> ClassIt; It; ++ClassIt)
+		{
+			UClass* Class = *ClassIt;
+			if (Instance->GetClass()->IsChildOf(Class) && Class->HasAnyClassFlags(CLASS_NewerVersionExists))
+			{
+				UE_LOG(LogGameFlow, Display, TEXT("Found live coding class %s"), *Class->GetName())
+			}
+		}
+		*/
+	} 
+}
+
+#endif
 
 void FGameFlowEditorModule::InitializeCppScriptTemplates()
 {

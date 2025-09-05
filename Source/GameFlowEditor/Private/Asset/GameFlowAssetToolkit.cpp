@@ -54,7 +54,7 @@ bool GameFlowAssetToolkit::OnRequestClose(EAssetEditorCloseReason InCloseReason)
 	return FAssetEditorToolkit::OnRequestClose(InCloseReason);
 }
 
-#elif ENGINE_MINOR_VERSION >= 5 && ENGINE_MINOR_VERSION < 6 
+#elif ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION < 6 
 
 bool GameFlowAssetToolkit::OnRequestClose()
 {

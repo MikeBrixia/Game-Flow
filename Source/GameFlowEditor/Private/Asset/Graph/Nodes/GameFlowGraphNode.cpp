@@ -702,7 +702,7 @@ void UGameFlowGraphNode::SetNodeAsset(UGameFlowNode* Node)
 		Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
 	
 		// Notify listeners that the node asset has been changed.
-	    GetGraph()->NotifyNodeChanged(this);	
+	    GetGraph()->NotifyGraphChanged();	
 	}
 }
 
