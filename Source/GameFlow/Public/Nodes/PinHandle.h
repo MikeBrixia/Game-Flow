@@ -6,7 +6,10 @@ class UFloatProperty;
 class UGameFlowNode;
 class UPinHandle;
 
-/** Utility structure used to handle game flow logical pin states and connections. */
+/**
+ * UPinHandle class is responsible for managing and representing logical connections between nodes
+ * in a GameFlow asset. It acts as an interface for interaction and data transfer between logical nodes.
+ */
 UCLASS(DefaultToInstanced, Abstract, EditInlineNew)
 class GAMEFLOW_API UPinHandle : public UObject
 {
@@ -14,11 +17,11 @@ class GAMEFLOW_API UPinHandle : public UObject
 
 public:
 	/** The name of the handled pin. */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	FName PinName;
 
 private:
-	UPROPERTY(TextExportTransient, VisibleAnywhere)
+	UPROPERTY(TextExportTransient, VisibleAnywhere, Replicated)
 	TArray<UPinHandle*> Connections;
 
 public:

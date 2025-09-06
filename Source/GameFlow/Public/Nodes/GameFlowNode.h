@@ -17,7 +17,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAssetExecuted, UInputPinHandle*, 
 
 #endif
 
-/** Base class for all Game Flow nodes. */
+/**
+ * Represents a single node in a Game Flow asset. This class forms the basis for all nodes in the Game Flow system,
+ * ensuring a consistent interface for execution and pin management.
+ */
 UCLASS(Abstract, Blueprintable, BlueprintType, Category="Default", ClassGroup=(GameFlow))
 class GAMEFLOW_API UGameFlowNode : public UObject
 {

@@ -19,8 +19,8 @@ public:
 	// Sets default values for this component's properties
 	UGameFlowListener();
 
-	/** Gameplay Tags used to identify this component listener inside game flow. */
-	UPROPERTY(EditAnywhere, Category="Game Flow")
+	/** Gameplay Tags used to identify this component listener inside the game flow. */
+	UPROPERTY(EditAnywhere, Category="Game Flow", Replicated)
 	FGameplayTagContainer IdentityTags;
 
 	/** Called when this listener component receives an event notification from a game flow asset. */
