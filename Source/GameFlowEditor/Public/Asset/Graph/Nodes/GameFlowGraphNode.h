@@ -66,7 +66,6 @@ public:
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	FEdGraphPinType GetGraphPinType() const;
 	
-	void OnLiveOrHotReloadCompile();
 	void OnAssetCompiled();
 	void MarkNodeAsPendingCompilation();
 	void OnAssetValidated();

@@ -367,14 +367,6 @@ void UGameFlowGraphNode::OnAssetValidated()
 	GetGraph()->NotifyGraphChanged();
 }
 
-void UGameFlowGraphNode::OnLiveOrHotReloadCompile()
-{
-	// Mark as pending compilation on cpp compile (live coding or hot reload).
-	bPendingCompilation = true;
-	// Call default asset compilation callback.
-	OnAssetCompiled();
-}
-
 void UGameFlowGraphNode::OnAssetCompiled()
 {
 	// Reconstruct the node only if it is pending compile.
@@ -577,7 +569,7 @@ void UGameFlowGraphNode::Initialize()
 	Info = Settings->NodesTypes.FindChecked(NodeAsset->TypeName);
     
 	// Listen to game flow asset events.
-	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::OnLiveOrHotReloadCompile);
+	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::ReconstructNode);
 	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
 	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
 }

@@ -111,8 +111,8 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
 	{
 		UGameFlowGraphNode* Instance = *It;
-		
-        UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
+
+		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
 		UGameFlowNode* Default = ObservedNode->GetClass()->GetDefaultObject<UGameFlowNode>();
             
 		TArray<FDiffSingleResult> InputPinsDiff;
@@ -138,7 +138,7 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 
 void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 {
-	// Then, decide whether a graph node should be marked as pending compile or not.
+	// Fix up all game flow nodes before blueprint compilation.
 	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
 	{
 		UGameFlowGraphNode* Instance = *It;

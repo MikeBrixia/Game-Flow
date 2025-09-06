@@ -1,6 +1,5 @@
 ﻿
 #include "Nodes/PinHandle.h"
-#include "Config/GameFlowSettings.h"
 #include "Nodes/GameFlowNode.h"
 
 UPinHandle::UPinHandle()
@@ -24,14 +23,14 @@ UGameFlowNode* UPinHandle::GetNodeOwner() const
 	return GetTypedOuter<UGameFlowNode>();
 }
 
-void UPinHandle::AddConnection(UPinHandle* Handle)
+bool UPinHandle::HasAnyConnections() const
 {
-	Connections.Add(Handle);
+	return Connections.Num() > 0;
 }
 
-void UPinHandle::RemoveConnection(UPinHandle* Handle)
+bool UPinHandle::HasConnections(const UPinHandle* OtherPinHandle) const
 {
-	Connections.Remove(Handle);
+	return Connections.Contains(OtherPinHandle);
 }
 
 #if WITH_EDITOR
@@ -41,18 +40,22 @@ void UPinHandle::CreateConnection(UPinHandle* OtherPinHandle)
 	if(CanCreateConnection(OtherPinHandle))
 	{
 		// Create a two-way connection between the nodes.
-		AddConnection(OtherPinHandle);
-		OtherPinHandle->AddConnection(this);
+		Connections.Add(OtherPinHandle);
+		OtherPinHandle->Connections.Add(this);
 	}
 }
 
 void UPinHandle::CutConnection(UPinHandle* OtherPinHandle)
 {
-	// Cut the connection between these two nodes.
-	RemoveConnection(OtherPinHandle);
-	if (OtherPinHandle != nullptr)
+	// Is the other pin connected to this pin?
+	if (HasConnections(OtherPinHandle))
 	{
-		OtherPinHandle->RemoveConnection(this);	
+		// If true, cut the connection between these two pins.
+		Connections.Remove(OtherPinHandle);
+		if (OtherPinHandle != nullptr)
+		{
+			OtherPinHandle->Connections.Remove(this);
+		}
 	}
 }
 

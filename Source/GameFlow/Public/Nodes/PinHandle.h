@@ -24,18 +24,37 @@ private:
 public:
 	
 	UPinHandle();
-
+	
 	virtual void TriggerPin();
 
-	/** Get an array of pins connected to this pin. */
+	/**
+	 * Retrieves all pin handles that are currently connected to this pin handle.
+	 *
+	 * @return An array of pointers to the connected pin handles.
+	 */
 	virtual TArray<UPinHandle*> GetConnections();
 
-	/** Get the node who owns this pin. */
+	/**
+	 * Get the node who owns this pin.
+	 *
+	 * @return The node who owns this pin.
+	 */
 	UGameFlowNode* GetNodeOwner() const;
-	
-protected:
-	virtual void AddConnection(UPinHandle* Handle);
-	virtual void RemoveConnection(UPinHandle* Handle);
+
+	/**
+	 * Checks if the current pin handle has any connections.
+	 *
+	 * @return True if the pin has one or more connections, false otherwise.
+	 */
+	virtual bool HasAnyConnections() const;
+
+	/**
+	 * Determines if the current pin handle is connected to the specified pin handle.
+	 *
+	 * @param OtherPinHandle A pointer to the other pin handle to check for a connection.
+	 * @return True if the current pin handle is connected to the specified pin handle, false otherwise.
+	 */
+	virtual bool HasConnections(const UPinHandle* OtherPinHandle) const;
 
 #if WITH_EDITORONLY_DATA
 

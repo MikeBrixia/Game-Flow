@@ -152,14 +152,12 @@ void UGameFlowNode::AddPin(FName PinName, EEdGraphPinDirection PinDirection, TSu
 		UInputPinHandle* NewInputPin = NewObject<UInputPinHandle>(this, PinType, PinObjectName, RF_Transactional);
 		NewInputPin->PinName = PinName;
 		Inputs.Add(PinName, NewInputPin);
-		UE_LOG(LogTemp, Display, TEXT("Added pin %s"), *NewInputPin->GetName());
 	}
 	else if (PinDirection == EGPD_Output)
 	{
 		UOutPinHandle* NewOutPin = NewObject<UOutPinHandle>(this, PinType, PinObjectName, RF_Transactional);
 		NewOutPin->PinName = PinName;
 		Outputs.Add(PinName, NewOutPin);
-		UE_LOG(LogTemp, Display, TEXT("Added pin %s"), *NewOutPin->GetName());
 	}
 }
 
@@ -168,14 +166,20 @@ void UGameFlowNode::RemovePin(FName PinName, EEdGraphPinDirection PinDirection)
 	if (PinDirection == EGPD_Input)
 	{
 		UPinHandle* PinHandle = GetPinByName(PinName, PinDirection);
-		PinHandle->CutAllConnections();
-		Inputs.Remove(PinName);
+		if (PinHandle != nullptr)
+		{
+			PinHandle->CutAllConnections();
+			Inputs.Remove(PinName);
+		}
 	}
 	else if (PinDirection == EGPD_Output)
 	{
 		UPinHandle* PinHandle = GetPinByName(PinName, PinDirection);
-		PinHandle->CutAllConnections();
-		Outputs.Remove(PinName);
+		if (PinHandle != nullptr)
+		{
+			PinHandle->CutAllConnections();
+			Outputs.Remove(PinName);
+		}
 	}
 }
 
@@ -320,58 +324,6 @@ void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 				// TODO: Break pin handle connections on pin removal.
 			}
 		}
-	}
-}
-
-void UGameFlowNode::ApplyCDOChanges()
-{
-	if (!HasAnyFlags(RF_ClassDefaultObject)
-		&& GIsEditor && !GWorld->HasBegunPlay())
-	{
-		UGameFlowNode* Defaults = GetClass()->GetDefaultObject<UGameFlowNode>();
-		// Propagate changes only to non-CDO objects.
-		auto OldInputs = Inputs;
-		Inputs = Defaults->Inputs;
-		// Propagate input pins changes.
-		for (auto& Pair : Inputs)
-		{
-			// CDO input pin name.
-			FName PinName = Pair.Key;
-			UInputPinHandle* PinHandle = OldInputs.FindRef(PinName);
-			// Does the input handle associated with the CDO pin name already exist?
-			if (PinHandle != nullptr)
-			{
-				// If true, simply migrate it to the instance input map.
-				Pair.Value = PinHandle;
-			}
-			else
-			{
-				// If false, add a brand-new input pin with the CDO input pin name.
-				Pair.Value = DuplicateObject(Pair.Value, this);
-			}
-		}
-
-		auto OldOutputs = Outputs;
-		Outputs = Defaults->Outputs;
-		// Propagate output pin changes.
-		for (auto& Pair : Outputs)
-		{
-			// CDO output pin name.
-			FName PinName = Pair.Key;
-			UOutPinHandle* PinHandle = OldOutputs.FindRef(PinName);
-			// Does the pin handle associated with the CDO pin name already exist?
-			if (PinHandle != nullptr)
-			{
-				// If true, simply migrate it to the instance input map.
-				Pair.Value = PinHandle;
-			}
-			else
-			{
-				// If false, add a brand-new input pin with the CDO input pin name.
-				Pair.Value = DuplicateObject(Pair.Value, this);
-			}
-		}
-		Modify();
 	}
 }
 
