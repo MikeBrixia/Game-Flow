@@ -129,18 +129,15 @@ protected:
 	bool bCanAddOutputPin;
 	
 public:
-	FORCEINLINE void AddInputPin(FName PinName);
-	void RemoveInputPin(FName PinName);
-	
-	FORCEINLINE void AddOutputPin(FName PinName);
-    void RemoveOutputPin(FName PinName);
+	FORCEINLINE void AddPin(FName PinName, EEdGraphPinDirection PinDirection, TSubclassOf<UPinHandle> PinType = nullptr);
+	FORCEINLINE void RemovePin(FName PinName, EEdGraphPinDirection PinDirection);
 	
 	UPinHandle* GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<UPinHandle*> GetPinsByDirection(TEnumAsByte<EEdGraphPinDirection> Direction) const;
 	TArray<FName> GetInputPinsNames() const;
 	TArray<FName> GetOutputPinsNames() const;
 	FDiffResults PinsDiff(const UGameFlowNode* OtherNode, TArray<FDiffSingleResult>& Diffs,
-		EEdGraphPinDirection Direction) const;
+		                   EEdGraphPinDirection Direction) const;
 	
 	bool CanAddInputPin() const;
 	bool CanAddOutputPin() const;
@@ -154,19 +151,14 @@ public:
 	/** Defines the tint and icon path for the node. */
 	virtual void GetNodeIconInfo(FString& Key, FLinearColor& Color) const;
     virtual void ApplyCDOChanges();
-    virtual void PostLoad() override;
 	
 protected:
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	
 	void AddInputPin_CDO(FName PinName);
 	void AddOutputPin_CDO(FName PinName);
-private:
-    UOutPinHandle* CreateExecOutputPin(FName PinName);
-    UInputPinHandle* CreateExecInputPin(FName PinName);
 	
-    FName GeneratePinName(FName PinName) const;
-
+private:
 	/** Return user-specified debug info. Use this when you want to debug
 	 * properties which are not stored as UPROPERTY on the node or to add more
 	 * complex debug behaviors. */

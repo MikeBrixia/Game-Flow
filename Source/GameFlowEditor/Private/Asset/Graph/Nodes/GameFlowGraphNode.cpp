@@ -313,15 +313,7 @@ void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
 	// don't want to touch the node asset.
 	if (bCanEditAsset)
 	{
-		// Remove pin from node asset.
-		if(InRemovedPin->Direction == EGPD_Input)
-		{
-			NodeAsset->RemoveInputPin(InRemovedPin->PinName);
-		}
-		else if(InRemovedPin->Direction == EGPD_Output)
-		{
-			NodeAsset->RemoveOutputPin(InRemovedPin->PinName);
-		}
+		NodeAsset->RemovePin(InRemovedPin->PinName, InRemovedPin->Direction);
 	}
 }
 
@@ -751,7 +743,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 					TArray<FName> InputPins = NodeAsset->GetInputPinsNames();
 					const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddInputPin(PinName);
+					NodeAsset->AddPin(PinName, EGPD_Input);
 					break;
 				}
 			
@@ -761,7 +753,7 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 					TArray<FName> OutputPins = NodeAsset->GetOutputPinsNames();
 					const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
 					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddOutputPin(PinName);
+					NodeAsset->AddPin(PinName, EGPD_Output);
 					break;
 				}
 		}

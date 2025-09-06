@@ -8,6 +8,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogGameFlow, Display, All);
 
+class UGameFlowNode;
+
 class FGameFlowEditorModule final : public IModuleInterface
 {
 public:
@@ -28,16 +30,11 @@ private:
 	void OnBlueprintCompiled();
 	void OnBlueprintPreCompile(UBlueprint* Blueprint);
 	
-#if WITH_HOT_RELOAD
+#if WITH_HOT_RELOAD || WITH_LIVE_CODING
 	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
 #endif
-	
-#if WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION >= 6)
-	void OnLiveCoding(FName ModuleName , ECompiledInUObjectsRegisteredStatus Status);
-#elif WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4) || ENGINE_MAJOR_VERSION < 5)
-	void OnLiveCoding(FName ModuleName);
-#endif
-	
+    /** Used to realign node pins with the CDO after a compilation event. */
+	void PostCompilePinsFixup(TArray<FDiffSingleResult> Diff, UGameFlowNode* Node, EEdGraphPinDirection PinDirection);
 	void InitializeCppScriptTemplates();
 	void ForwardEditorSettingsToRuntimeSettings();
 	void RemoveCppScriptTemplates();

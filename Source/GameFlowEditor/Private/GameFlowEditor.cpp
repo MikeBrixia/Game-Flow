@@ -99,9 +99,10 @@ void FGameFlowEditorModule::OnPostEngineInit()
 	// Hookup to editor blueprint compilation events.
 	GEditor->OnBlueprintCompiled().AddRaw(this, &FGameFlowEditorModule::OnBlueprintCompiled);
 	GEditor->OnBlueprintPreCompile().AddRaw(this, &FGameFlowEditorModule::OnBlueprintPreCompile);
-	
+
+#if WITH_HOT_RELOAD || WITH_LIVE_CODING
 	FCoreUObjectDelegates::ReloadCompleteDelegate.AddRaw(this, &FGameFlowEditorModule::OnHotReload);
-	FCoreUObjectDelegates::CompiledInUObjectsRegisteredDelegate.AddRaw(this, &FGameFlowEditorModule::OnLiveCoding);
+#endif
 }
 
 void FGameFlowEditorModule::OnBlueprintCompiled()
@@ -110,6 +111,26 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
 	{
 		UGameFlowGraphNode* Instance = *It;
+		
+        UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
+		UGameFlowNode* Default = ObservedNode->GetClass()->GetDefaultObject<UGameFlowNode>();
+            
+		TArray<FDiffSingleResult> InputPinsDiff;
+		FDiffResults DiffResults = ObservedNode->PinsDiff(Default,InputPinsDiff, EGPD_Input);
+		// If input pins have been changed inside the CDO, update the observed node using the REINST obj.
+		if (DiffResults.HasFoundDiffs())
+		{
+			PostCompilePinsFixup(InputPinsDiff, ObservedNode, EGPD_Input);
+		}
+
+		TArray<FDiffSingleResult> OutputPinsDiff;
+		DiffResults = ObservedNode->PinsDiff(Default,OutputPinsDiff, EGPD_Output);
+		// If output pins have been changed inside the CDO, update the observed node.
+		if (DiffResults.HasFoundDiffs())
+		{
+			PostCompilePinsFixup(OutputPinsDiff, ObservedNode, EGPD_Output);
+		}
+		
 		// Compile marked nodes
 		Instance->OnAssetCompiled();
 	}
@@ -126,11 +147,12 @@ void FGameFlowEditorModule::OnBlueprintPreCompile(UBlueprint* Blueprint)
 		if (ObservedNode != nullptr
 			&& ObservedNode->GetClass()->ClassGeneratedBy == Blueprint)
 		{
-			ObservedNode->ApplyCDOChanges();
 			Instance->MarkNodeAsPendingCompilation();
 		}
 	}
 }
+
+#if WITH_HOT_RELOAD || WITH_LIVE_CODING
 
 void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 {
@@ -145,28 +167,11 @@ void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReas
 		
 		TArray<FDiffSingleResult> InputPinsDiff;
 		FDiffResults DiffResults = ObservedNode->PinsDiff(REINST_Instance,InputPinsDiff, EGPD_Input);
-		
 		// If input pins have been changed inside the CDO, update the observed node using the REINST obj.
 		if (DiffResults.HasFoundDiffs())
 		{
 			ClassesToRebuild.Add(ObservedNode->GetClass());
-			
-			for (const FDiffSingleResult& Diff : InputPinsDiff)
-			{
-				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
-				{
-					// If we have a pin that the reinstance does not have, remove it from the observed node.
-					if (Diff.Category == EDiffType::ADDITION)
-					{
-						ObservedNode->RemoveInputPin(FName(Diff.DisplayString.ToString()));
-					}
-					// If we don't have a pin that the reinstance have, add it to the observed node.
-					else if (Diff.Category == EDiffType::SUBTRACTION)
-					{
-						ObservedNode->AddInputPin(FName(Diff.DisplayString.ToString()));
-					}
-				}
-			}
+			PostCompilePinsFixup(InputPinsDiff, ObservedNode, EGPD_Input);
 		}
 
 		TArray<FDiffSingleResult> OutputPinsDiff;
@@ -175,22 +180,7 @@ void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReas
 		if (DiffResults.HasFoundDiffs())
 		{
 			ClassesToRebuild.Add(ObservedNode->GetClass());
-			for (const FDiffSingleResult& Diff : OutputPinsDiff)
-			{
-				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
-				{
-					// If we have a pin that the reinstance does not have, remove it from the observed node.
-					if (Diff.Category == EDiffType::ADDITION)
-					{
-						ObservedNode->RemoveOutputPin(FName(Diff.DisplayString.ToString()));
-					}
-					// If we don't have a pin that the reinstance have, add it to the observed node.
-					else if (Diff.Category == EDiffType::SUBTRACTION)
-					{
-						ObservedNode->AddOutputPin(FName(Diff.DisplayString.ToString()));
-					}
-				}
-			}
+			PostCompilePinsFixup(OutputPinsDiff, ObservedNode, EGPD_Output);
 		}
 	}
 
@@ -208,102 +198,25 @@ void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReas
 	}
 }
 
-#if WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION >= 6)
-
-void FGameFlowEditorModule::OnLiveCoding(FName ModuleName, ECompiledInUObjectsRegisteredStatus Status)
+void FGameFlowEditorModule::PostCompilePinsFixup(TArray<FDiffSingleResult> Diff, UGameFlowNode* Node, EEdGraphPinDirection PinDirection)
 {
-	for (TObjectIterator<UGameFlowGraphNode> It; It; ++It)
+	// Fixup all detected differences between the nodes pins.
+	for (const FDiffSingleResult& SingleResult : Diff)
 	{
-		UGameFlowGraphNode* Instance = *It;
-		
-		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
-		UClass* RegeneratedClass = ObservedNode->GetClass()->RegenerateClass(ObservedNode->GetClass(),
-			ObservedNode->GetClass()->GetDefaultObject());
-		UGameFlowNode* Reinstance = NewObject<UGameFlowNode>(GetTransientPackage(),
-			RegeneratedClass);
-
-		for (const FName& Name : Reinstance->GetInputPinsNames())
+		if (SingleResult.Diff == EDiffType::OBJECT_REQUEST_DIFF)
 		{
-			UE_LOG(LogGameFlow, Display, TEXT("Found input pin %s on %s"),
-				*Name.ToString(), *Reinstance->GetName())
-		}
-
-		for (const FName& Name : Reinstance->GetOutputPinsNames())
-		{
-			UE_LOG(LogGameFlow, Display, TEXT("Found output pin %s on %s"),
-				*Name.ToString(), *Reinstance->GetName())
-		}
-		// Reinstance node will be temporary and should not be saved.
-		Reinstance->SetFlags(RF_Transient);
-
-		TArray<FDiffSingleResult> InputPinsDiff;
-		FDiffResults DiffResults = ObservedNode->PinsDiff(Reinstance,InputPinsDiff, EGPD_Input);
-		// If we've found differences between input pins, update the observed node.
-		if (DiffResults.HasFoundDiffs())
-		{
-			for (const FDiffSingleResult& Diff : InputPinsDiff)
+			// If we have a pin that the reinstance does not have, remove it from the observed node.
+			if (SingleResult.Category == EDiffType::ADDITION)
 			{
-				UE_LOG(LogGameFlow, Display, TEXT("Found diff on %s"),
-					*Diff.DisplayString.ToString())
-				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
-				{
-					// If we have a pin that the reinstance does not have, remove it.
-					if (Diff.Category == EDiffType::ADDITION)
-					{
-						ObservedNode->RemoveInputPin(FName(Diff.DisplayString.ToString()));
-					}
-					// If we don't have a pin that the reinstance have, add it.
-					else if (Diff.Category == EDiffType::SUBTRACTION)
-					{
-						ObservedNode->AddInputPin(FName(Diff.DisplayString.ToString()));
-					}
-				}
+				Node->RemovePin(FName(SingleResult.DisplayString.ToString()), PinDirection);
+			}
+			// If we don't have a pin that the reinstance have, add it to the observed node.
+			else if (SingleResult.Category == EDiffType::SUBTRACTION)
+			{
+				Node->AddPin(FName(SingleResult.DisplayString.ToString()), PinDirection);
 			}
 		}
-
-		TArray<FDiffSingleResult> OutputPinsDiff;
-		DiffResults = ObservedNode->PinsDiff(Reinstance,OutputPinsDiff, EGPD_Output);
-		if (DiffResults.HasFoundDiffs())
-		{
-			for (const FDiffSingleResult& Diff : OutputPinsDiff)
-			{
-				if (Diff.Diff == EDiffType::OBJECT_REQUEST_DIFF)
-				{
-					if (Diff.Category == EDiffType::ADDITION)
-					{
-						ObservedNode->RemoveOutputPin(FName(Diff.DisplayString.ToString()));
-					}
-					else if (Diff.Category == EDiffType::SUBTRACTION)
-					{
-						ObservedNode->AddOutputPin(FName(Diff.DisplayString.ToString()));
-					}
-				}
-			}
-		}
-		
-		Instance->MarkNodeAsPendingCompilation();
-		Instance->OnAssetCompiled();
 	}
-}
-
-#elif WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4) || ENGINE_MAJOR_VERSION < 5)
-
-void FGameFlowEditorModule::OnLiveCoding(FName ModuleName)
-{
-	for (TObjectIterator<UGameFlowNode> It; It; ++It)
-	{
-		UGameFlowNode* Instance = *It;
-		/*
-		for (TObjectIterator<UClass> ClassIt; It; ++ClassIt)
-		{
-			UClass* Class = *ClassIt;
-			if (Instance->GetClass()->IsChildOf(Class) && Class->HasAnyClassFlags(CLASS_NewerVersionExists))
-			{
-				UE_LOG(LogGameFlow, Display, TEXT("Found live coding class %s"), *Class->GetName())
-			}
-		}
-		*/
-	} 
 }
 
 #endif

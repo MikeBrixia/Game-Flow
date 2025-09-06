@@ -6,6 +6,7 @@
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Engine/StreamableManager.h"
+#include "GameFlowEditor/Public/GameFlowEditor.h"
 #include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
@@ -106,9 +107,6 @@ FDiffResults UGameFlowNode::PinsDiff(const UGameFlowNode* OtherNode, TArray<FDif
     		}
     	} 
     }
-
-	
-	
 	return Results;
 }
 
@@ -139,37 +137,46 @@ bool UGameFlowNode::IsActiveNode() const
 	return ParentAsset->GetActiveNodes().Contains(this);
 }
 
-void UGameFlowNode::AddInputPin(FName PinName)
+void UGameFlowNode::AddPin(FName PinName, EEdGraphPinDirection PinDirection, TSubclassOf<UPinHandle> PinType)
 {
-	if(!PinName.IsNone() && PinName.IsValid())
+	// If the pin obj type was not specified, read it from the node CDO.
+	if (PinType == nullptr)
 	{
-		UInputPinHandle* NewInputPinHandle = CreateExecInputPin(PinName);
-		Inputs.Add(PinName, NewInputPinHandle);
+		UGameFlowNode* Defaults = GetClass()->GetDefaultObject<UGameFlowNode>();
+		PinType = Defaults->GetPinByName(PinName, PinDirection)->GetClass();
+	}
+	const FName PinObjectName = MakeUniqueObjectName(this, PinType, PinName);
+	
+	if (PinDirection == EGPD_Input)
+	{
+		UInputPinHandle* NewInputPin = NewObject<UInputPinHandle>(this, PinType, PinObjectName, RF_Transactional);
+		NewInputPin->PinName = PinName;
+		Inputs.Add(PinName, NewInputPin);
+		UE_LOG(LogTemp, Display, TEXT("Added pin %s"), *NewInputPin->GetName());
+	}
+	else if (PinDirection == EGPD_Output)
+	{
+		UOutPinHandle* NewOutPin = NewObject<UOutPinHandle>(this, PinType, PinObjectName, RF_Transactional);
+		NewOutPin->PinName = PinName;
+		Outputs.Add(PinName, NewOutPin);
+		UE_LOG(LogTemp, Display, TEXT("Added pin %s"), *NewOutPin->GetName());
 	}
 }
 
-void UGameFlowNode::RemoveInputPin(FName PinName)
+void UGameFlowNode::RemovePin(FName PinName, EEdGraphPinDirection PinDirection)
 {
-	UPinHandle* PinHandle = GetPinByName(PinName, EGPD_Input);
-	PinHandle->CutAllConnections();
-	Inputs.Remove(PinName);
-}
-
-void UGameFlowNode::AddOutputPin(FName PinName)
-{
-	UE_LOG(LogTemp, Warning, TEXT("UGameFlowNode::AddOutputPin() - %s"), *GetName());
-	if(!PinName.IsNone() && PinName.IsValid())
+	if (PinDirection == EGPD_Input)
 	{
-		UOutPinHandle* NewOutputPinHandle = CreateExecOutputPin(PinName);
-		Outputs.Add(PinName, NewOutputPinHandle);
+		UPinHandle* PinHandle = GetPinByName(PinName, PinDirection);
+		PinHandle->CutAllConnections();
+		Inputs.Remove(PinName);
 	}
-}
-
-void UGameFlowNode::RemoveOutputPin(FName PinName)
-{
-	UPinHandle* PinHandle = GetPinByName(PinName, EGPD_Output);
-	PinHandle->CutAllConnections();
-	Outputs.Remove(PinName);
+	else if (PinDirection == EGPD_Output)
+	{
+		UPinHandle* PinHandle = GetPinByName(PinName, PinDirection);
+		PinHandle->CutAllConnections();
+		Outputs.Remove(PinName);
+	}
 }
 
 UPinHandle* UGameFlowNode::GetPinByName(FName PinName, TEnumAsByte<EEdGraphPinDirection> Direction) const
@@ -267,8 +274,6 @@ void UGameFlowNode::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 
 								if (ObjValue != nullptr)
 								{
-									ObjValue->Rename(NewName, this, REN_DontCreateRedirectors);
-									
 									void* MemberPtr = NameProperty->ContainerPtrToValuePtr<void>(ObjValue);
 									NameProperty->SetPropertyValue(MemberPtr, PinName);
 								}
@@ -370,33 +375,6 @@ void UGameFlowNode::ApplyCDOChanges()
 	}
 }
 
-void UGameFlowNode::PostLoad()
-{
-	UObject::PostLoad();
-
-	UE_LOG(LogTemp, Warning, TEXT("UGameFlowNode::PostLoad() - %s"), *GetName());
-}
-
-UOutPinHandle* UGameFlowNode::CreateExecOutputPin(FName PinName)
-{
-	const FString NodeName = GetName();
-
-	UOutPinHandle* NewOutPin = NewObject<UOutPinHandle>(this, UOutPinHandle::StaticClass(), NAME_None, RF_Transactional);
-	NewOutPin->PinName = PinName;
-    
-	return NewOutPin;
-}
-
-UInputPinHandle* UGameFlowNode::CreateExecInputPin(FName PinName)
-{
-	const FString NodeName = GetName();
-	
-	UInputPinHandle* NewInputPin = NewObject<UInputPinHandle>(this, UInputPinHandle::StaticClass(), NAME_None, RF_Transactional);
-	NewInputPin->PinName = PinName;
-
-	return NewInputPin;
-}
-
 void UGameFlowNode::AddInputPin_CDO(FName PinName)
 {
 	UInputPinHandle* NewInputPin = CreateDefaultSubobject<UInputPinHandle>(PinName, false);
@@ -409,13 +387,6 @@ void UGameFlowNode::AddOutputPin_CDO(FName PinName)
 	UOutPinHandle* NewPin = CreateDefaultSubobject<UOutPinHandle>(PinName, false);
 	NewPin->PinName = PinName;
 	Outputs.Add(PinName, NewPin);
-}
-
-FName UGameFlowNode::GeneratePinName(FName PinName) const
-{
-	const FString NodeName = GetName();
-	const FName FullPinName = FName(NodeName + "." + PinName.ToString());
-	return FullPinName;
 }
 
 FString UGameFlowNode::GetCustomDebugInfo() const

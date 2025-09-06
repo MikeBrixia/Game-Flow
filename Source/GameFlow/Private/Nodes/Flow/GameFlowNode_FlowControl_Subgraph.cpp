@@ -65,7 +65,7 @@ void UGameFlowNode_FlowControl_Subgraph::ConstructInputPins()
 		InstancedAsset->CustomInputs.GenerateKeyArray(SubgraphInputPins);
 		for(const FName& PinName : SubgraphInputPins)
 		{
-			AddInputPin(PinName);
+			AddPin(PinName, EGPD_Input);
 		}
 	}
 }
@@ -78,7 +78,7 @@ void UGameFlowNode_FlowControl_Subgraph::ConstructOutputPins()
 		InstancedAsset->CustomOutputs.GenerateKeyArray(SubgraphOutputPins);
 		for(const FName& PinName : SubgraphOutputPins)
 		{
-			AddOutputPin(PinName);
+			AddPin(PinName, EGPD_Output);
 		}
 	}
 }
