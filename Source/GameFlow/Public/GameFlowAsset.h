@@ -105,9 +105,30 @@ public:
 	 * @return The currently executed node
 	 */
 	TArray<UGameFlowNode*> GetActiveNodes() const { return ActiveNodes; }
-	
+
+	/**
+	 * Adds a node to the Game Flow asset by its globally unique identifier (GUID),
+	 * ensuring it is valid.
+	 *
+	 * @param Node The node to be added to the Game Flow asset.
+	 */
 	void AddNode(UGameFlowNode* Node);
+
+	/**
+	 * Removes a node from the Game Flow asset, identified by its globally unique identifier (GUID).
+	 * Ensures the node is removed only if it has a valid GUID.
+	 *
+	 * @param Node The node to be removed from the Game Flow asset.
+	 */
 	void RemoveNode(UGameFlowNode* Node);
+
+	/**
+	 * Retrieves all the nodes associated with the Game Flow asset.
+	 * The nodes represent individual elements used in the node-based
+	 * editor for handling world and game events.
+	 *
+	 * @return An array of pointers to the Game Flow nodes.
+	 */
 	TArray<UGameFlowNode*> GetNodes() const;
 	
 	/**

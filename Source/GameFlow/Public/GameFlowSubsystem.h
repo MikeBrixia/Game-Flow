@@ -30,11 +30,11 @@ private:
 	TMap<UObject*, UGameFlowAsset*> InstancedAssets;
 	
 	/** Instanced assets that share the lifetime of the world. */
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	TArray<UGameFlowAsset*> WorldInstancedAssets;
 	
 	/** All the game flow listeners inside the world. */
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	TArray<UGameFlowListener*> Listeners;
 
 public:

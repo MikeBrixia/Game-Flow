@@ -109,9 +109,12 @@ public:
 	UPROPERTY()
 	FVector2D GraphPosition;
 
-	/** Store developer comment about this node. */
+	/** Developer comment about this node. */
 	UPROPERTY()
 	FString SavedNodeComment;
+
+	UPROPERTY()
+	bool bIsCommentBubbleActive;
 	
 	/** The type of this node (Latent, Event ecc.) */
 	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"))
@@ -125,6 +128,10 @@ public:
 	UPROPERTY()
 	bool bBreakpointEnabled;
 
+	/**
+	 * Indicates whether the current object or component is active. This flag is used to control execution or visibility
+	 * based on its state.
+	 */
 	UPROPERTY()
 	bool bIsActive;
 	
@@ -155,7 +162,8 @@ public:
 	 * @param PinDirection The direction of the pin (input or output).
 	 * @param PinType The type of the pin handle to be created (Exec, property...).
 	 */
-	FORCEINLINE void AddPin(FName PinName, EEdGraphPinDirection PinDirection, TSubclassOf<UPinHandle> PinType = nullptr);
+	FORCEINLINE void AddPin(FName PinName, EEdGraphPinDirection PinDirection,
+		TSubclassOf<UPinHandle> PinType = nullptr, bool bCalledInsideConstructor = false);
 
 	/**
 	 * Removes a pin from the current Game Flow node by its name and direction.
@@ -195,7 +203,7 @@ public:
 	 */
 	FDiffResults PinsDiff(const UGameFlowNode* OtherNode, TArray<FDiffSingleResult>& Diffs,
 	                      EEdGraphPinDirection Direction) const;
-
+	
 	/**
 	 * Determines whether an input pin can be added to this Game Flow node, using the "+" button.
 	 *

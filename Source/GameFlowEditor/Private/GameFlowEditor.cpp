@@ -130,6 +130,7 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 		{
 			PostCompilePinsFixup(OutputPinsDiff, ObservedNode, EGPD_Output);
 		}
+		ObservedNode->TypeName = Default->TypeName;
 		
 		// Compile marked nodes
 		Instance->OnAssetCompiled();
@@ -182,6 +183,7 @@ void FGameFlowEditorModule::OnHotReload(EReloadCompleteReason ReloadCompleteReas
 			ClassesToRebuild.Add(ObservedNode->GetClass());
 			PostCompilePinsFixup(OutputPinsDiff, ObservedNode, EGPD_Output);
 		}
+		ObservedNode->TypeName = REINST_Instance->TypeName;
 	}
 
 	// After logical node fixups, update the graph nodes associated with objs derived from the modified UClasses.

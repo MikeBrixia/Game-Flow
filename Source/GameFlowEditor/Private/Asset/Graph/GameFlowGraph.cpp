@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/Graph/GameFlowGraph.h"
-#include "GameFlowEditor.h"
 #include "GraphEditAction.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
@@ -145,46 +144,6 @@ void UGameFlowGraph::OnDebugModeUpdated(bool bEnabled)
 		Node->SetDebugEnabled(bEnabled);
 	}
 }
-
-#if WITH_HOT_RELOAD
-
-void UGameFlowGraph::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
-{
-	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
-	for(UGameFlowGraphNode* Node : ReloadedNodes)
-	{
-		if(Node != nullptr)
-		{
-			Node->OnLiveOrHotReloadCompile();
-		}
-	}
-}
-
-#endif
-
-#if WITH_LIVE_CODING && ((ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION > 5)
-
-void UGameFlowGraph::OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStatus Status)
-{
-	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
-	for(UGameFlowGraphNode* Node : ReloadedNodes)
-	{
-		Node->OnLiveOrHotReloadCompile();
-	}
-}
-
-#else if WITH_LIVE_CODING && (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4) || ENGINE_MAJOR_VERSION < 5
-
-void UGameFlowGraph::OnLiveCompile(FName Name)
-{
-	const TArray<UGameFlowGraphNode*> ReloadedNodes = reinterpret_cast<const TArray<UGameFlowGraphNode*>&>(Nodes);
-	for(UGameFlowGraphNode* Node : ReloadedNodes)
-	{
-		Node->OnLiveOrHotReloadCompile();
-	}
-}
-
-#endif
 
 void UGameFlowGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {

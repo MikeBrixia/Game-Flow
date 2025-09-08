@@ -89,16 +89,6 @@ public:
 	void OnDebugModeUpdated(bool bEnabled);
 	void OnReplaceGraphNode();
     void OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin);
-
-#if WITH_HOT_RELOAD
-	void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
-#endif
-	
-#if WITH_LIVE_CODING && (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4) || ENGINE_MAJOR_VERSION > 5
-	void OnLiveCompile(FName Name, ECompiledInUObjectsRegisteredStatus Status);
-#else if WITH_LIVE_CODING && (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4) || ENGINE_MAJOR_VERSION < 5 
-	void OnLiveCompile(FName Name);
-#endif
 	
 	void RebuildGraphFromAsset();
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;

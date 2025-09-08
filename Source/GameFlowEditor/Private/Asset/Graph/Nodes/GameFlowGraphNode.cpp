@@ -170,7 +170,11 @@ void UGameFlowGraphNode::PostPlacedNewNode()
 {
 	Super::PostPlacedNewNode();
 
+	// Read the node comment and choose whether we
+	// should show the comment bubble or not.
 	NodeComment = NodeAsset->SavedNodeComment;
+	bool bVisible = IsCommentBubbleVisible();
+	SetMakeCommentBubbleVisible(bVisible);
 	
 	// Initialize node.
 	Initialize();
@@ -471,6 +475,23 @@ FEdGraphPinType UGameFlowGraphNode::GetGraphPinType() const
 	FEdGraphPinType OutputPinInfo = {};
 	OutputPinInfo.PinCategory = UEdGraphSchema_K2::PC_Exec;
 	return OutputPinInfo;
+}
+
+void UGameFlowGraphNode::OnUpdateCommentText(const FString& NewComment)
+{
+	Super::OnUpdateCommentText(NewComment);
+	NodeAsset->SavedNodeComment = NewComment;
+}
+
+void UGameFlowGraphNode::OnCommentBubbleToggled(bool bInCommentBubbleVisible)
+{
+	Super::OnCommentBubbleToggled(bInCommentBubbleVisible);
+	NodeAsset->bIsCommentBubbleActive = bInCommentBubbleVisible;
+}
+
+bool UGameFlowGraphNode::IsCommentBubbleVisible() const
+{
+	return !NodeComment.IsEmpty() && NodeAsset->bIsCommentBubbleActive;
 }
 
 FName UGameFlowGraphNode::CreateUniquePinName(FName SourcePinName) const

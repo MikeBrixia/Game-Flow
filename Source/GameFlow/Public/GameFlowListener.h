@@ -20,7 +20,7 @@ public:
 	UGameFlowListener();
 
 	/** Gameplay Tags used to identify this component listener inside the game flow. */
-	UPROPERTY(EditAnywhere, Category="Game Flow", Replicated)
+	UPROPERTY(EditAnywhere, Category="Game Flow")
 	FGameplayTagContainer IdentityTags;
 
 	/** Called when this listener component receives an event notification from a game flow asset. */

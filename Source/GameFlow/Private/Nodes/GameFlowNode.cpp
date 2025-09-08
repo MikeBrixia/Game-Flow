@@ -1,12 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Nodes/GameFlowNode.h"
-
 #include "DiffResults.h"
 #include "GameFlowAsset.h"
 #include "Config/GameFlowSettings.h"
 #include "Engine/StreamableManager.h"
-#include "GameFlowEditor/Public/GameFlowEditor.h"
 #include "Nodes/Pins/OutPinHandles.h"
 
 UGameFlowNode::UGameFlowNode()
@@ -18,6 +16,7 @@ UGameFlowNode::UGameFlowNode()
 	bBreakpointEnabled = false;
 	bCanAddInputPin = false;
 	bCanAddOutputPin = false;
+	bIsCommentBubbleActive = false;
 #endif
 }
 
@@ -45,6 +44,8 @@ FDiffResults UGameFlowNode::PinsDiff(const UGameFlowNode* OtherNode, TArray<FDif
 {
 	FDiffResults Results (&Diffs);
 
+	if (OtherNode == nullptr) return Results;
+	
 	if (Direction == EGPD_Input)
 	{
 		// Find all pins that the other node does not possess.
@@ -137,7 +138,8 @@ bool UGameFlowNode::IsActiveNode() const
 	return ParentAsset->GetActiveNodes().Contains(this);
 }
 
-void UGameFlowNode::AddPin(FName PinName, EEdGraphPinDirection PinDirection, TSubclassOf<UPinHandle> PinType)
+void UGameFlowNode::AddPin(FName PinName, EEdGraphPinDirection PinDirection,
+	TSubclassOf<UPinHandle> PinType, bool bCalledInsideConstructor)
 {
 	// If the pin obj type was not specified, read it from the node CDO.
 	if (PinType == nullptr)
@@ -149,13 +151,29 @@ void UGameFlowNode::AddPin(FName PinName, EEdGraphPinDirection PinDirection, TSu
 	
 	if (PinDirection == EGPD_Input)
 	{
-		UInputPinHandle* NewInputPin = NewObject<UInputPinHandle>(this, PinType, PinObjectName, RF_Transactional);
+		UInputPinHandle* NewInputPin;
+		if (bCalledInsideConstructor)
+		{
+			NewInputPin = CreateDefaultSubobject<UInputPinHandle>(PinName, false);
+		}
+		else
+		{
+			NewInputPin = NewObject<UInputPinHandle>(this, PinType, PinObjectName, RF_Transactional);
+		}
 		NewInputPin->PinName = PinName;
 		Inputs.Add(PinName, NewInputPin);
 	}
 	else if (PinDirection == EGPD_Output)
 	{
-		UOutPinHandle* NewOutPin = NewObject<UOutPinHandle>(this, PinType, PinObjectName, RF_Transactional);
+		UOutPinHandle* NewOutPin;
+		if (bCalledInsideConstructor)
+		{
+			NewOutPin = CreateDefaultSubobject<UOutPinHandle>(PinName, false);
+		}
+		else
+		{
+			NewOutPin = NewObject<UOutPinHandle>(this, PinType, PinObjectName, RF_Transactional);
+		}
 		NewOutPin->PinName = PinName;
 		Outputs.Add(PinName, NewOutPin);
 	}

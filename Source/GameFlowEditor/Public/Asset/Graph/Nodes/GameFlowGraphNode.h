@@ -65,6 +65,10 @@ public:
 	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
 	FEdGraphPinType GetGraphPinType() const;
+
+	virtual void OnUpdateCommentText(const FString& NewComment) override;
+	virtual void OnCommentBubbleToggled(bool bInCommentBubbleVisible) override;
+	virtual bool IsCommentBubbleVisible() const;
 	
 	void OnAssetCompiled();
 	void MarkNodeAsPendingCompilation();
