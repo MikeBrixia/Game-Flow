@@ -113,6 +113,9 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 		UGameFlowGraphNode* Instance = *It;
 
 		UGameFlowNode* ObservedNode = Instance->GetNodeAsset();
+
+		if (ObservedNode == nullptr) continue;
+		
 		UGameFlowNode* Default = ObservedNode->GetClass()->GetDefaultObject<UGameFlowNode>();
             
 		TArray<FDiffSingleResult> InputPinsDiff;
@@ -130,8 +133,8 @@ void FGameFlowEditorModule::OnBlueprintCompiled()
 		{
 			PostCompilePinsFixup(OutputPinsDiff, ObservedNode, EGPD_Output);
 		}
-		ObservedNode->TypeName = Default->TypeName;
 		
+		ObservedNode->TypeName = Default->TypeName;
 		// Compile marked nodes
 		Instance->OnAssetCompiled();
 	}

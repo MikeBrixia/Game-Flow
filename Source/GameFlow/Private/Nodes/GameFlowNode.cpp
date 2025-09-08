@@ -13,7 +13,7 @@ UGameFlowNode::UGameFlowNode()
 	TypeName = "Default";
 	bIsActive = false;
 	bForceDebugView = false;
-	bBreakpointEnabled = false;
+	bBreakpointPlaced = false;
 	bCanAddInputPin = false;
 	bCanAddOutputPin = false;
 	bIsCommentBubbleActive = false;
@@ -401,7 +401,7 @@ void UGameFlowNode::TryExecute(FName PinName)
 	OwnerAsset->AddActiveNode(this);
 
 	// If we've hit a breakpoint, try opening the asset editor if it is closed.
-	if(bBreakpointEnabled)
+	if(bBreakpointPlaced)
 	{
 		FStreamableManager StreamableManager;
 		UGameFlowAsset* LoadedTemplate = StreamableManager.LoadSynchronous(OwnerAsset->TemplateAsset);

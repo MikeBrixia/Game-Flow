@@ -253,10 +253,16 @@ void GameFlowAssetToolkit::CreateAssetToolbar()
 
 void GameFlowAssetToolkit::OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin)
 {
+	// Pause the play session when the breakpoint gets hit.
+	if (GEditor)
+	{
+		GEditor->SetPIEWorldsPaused(true);
+	}
+	
 	const TSharedPtr<SDockTab> FlowGraphTab = TabManager->FindExistingLiveTab(GraphTabName);
 	if(FlowGraphTab.IsValid())
 	{
-		// First focus on the flow graph editor tab.
+		// First, focus on the flow graph editor tab.
 		FlowGraphTab->DrawAttention();
 		// Then if pin was the source of the breakpoint hit, jump to it
 		if(GraphPin != nullptr)

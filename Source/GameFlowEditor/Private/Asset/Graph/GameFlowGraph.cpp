@@ -212,7 +212,10 @@ void UGameFlowGraph::OnReplaceGraphNode()
 
 void UGameFlowGraph::OnBreakpointHit(UGameFlowGraphNode* GraphNode, UEdGraphPin* GraphPin)
 {
-	OnBreakpointHitRequest.Execute(GraphNode, GraphPin);
+	if (OnBreakpointHitRequest.IsBound())
+	{
+		OnBreakpointHitRequest.Execute(GraphNode, GraphPin);
+	}
 }
 
 void UGameFlowGraph::OnNodesRemoved(const TSet<const UGameFlowGraphNode*> RemovedNodes)

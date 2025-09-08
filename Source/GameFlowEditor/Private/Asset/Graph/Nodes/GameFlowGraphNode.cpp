@@ -13,12 +13,14 @@
 
 #endif
 
+#include "AssetViewUtils.h"
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
 #include "Asset/Graph/Actions/FGameFlowSchemaAction_ReplaceNode.h"
 #include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
 #include "Config/FGameFlowNodeInfo.h"
 #include "Config/GameFlowEditorSettings.h"
+#include "Engine/StreamableManager.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "Widget/SGameFlowReplaceNodeDialog.h"
 #include "Widget/Nodes/SGameFlowNode.h"
@@ -212,7 +214,6 @@ void UGameFlowGraphNode::PostPasteNode()
 void UGameFlowGraphNode::PrepareForCopying()
 {
 	Super::PrepareForCopying();
-	
 	bIsBeingCopyPasted = true;
 }
 
@@ -262,38 +263,33 @@ void UGameFlowGraphNode::OnValidationRequest()
 
 void UGameFlowGraphNode::OnAddBreakpointRequest()
 {
-	NodeAsset->bBreakpointEnabled = true;
-	
-	// TODO Implement debug features
+	NodeAsset->bBreakpointPlaced = true;
 }
 
 void UGameFlowGraphNode::OnRemoveBreakpointRequest()
 {
+	NodeAsset->bBreakpointPlaced = false;
 	NodeAsset->bBreakpointEnabled = false;
-	
-	// TODO Implement debug features
 }
 
 void UGameFlowGraphNode::OnDisableBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = false;
-	// TODO Implement debug features
 }
 
 void UGameFlowGraphNode::OnEnableBreakpointRequest()
 {
 	NodeAsset->bBreakpointEnabled = true;
-	// TODO Implement debug features
 }
 
 bool UGameFlowGraphNode::CanAddBreakpoint() const
 {
-	return !NodeAsset->bBreakpointEnabled; 
+	return !NodeAsset->bBreakpointPlaced; 
 }
 
 bool UGameFlowGraphNode::CanRemoveBreakpoint() const
 {
-	return NodeAsset->bBreakpointEnabled; 
+	return NodeAsset->bBreakpointPlaced; 
 }
 
 bool UGameFlowGraphNode::CanEnableBreakpoint() const
@@ -361,6 +357,19 @@ void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
 
 void UGameFlowGraphNode::OnNodeAssetPinTriggered(UPinHandle* PinHandle)
 {
+	UInputPinHandle* InputPin = CastChecked<UInputPinHandle>(PinHandle);
+	TriggerBreakpoint(InputPin);
+}
+
+void UGameFlowGraphNode::TriggerBreakpoint(UPinHandle* PinHandle)
+{
+	if(NodeAsset->bBreakpointPlaced || (PinHandle != nullptr && PinHandle->bIsBreakpointEnabled))
+	{
+		UEdGraphPin* GraphPin = FindPin(PinHandle->PinName);
+		UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+		// Notify the graph of the breakpoint hit.
+		GameFlowGraph->OnBreakpointHit(this, GraphPin);
+	}
 }
 
 void UGameFlowGraphNode::OnAssetValidated()
@@ -632,17 +641,7 @@ bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
 void UGameFlowGraphNode::OnNodeAssetExecuted(UInputPinHandle* InputPinHandle)
 {
 	bIsActive = true;
-	
-	if(NodeAsset->bBreakpointEnabled || (InputPinHandle != nullptr && InputPinHandle->bIsBreakpointEnabled))
-	{
-		// Pause the play session when the breakpoint gets hit.
-		GEditor->SetPIEWorldsPaused(true);
-
-		UEdGraphPin* GraphPin = FindPin(InputPinHandle->PinName);
-        UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-		// Notify the graph of the breakpoint hit.
-		GameFlowGraph->OnBreakpointHit(this, GraphPin);
-	}
+	TriggerBreakpoint(InputPinHandle);
 }
 
 bool UGameFlowGraphNode::IsActiveNode() const

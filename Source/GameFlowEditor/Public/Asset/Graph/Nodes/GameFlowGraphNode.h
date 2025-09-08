@@ -75,6 +75,7 @@ public:
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
+	void TriggerBreakpoint(UPinHandle* PinHandle);
 	
 	UFUNCTION()
 	void OnNodeAssetExecuted(UInputPinHandle* InputPinHandle);

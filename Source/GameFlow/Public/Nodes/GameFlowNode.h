@@ -126,8 +126,15 @@ public:
 	 * should be resumed manually by the user.
 	 */
 	UPROPERTY()
-	bool bBreakpointEnabled;
+	bool bBreakpointPlaced;
 
+	/**
+	 * Indicates whether a breakpoint is currently active for debugging purposes.
+	 * Used to determine if execution should pause when this node is reached.
+	 */
+	UPROPERTY()
+	bool bBreakpointEnabled;
+	
 	/**
 	 * Indicates whether the current object or component is active. This flag is used to control execution or visibility
 	 * based on its state.

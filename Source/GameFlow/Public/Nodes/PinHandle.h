@@ -62,6 +62,9 @@ public:
 #if WITH_EDITORONLY_DATA
 
 public:
+	UPROPERTY(TextExportTransient)
+    bool bIsBreakpointPlaced;
+	
 	/** True when this pin has been marked with a breakpoint, false otherwise. */
 	UPROPERTY(TextExportTransient)
 	bool bIsBreakpointEnabled;
