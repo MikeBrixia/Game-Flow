@@ -75,7 +75,6 @@ public:
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
 	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
-	void TriggerBreakpoint(UPinHandle* PinHandle);
 	
 	UFUNCTION()
 	void OnNodeAssetExecuted(UInputPinHandle* InputPinHandle);
@@ -132,7 +131,8 @@ private:
 	void OnRemoveBreakpointRequest();
 	void OnDisableBreakpointRequest();
 	void OnEnableBreakpointRequest();
-	
+
+	void TriggerBreakpoint(UPinHandle* PinHandle);
 	bool CanAddBreakpoint() const;
 	bool CanRemoveBreakpoint() const;
 	bool CanEnableBreakpoint() const;
