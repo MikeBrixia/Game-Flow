@@ -6,6 +6,12 @@ class UFloatProperty;
 class UGameFlowNode;
 class UPinHandle;
 
+#if WITH_EDITOR
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPinTriggered, UPinHandle*, PinHandle);
+
+#endif
+
 /**
  * UPinHandle class is responsible for managing and representing logical connections between nodes
  * in a GameFlow asset. It acts as an interface for interaction and data transfer between logical nodes.
@@ -62,6 +68,12 @@ public:
 #if WITH_EDITORONLY_DATA
 
 public:
+	/**
+	 * FOnPinTriggered is a delegate used to notify when a pin is triggered during execution in the GameFlow system.
+	 * It facilitates communication or events handling tied to pin activation or processing.
+	 */
+	FOnPinTriggered OnPinTriggered;
+	
 	UPROPERTY(TextExportTransient)
     bool bIsBreakpointPlaced;
 	

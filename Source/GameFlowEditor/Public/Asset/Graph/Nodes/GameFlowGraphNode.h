@@ -74,7 +74,6 @@ public:
 	void MarkNodeAsPendingCompilation();
 	void OnAssetValidated();
 	void OnAssetSelected(const FAssetData& AssetData);
-	void OnNodeAssetPinTriggered(UPinHandle* PinHandle);
 	
 	UFUNCTION()
 	void OnNodeAssetExecuted(UInputPinHandle* InputPinHandle);
@@ -127,16 +126,29 @@ private:
 	
 	void OnReplacementRequest();
 	void OnValidationRequest();
+	
 	void OnAddBreakpointRequest();
 	void OnRemoveBreakpointRequest();
 	void OnDisableBreakpointRequest();
 	void OnEnableBreakpointRequest();
-
-	void TriggerBreakpoint(UPinHandle* PinHandle);
+	
+	UFUNCTION()
+	void TriggerBreakpoint(UPinHandle* PinHandle = nullptr);
+	
 	bool CanAddBreakpoint() const;
 	bool CanRemoveBreakpoint() const;
 	bool CanEnableBreakpoint() const;
 	bool CanDisableBreakpoint() const;
+	
+	void OnAddPinBreakpointRequest(const UEdGraphPin* GraphPin);
+	void OnRemovePinBreakpointRequest(const UEdGraphPin* GraphPin);
+	void OnEnablePinBreakpointRequest(const UEdGraphPin* GraphPin);
+	void OnDisablePinBreakpointRequest(const UEdGraphPin* GraphPin);
+
+	bool CanAddPinBreakpoint(const UEdGraphPin* GraphPin) const;
+	bool CanRemovePinBreakpoint(const UEdGraphPin* GraphPin) const;
+	bool CanEnablePinBreakpoint(const UEdGraphPin* GraphPin) const;
+	bool CanDisablePinBreakpoint(const UEdGraphPin* GraphPin) const;
 	
 	void ConfigureContextMenuAction();
 };

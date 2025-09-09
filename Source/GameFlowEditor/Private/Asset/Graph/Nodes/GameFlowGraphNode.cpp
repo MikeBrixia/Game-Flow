@@ -264,6 +264,7 @@ void UGameFlowGraphNode::OnValidationRequest()
 void UGameFlowGraphNode::OnAddBreakpointRequest()
 {
 	NodeAsset->bBreakpointPlaced = true;
+	NodeAsset->bBreakpointEnabled = true;
 }
 
 void UGameFlowGraphNode::OnRemoveBreakpointRequest()
@@ -294,12 +295,79 @@ bool UGameFlowGraphNode::CanRemoveBreakpoint() const
 
 bool UGameFlowGraphNode::CanEnableBreakpoint() const
 {
-	return !NodeAsset->bBreakpointEnabled; 
+	return !NodeAsset->bBreakpointEnabled && NodeAsset->bBreakpointPlaced; 
 }
 
 bool UGameFlowGraphNode::CanDisableBreakpoint() const
 {
-	return NodeAsset->bBreakpointEnabled; 
+	return NodeAsset->bBreakpointEnabled && NodeAsset->bBreakpointPlaced; 
+}
+
+void UGameFlowGraphNode::OnAddPinBreakpointRequest(const UEdGraphPin* GraphPin)
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	PinHandle->bIsBreakpointPlaced = true;
+	PinHandle->bIsBreakpointEnabled = true;
+}
+
+void UGameFlowGraphNode::OnRemovePinBreakpointRequest(const UEdGraphPin* GraphPin)
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	PinHandle->bIsBreakpointPlaced = false;
+	PinHandle->bIsBreakpointEnabled = false;
+}
+
+void UGameFlowGraphNode::OnEnablePinBreakpointRequest(const UEdGraphPin* GraphPin)
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	PinHandle->bIsBreakpointEnabled = true;
+}
+
+void UGameFlowGraphNode::OnDisablePinBreakpointRequest(const UEdGraphPin* GraphPin)
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	PinHandle->bIsBreakpointEnabled = false;
+}
+
+bool UGameFlowGraphNode::CanAddPinBreakpoint(const UEdGraphPin* GraphPin) const
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	return !PinHandle->bIsBreakpointPlaced;
+}
+
+bool UGameFlowGraphNode::CanRemovePinBreakpoint(const UEdGraphPin* GraphPin) const
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	return PinHandle->bIsBreakpointPlaced;
+}
+
+bool UGameFlowGraphNode::CanEnablePinBreakpoint(const UEdGraphPin* GraphPin) const
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	return !PinHandle->bIsBreakpointEnabled && PinHandle->bIsBreakpointPlaced;
+}
+
+bool UGameFlowGraphNode::CanDisablePinBreakpoint(const UEdGraphPin* GraphPin) const
+{
+	UPinHandle* PinHandle = NodeAsset->GetPinByName(GraphPin->PinName, GraphPin->Direction);
+	return PinHandle->bIsBreakpointEnabled && PinHandle->bIsBreakpointPlaced;
+}
+
+void UGameFlowGraphNode::TriggerBreakpoint(UPinHandle* PinHandle)
+{
+	// Breakpoint should only be triggered in debug mode.
+	if (IsDebugEnabled()) return;
+	
+	const bool bIsValidPin = PinHandle != nullptr;
+	// The graph pin on which the breakpoint has been triggered. Can be nullptr
+	UEdGraphPin* GraphPin = bIsValidPin ? FindPin(PinHandle->PinName) : nullptr;
+	// Do we have an active breakpoint on this node OR on the triggered pin (if valid)? 
+	if(NodeAsset->bBreakpointPlaced || (bIsValidPin && PinHandle->bIsBreakpointEnabled))
+	{
+		UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
+		// Notify the graph of the breakpoint hit.
+		GameFlowGraph->OnBreakpointHit(this, GraphPin);
+	}
 }
 
 void UGameFlowGraphNode::OnPinRemoved(UEdGraphPin* InRemovedPin)
@@ -355,23 +423,6 @@ void UGameFlowGraphNode::OnAssetSelected(const FAssetData& AssetData)
 {
 }
 
-void UGameFlowGraphNode::OnNodeAssetPinTriggered(UPinHandle* PinHandle)
-{
-	UInputPinHandle* InputPin = CastChecked<UInputPinHandle>(PinHandle);
-	TriggerBreakpoint(InputPin);
-}
-
-void UGameFlowGraphNode::TriggerBreakpoint(UPinHandle* PinHandle)
-{
-	if(NodeAsset->bBreakpointPlaced || (PinHandle != nullptr && PinHandle->bIsBreakpointEnabled))
-	{
-		UEdGraphPin* GraphPin = FindPin(PinHandle->PinName);
-		UGameFlowGraph* GameFlowGraph = CastChecked<UGameFlowGraph>(GetGraph());
-		// Notify the graph of the breakpoint hit.
-		GameFlowGraph->OnBreakpointHit(this, GraphPin);
-	}
-}
-
 void UGameFlowGraphNode::OnAssetValidated()
 {
 	const UGameFlowGraphSchema* GraphSchema = CastChecked<UGameFlowGraphSchema>(GetSchema());
@@ -422,20 +473,116 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	const FGameFlowGraphNodeCommands& GraphNodeCommands = FGameFlowGraphNodeCommands::Get();
 	const FGraphEditorCommandsImpl& GraphEditorCommands = FGraphEditorCommands::Get();
 	const FGenericCommands& GenericCommands = FGenericCommands::Get();
-	
+
 	Super::GetNodeContextMenuActions(Menu, Context);
-	
+
+	const UEdGraphPin* ContextPin = Context->Pin;
+	UGameFlowGraphNode* const MutableThis = const_cast<UGameFlowGraphNode*>(this);
 	// When only the node is selected, show available context actions.
-	if(Context->Pin != nullptr)
+	if (ContextPin != nullptr)
 	{
 		// Pin handle actions
 		{
-			// TODO Should implement pin handle context actions.
 		}
-		
+
 		// Pin debug actions
 		{
-			// TODO Should implement pin debug actions.
+			FToolMenuSection& PinDebugSection = Menu->AddSection(
+				"GameFlow", NSLOCTEXT("FGameFlowNode", "PinContextAction", "Debug actions"));
+
+			// Add Breakpoint (pin)
+			PinDebugSection.AddMenuEntry(
+				"GF_AddBreakpointOnPin",
+				LOCTEXT("GF_AddBreakpointOnPin_Label", "Add Breakpoint"),
+				LOCTEXT("GF_AddBreakpointOnPin_Tooltip", "Add a breakpoint on this pin"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						MutableThis->OnAddPinBreakpointRequest(ContextPin);
+					}),
+					FCanExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanAddPinBreakpoint(ContextPin);
+					}),
+					FGetActionCheckState(),
+					FIsActionButtonVisible::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanAddPinBreakpoint(ContextPin);
+					})
+				)
+			);
+
+			// Remove Breakpoint (pin)
+			PinDebugSection.AddMenuEntry(
+				"GF_RemoveBreakpointOnPin",
+				LOCTEXT("GF_RemoveBreakpointOnPin_Label", "Remove Breakpoint"),
+				LOCTEXT("GF_RemoveBreakpointOnPin_Tooltip", "Remove a breakpoint from this pin"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						MutableThis->OnRemovePinBreakpointRequest(ContextPin);
+					}),
+					FCanExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanRemovePinBreakpoint(ContextPin);
+					}),
+					FGetActionCheckState(),
+					FIsActionButtonVisible::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanRemovePinBreakpoint(ContextPin);
+					})
+				)
+			);
+
+			// Enable Breakpoint (pin)
+			PinDebugSection.AddMenuEntry(
+				"GF_EnableBreakpointOnPin",
+				LOCTEXT("GF_EnableBreakpointOnPin_Label", "Enable Breakpoint"),
+				LOCTEXT("GF_EnableBreakpointOnPin_Tooltip", "Enable breakpoint on this pin. "
+												"Only enabled breakpoint can be triggered"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						MutableThis->OnEnablePinBreakpointRequest(ContextPin);
+					}),
+					FCanExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanEnablePinBreakpoint(ContextPin);
+					}),
+					FGetActionCheckState(),
+					FIsActionButtonVisible::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanEnablePinBreakpoint(ContextPin);
+					})
+				)
+			);
+
+			// Disable Breakpoint (pin)
+			PinDebugSection.AddMenuEntry(
+				"GF_DisableBreakpointOnPin",
+				LOCTEXT("GF_DisableBreakpointOnPin_Label", "Disable Breakpoint"),
+				LOCTEXT("GF_DisableBreakpointOnPin_Tooltip", "Disable breakpoint on this pin. "
+												 "Disabled breakpoint cannot be triggered"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						MutableThis->OnDisablePinBreakpointRequest(ContextPin);
+					}),
+					FCanExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanDisablePinBreakpoint(ContextPin);
+					}),
+					FGetActionCheckState(),
+					FIsActionButtonVisible::CreateLambda([MutableThis, ContextPin]()
+					{
+						return MutableThis->CanDisablePinBreakpoint(ContextPin);
+					})
+				)
+			);
 		}
 	}
 	else if(Context->Node != nullptr)
@@ -602,6 +749,20 @@ void UGameFlowGraphNode::Initialize()
 	NodeAsset->OnAssetRedirected.AddUObject(this, &UGameFlowGraphNode::ReconstructNode);
 	NodeAsset->OnErrorEvent.AddUObject(this, &UGameFlowGraphNode::ReportError);
 	NodeAsset->OnAssetExecuted.AddDynamic(this, &UGameFlowGraphNode::OnNodeAssetExecuted);
+
+	TArray<UPinHandle*> InputPins = NodeAsset->GetPinsByDirection(EEdGraphPinDirection::EGPD_Input);
+	// Listen for all the node input pins trigger event.
+	for (UPinHandle* PinHandle : InputPins)
+	{
+		PinHandle->OnPinTriggered.AddDynamic(this, &UGameFlowGraphNode::TriggerBreakpoint);
+	}
+
+	TArray<UPinHandle*> OutputPins = NodeAsset->GetPinsByDirection(EEdGraphPinDirection::EGPD_Output);
+	// Listen for all the node output pins trigger event.
+	for (UPinHandle* PinHandle : OutputPins)
+	{
+		PinHandle->OnPinTriggered.AddDynamic(this, &UGameFlowGraphNode::TriggerBreakpoint);
+	}
 }
 
 void UGameFlowGraphNode::ReconstructNode()
@@ -641,7 +802,7 @@ bool UGameFlowGraphNode::Modify(bool bAlwaysMarkDirty)
 void UGameFlowGraphNode::OnNodeAssetExecuted(UInputPinHandle* InputPinHandle)
 {
 	bIsActive = true;
-	TriggerBreakpoint(InputPinHandle);
+	TriggerBreakpoint();
 }
 
 bool UGameFlowGraphNode::IsActiveNode() const

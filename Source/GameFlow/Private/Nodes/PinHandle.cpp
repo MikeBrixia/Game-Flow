@@ -6,11 +6,18 @@ UPinHandle::UPinHandle()
 {
 #if WITH_EDITOR
 	bIsBreakpointEnabled = false;
+	bIsBreakpointPlaced = false;
 #endif
 }
 
 void UPinHandle::TriggerPin()
 {
+#if WITH_EDITOR
+	if (bIsBreakpointEnabled && OnPinTriggered.IsBound())
+	{
+		OnPinTriggered.Broadcast(this);
+	}
+#endif
 }
 
 TArray<UPinHandle*> UPinHandle::GetConnections()

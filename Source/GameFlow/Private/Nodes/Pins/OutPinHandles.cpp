@@ -10,6 +10,8 @@ UOutPinHandle::UOutPinHandle()
 
 void UOutPinHandle::TriggerPin()
 {
+	Super::TriggerPin();
+	
 	// Trigger all connected exec pins.
 	for(const auto& Pin : GetConnections())
 	{

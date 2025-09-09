@@ -383,7 +383,7 @@ void UGameFlowNode::FinishExecute(bool bFinish)
 {
 	UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
 	
-	// If node has finished executing, remove it from asset active nodes.
+	// If the node has finished executing, remove it from asset active nodes.
 	if(bFinish && OwnerAsset != nullptr)
 	{
 #if WITH_EDITOR
@@ -401,7 +401,7 @@ void UGameFlowNode::TryExecute(FName PinName)
 	OwnerAsset->AddActiveNode(this);
 
 	// If we've hit a breakpoint, try opening the asset editor if it is closed.
-	if(bBreakpointPlaced)
+	if(bBreakpointEnabled)
 	{
 		FStreamableManager StreamableManager;
 		UGameFlowAsset* LoadedTemplate = StreamableManager.LoadSynchronous(OwnerAsset->TemplateAsset);
@@ -413,7 +413,8 @@ void UGameFlowNode::TryExecute(FName PinName)
 		const UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(GUID);
 		if(TemplateNode != nullptr && TemplateNode->OnAssetExecuted.IsBound())
 		{
-			TemplateNode->OnAssetExecuted.Broadcast(Inputs.FindRef(PinName));
+			UInputPinHandle* TriggeredPin = Inputs.FindRef(PinName);
+			TemplateNode->OnAssetExecuted.Broadcast(TriggeredPin);
 		}
 	}
 #endif
