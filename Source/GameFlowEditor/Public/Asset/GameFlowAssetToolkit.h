@@ -79,7 +79,7 @@ public:
 private:
 	/** The selected world inside the PIE menu. */
 	UWorld* PIE_SelectedWorld;
-	/** The selected asset instance inside PIE menu. */
+	/** The selected asset instance inside the PIE menu. */
 	UGameFlowAsset* PIE_SelectedAssetInstance;
 	
     /** Apply undo/redo registered actions to game flow editor. */

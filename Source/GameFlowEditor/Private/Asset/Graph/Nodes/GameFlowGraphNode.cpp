@@ -356,7 +356,7 @@ bool UGameFlowGraphNode::CanDisablePinBreakpoint(const UEdGraphPin* GraphPin) co
 void UGameFlowGraphNode::TriggerBreakpoint(UPinHandle* PinHandle)
 {
 	// Breakpoint should only be triggered in debug mode.
-	if (IsDebugEnabled()) return;
+	if (!IsDebugEnabled()) return;
 	
 	const bool bIsValidPin = PinHandle != nullptr;
 	// The graph pin on which the breakpoint has been triggered. Can be nullptr

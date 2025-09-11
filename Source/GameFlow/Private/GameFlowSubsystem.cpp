@@ -33,11 +33,18 @@ UGameFlowAsset* UGameFlowSubsystem::RegisterAssetInstance(UGameFlowAsset* Asset)
 		AssetInstance = Asset->CreateInstance(this);
 		InstancedAssets.Add(Asset->GetArchetype(), AssetInstance);
 		
-		// Listen for finish events. It is needed to know when we need to unregister asset instance.
+		// Listen for finish events. It is necessary to know when we need to unregister asset instance.
 		AssetInstance->OnFinish.AddUObject(this, &UGameFlowSubsystem::UnregisterAssetInstance);
 	}
+	// Print the warning message both on the screen and in the log console.
 	else
 	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow,
+				FString::Printf(TEXT("Asset %s has already been instanced inside %s scene/level and therefore could not be registered."), *Asset->GetName(),
+					*GetWorld()->GetName()), true);
+		}
 		UE_LOG(LogGameSession, Warning, TEXT("%s has already been instanced inside %s scene/level and therefore could not be registered. Returning already instanced object"),
 				   *Asset->GetName(), *GetWorld()->GetName());
 	}

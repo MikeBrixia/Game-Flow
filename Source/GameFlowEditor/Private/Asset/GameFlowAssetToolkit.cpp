@@ -316,11 +316,11 @@ bool GameFlowAssetToolkit::CanEnableDebug() const
 
 void GameFlowAssetToolkit::OnPostPIEStarted(bool bStarted)
 {
-	// Try finding Game Flow asset toolbar.
+	// Try finding the Game Flow asset toolbar.
 	UToolMenu* EditorToolbar = GetToolbar();
 	if(EditorToolbar != nullptr)
 	{
-		// By default select the first PIE world in the hierarchy.
+		// By default, select the first PIE world in the hierarchy.
 		const FWorldContext* WorldContext = GEditor->GetWorldContextFromPIEInstance(0);
 		PIE_SelectedWorld = WorldContext->World();
 		
@@ -458,7 +458,7 @@ TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectPIEWorldMenu()
 TSharedRef<SWidget> GameFlowAssetToolkit::BuildSelectAssetInstanceMenu()
 {
 	FMenuBuilder OptionsMenuBuilder(true, nullptr);
-
+	
 	if(PIE_SelectedWorld != nullptr)
 	{
 		const UGameFlowSubsystem* Subsystem = PIE_SelectedWorld->GetGameInstance()->GetSubsystem<UGameFlowSubsystem>();
