@@ -10,7 +10,7 @@ UInputPinHandle::UInputPinHandle()
 
 void UInputPinHandle::TriggerPin()
 {
-	Super::TriggerPin();
+    Super::TriggerPin();
 	
 	UGameFlowNode* Node = GetNodeOwner();
 	Node->TryExecute(PinName);

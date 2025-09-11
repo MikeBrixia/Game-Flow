@@ -1,5 +1,7 @@
 ﻿
 #include "Nodes/PinHandle.h"
+
+#include "GameFlowAsset.h"
 #include "Nodes/GameFlowNode.h"
 
 UPinHandle::UPinHandle()
@@ -13,9 +15,25 @@ UPinHandle::UPinHandle()
 void UPinHandle::TriggerPin()
 {
 #if WITH_EDITOR
-	if (bIsBreakpointEnabled && OnPinTriggered.IsBound())
+	// Have we hit an enabled breakpoint?
+	if (bIsBreakpointEnabled)
 	{
-		OnPinTriggered.Broadcast(this);
+		UGameFlowNode* Node = GetNodeOwner();
+		UGameFlowAsset* OwnerAsset = GetTypedOuter<UGameFlowAsset>();
+		// The template used to create the node owner of this pin instance.
+		UGameFlowNode* TemplateNode = OwnerAsset->TemplateAsset->GetNodeByGUID(Node->GUID);
+
+		// The template used to create this pin instance.
+		UPinHandle* TemplateHandle = TemplateNode->GetPinByName(PinName, EGPD_Input);
+		if (TemplateHandle == nullptr)
+		{
+			TemplateHandle = TemplateNode->GetPinByName(PinName, EGPD_Output);
+		}
+	
+		if (TemplateHandle->OnPinTriggered.IsBound())
+		{
+			TemplateHandle->OnPinTriggered.Broadcast(this);
+		}
 	}
 #endif
 }
