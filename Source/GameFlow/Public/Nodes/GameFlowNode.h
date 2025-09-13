@@ -97,7 +97,7 @@ public:
 
 	/** Used to uniquely identify a node asset inside the editor.
 	 * ID is shared between instances of game flow asset. */
-	UPROPERTY(VisibleAnywhere, TextExportTransient)
+	UPROPERTY(TextExportTransient)
 	FGuid GUID;
 
 	/** If set to true, this node will be debugged independently of the editor debug mode. */
@@ -116,7 +116,7 @@ public:
 	bool bIsCommentBubbleActive;
 	
 	/** The type of this node (Latent, Event ecc.) */
-	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"))
+	UPROPERTY(EditDefaultsOnly, meta=(GetOptions = "GetNodeTypeOptions"), Category="Config")
 	FName TypeName;
 	
 	/** 

@@ -1,0 +1,21 @@
+﻿<!-- xml -->
+<svg width="128" height="128" viewBox="150 -10 300 175" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- Root node -->
+        <rect x="150" y="100" width="90" height="50" rx="5" ry="5" fill="#696969" />
+        <line x1="170" y1="120" x2="200" y2="120" stroke-width="2" stroke="white" />
+        <line x1="170" y1="130" x2="200" y2="130" stroke-width="2" stroke="white" />
+        <polygon points="200,110 200,140, 220,125" fill="white"/>
+
+        <!-- Connected nodes. -->
+        <rect x="360" y="40" width="90" height="50" rx="5" ry="5" fill="#696969" />
+        <rect x="360" y="165" width="90" height="50" rx="5" ry="5" fill="#696969" />
+
+        <!-- Root connection. -->
+        <line x1="240" y1="125" x2="300" y2="125" stroke-width="2" stroke="gray" />
+        <!-- Vertical connections. -->
+        <line x1="300" y1="125" x2="300" y2="65" stroke-width="2" stroke="gray" />
+        <line x1="300" y1="125" x2="300" y2="190" stroke-width="2" stroke="gray" />
+        <!-- Horizontal connections -->
+        <line x1="300" y1="65" x2="360" y2="65" stroke-width="2" stroke="gray" />
+        <line x1="300" y1="190" x2="360" y2="190" stroke-width="2" stroke="gray" />
+</svg>

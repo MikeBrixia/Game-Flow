@@ -1,0 +1,10 @@
+﻿<!-- xml -->
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <line x1="8" y1="24" x2="35" y2="24" stroke="white" stroke-width="3"/>
+    <line x1="8" y1="34" x2="35" y2="34" stroke="white" stroke-width="3"/>
+    
+    <polygon points="36,18 36,40 52,29" fill="white"/>
+
+    <!-- Text may not be rendered. -->
+    <text x="37" y="32" fill="black" font-size="7" font-family="sans-serif">GF</text>
+</svg>

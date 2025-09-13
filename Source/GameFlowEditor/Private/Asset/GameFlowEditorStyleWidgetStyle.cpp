@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Asset/GameFlowEditorStyleWidgetStyle.h"
-
 #include "Styling/CoreStyle.h"
 
 #define IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush( StyleSet->RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
@@ -11,12 +10,23 @@
 
 FGameFlowEditorStyle::FGameFlowEditorStyle()
 {
-	// Initialize style set pointer.
+	// Initialize the style set pointer.
 	StyleSet = MakeShared<FSlateStyleSet>(TypeName);
-    
-	// Set style set content root filepath.
-	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 
+	// Set the content root to be the resources folder of the plugin.
+	StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("GameFlow/Resources"));
+	// Game Flow custom styling
+	{
+		StyleSet->Set("GameFlow.Editor.Default.AssetIcon", new IMAGE_BRUSH_SVG(TEXT("Arrow"),
+					  CoreStyleConstants::Icon64x64));
+		StyleSet->Set("ClassIcon.GameFlowAsset", new IMAGE_BRUSH_SVG(TEXT("Arrow"),
+			  CoreStyleConstants::Icon16x16));
+		StyleSet->Set("ClassThumbnail.GameFlowAsset", new IMAGE_BRUSH_SVG(TEXT("Arrow"),
+	          CoreStyleConstants::Icon64x64));
+	}
+	
+	// Change the content root to be the engine editor slate folder, we now need default UE icons.
+	StyleSet->SetContentRoot(FPaths::EngineContentDir() / TEXT("Editor/Slate/"));
 #if ENGINE_MAJOR_VERSION < 5
 	// Unreal Engine 4 Debug features styling
 	{
@@ -72,12 +82,6 @@ FGameFlowEditorStyle::FGameFlowEditorStyle()
 									  CoreStyleConstants::Icon22x22));
 			StyleSet->Set("GameFlow.Editor.Debug.Icon.DisabledBreakpoint", new IMAGE_BRUSH(TEXT("Old/Kismet2/Breakpoint_Disabled_Small"),
 									  CoreStyleConstants::Icon22x22));
-		}
-
-		// Editor assets icons.
-		{
-			StyleSet->Set("GameFlow.Editor.Default.AssetIcon", new IMAGE_BRUSH(TEXT("Icons/icon_Blueprint_AddGraph_512px"),
-								  CoreStyleConstants::Icon22x22));
 		}
 
 		// Nodes types icons

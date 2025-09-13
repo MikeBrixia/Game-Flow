@@ -46,7 +46,7 @@ const FSlateBrush* FGameFlowAssetTypeAction::GetThumbnailBrush(const FAssetData&
 void FGameFlowAssetTypeAction::OpenAssetEditor(const TArray<UObject*>& InObjects,
                                                TSharedPtr<IToolkitHost> EditWithinLevelEditor)
 {
-	// Create and initialize game flow asset editor.
+	// Create and initialize the game flow asset editor.
 	const TSharedPtr<GameFlowAssetToolkit> Editor = MakeShared<GameFlowAssetToolkit>();
 	Editor->InitEditor(InObjects);
 }

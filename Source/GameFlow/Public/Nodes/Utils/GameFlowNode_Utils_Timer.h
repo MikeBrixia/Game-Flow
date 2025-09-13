@@ -19,15 +19,15 @@ public:
 	UGameFlowNode_Utils_Timer();
 
 	/** Amount of time needed to complete the timer. */
-	UPROPERTY(EditAnywhere, meta=(GF_Debuggable="enabled"))
+	UPROPERTY(EditAnywhere, meta=(GF_Debuggable="enabled"), Category="Default")
 	float Time;
 
 	/** Trigger step event each step time interval. */
-	UPROPERTY(EditAnywhere, meta=(GF_Debuggable="enabled"))
+	UPROPERTY(EditAnywhere, meta=(GF_Debuggable="enabled"), Category="Default")
 	float StepTime;
 
 	/** If true, this node will restart itself after completion. */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Default")
 	bool bLoop;
 
 private:

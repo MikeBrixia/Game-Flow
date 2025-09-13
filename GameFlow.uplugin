@@ -1,9 +1,9 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "GameFlow",
-	"Description": "Game Flow is an event based systems which allows developer and designers to script generic game events such as world events.",
+	"VersionName": "0.1",
+	"FriendlyName": "Game Flow",
+	"Description": "Designer-agnostic flow graph, which allows developers to script game's flow, branching dialogues and quests",
 	"Category": "Gameplay",
 	"CreatedBy": "Michael Guida",
 	"CreatedByURL": "",
@@ -11,9 +11,10 @@
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
-	"IsExperimentalVersion": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": true,
 	"Installed": false,
+	"Icon": "Resources/PluginIcon128.png",
 	"Modules": [
 		{
 			"Name": "GameFlow",

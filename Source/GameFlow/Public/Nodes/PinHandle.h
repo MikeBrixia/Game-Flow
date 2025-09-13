@@ -23,11 +23,11 @@ class GAMEFLOW_API UPinHandle : public UObject
 
 public:
 	/** The name of the handled pin. */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Default")
 	FName PinName;
 
 private:
-	UPROPERTY(TextExportTransient, VisibleAnywhere)
+	UPROPERTY(TextExportTransient)
 	TArray<UPinHandle*> Connections;
 
 public:

@@ -40,15 +40,15 @@ void FGameFlowEditorModule::StartupModule()
 		// Register game flow as a standalone category inside the asset panel.
 		GameFlowCategory = AssetToolModule.Get().RegisterAdvancedAssetCategory("Game_Flow", FText::FromString("Game Flow"));
 		
-		// Register Game Flow assets.
-		GameFlowAsset = MakeShared<FGameFlowAssetTypeAction>();
-		AssetToolModule.Get().RegisterAssetTypeActions(GameFlowAsset.ToSharedRef());
-		
 		// Register Game Flow stylesheets.
 		const FFlowNodeStyle& GameFlowNodeStyle = FFlowNodeStyle::GetDefault();
 		FSlateStyleRegistry::RegisterSlateStyle(GameFlowNodeStyle.GetStyle());
-        const FGameFlowEditorStyle& AssetEditorStyle = FGameFlowEditorStyle::GetDefault();
+		const FGameFlowEditorStyle& AssetEditorStyle = FGameFlowEditorStyle::GetDefault();
 		FSlateStyleRegistry::RegisterSlateStyle(AssetEditorStyle.GetStyle());
+		
+		// Register Game Flow assets.
+		GameFlowAsset = MakeShared<FGameFlowAssetTypeAction>();
+		AssetToolModule.Get().RegisterAssetTypeActions(GameFlowAsset.ToSharedRef());
 		
 		// Register Game Flow graph visual factories. these factories will be used as the default
 		// strategy to instantiate all the involved items.

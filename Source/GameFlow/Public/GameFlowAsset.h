@@ -68,7 +68,7 @@ protected:
 
 public:
 	/** All the node assets instanced by the user.*/
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Game Flow")
 	TMap<FGuid, UGameFlowNode*> Nodes;
 	
 	/** True if this asset has already been opened inside a GameFlow editor, false otherwise. */
