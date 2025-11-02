@@ -37,7 +37,7 @@ private:
 public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
-
+    
 	virtual bool IsNodeEditable() const override { return true; }
 	
 protected:
@@ -73,7 +73,7 @@ protected:
 
 	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;
     virtual void OnTitleTextChanged(const FText& CommittedText, ETextCommit::Type CommitType);
-	
+    
 private:
 	void AddButton_CreatePin(EEdGraphPinDirection PinDirection);
 	

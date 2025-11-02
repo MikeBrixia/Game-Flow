@@ -22,6 +22,11 @@ void FGameFlowGraphNodeCommands::RegisterCommands()
 										LOCTEXT("ValidateNodeCommand", "Validate"),
 										LOCTEXT("ReplaceNodeCommandDescription", "Validate and fix node invalid data"),
 										FSlateIcon(GetStyleSetName(), "GameFlow.Editor.Common.Adjust"), EUserInterfaceActionType::Button, FInputChord());
+
+		FUICommandInfo::MakeCommandInfo(SharedThis(this), RemovePin, "RemovePin",
+										LOCTEXT("RemovePinCommand", "Remove Pin"),
+										LOCTEXT("RemovePinCommandDescription", "Remove this pin"),
+										FSlateIcon(GetStyleSetName(), "GameFlow.Editor.Common.Remove"), EUserInterfaceActionType::Button, FInputChord());
 	}
 }
 

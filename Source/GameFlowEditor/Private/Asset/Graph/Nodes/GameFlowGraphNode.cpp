@@ -64,7 +64,7 @@ void UGameFlowGraphNode::ConfigureContextMenuAction()
 		ContextMenuCommands->MapAction(GraphEditorCommands.ReconstructNodes,
 			                       FExecuteAction::CreateUObject(this, &UGameFlowGraphNode::ReconstructNode));
 	}
-
+	
 	// Configure debug commands
 	{
 		ContextMenuCommands->MapAction(GraphEditorCommands.AddBreakpoint,
@@ -483,12 +483,28 @@ void UGameFlowGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeCo
 	{
 		// Pin handle actions
 		{
+			FToolMenuSection& PinActionsSection = Menu->AddSection(
+				"GameFlow", NSLOCTEXT("FGameFlowNode", "PinContextAction", "Pin Actions"));
+			
+			PinActionsSection.AddMenuEntry(
+				"RemovePin",
+				LOCTEXT("RemovePin_Label", "Remove pin"),
+				LOCTEXT("RemovePin_Tooltip", "Remove pin from the node"),
+				FSlateIcon(),
+				FUIAction(
+					FExecuteAction::CreateLambda([MutableThis, ContextPin]()
+					{
+						// Il pin nel contesto è const: cast sicuro perché stiamo rimuovendo un pin del nostro nodo.
+						UEdGraphPin* MutablePin = const_cast<UEdGraphPin*>(ContextPin);
+						MutableThis->RemovePin(MutablePin);
+						MutableThis->GetGraph()->NotifyGraphChanged();
+					})));
 		}
 
 		// Pin debug actions
 		{
 			FToolMenuSection& PinDebugSection = Menu->AddSection(
-				"GameFlow", NSLOCTEXT("FGameFlowNode", "PinContextAction", "Debug actions"));
+				"GameFlow", NSLOCTEXT("FGameFlowNode", "PinDebugContextAction", "Debug actions"));
 
 			// Add Breakpoint (pin)
 			PinDebugSection.AddMenuEntry(
@@ -663,10 +679,14 @@ FName UGameFlowGraphNode::CreateUniquePinName(FName SourcePinName) const
 	// Handle text pin name generation.
 	else
 	{
-		Number = GetNum(GeneratedName);
+		int StringLength = GeneratedName.Len();
+		
+		TCHAR LastChar = GeneratedName[StringLength - 1];
+		// If last char of source pin name is a number, we're done; otherwise set the number to 0,
+		// to signify the new pin name as the first of the list of enumerated pin names.
+		Number = FChar::IsDigit(LastChar)? FChar::ConvertCharDigitToInt(LastChar) : 0;
 		GeneratedName = FString::Printf(TEXT("NewPin_%d"), Number + 1);
 	}
-
 	return FName(GeneratedName);
 }
 
@@ -914,9 +934,8 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 			case EGPD_Input:
 				{
 					TArray<FName> InputPins = NodeAsset->GetInputPinsNames();
-					const FName PreviousName = InputPins.Num() > 0 ? InputPins.Last() : "None";
-					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddPin(PinName, EGPD_Input);
+					PinName = CreateUniquePinName(PinName);
+					NodeAsset->AddPin(PinName, EGPD_Input, UInputPinHandle::StaticClass());
 					break;
 				}
 			
@@ -924,20 +943,19 @@ UEdGraphPin* UGameFlowGraphNode::CreateNodePin(const EEdGraphPinDirection PinDir
 			case EGPD_Output:
 				{
 					TArray<FName> OutputPins = NodeAsset->GetOutputPinsNames();
-					const FName PreviousName = OutputPins.Num() > 0 ? OutputPins.Last() : "None";
-					PinName = CreateUniquePinName(PreviousName);
-					NodeAsset->AddPin(PinName, EGPD_Output);
+					PinName = CreateUniquePinName(PinName);
+					NodeAsset->AddPin(PinName, EGPD_Output, UOutPinHandle::StaticClass());
 					break;
 				}
 		}
 	}
 	
 	UEdGraphPin* Pin = nullptr;
-	// Create the pin object only if name is valid.
+	// Create the pin object only if the name is valid.
 	if(!PinName.IsEqual(EName::None))
 	{
 		const FEdGraphPinType PinType = GetGraphPinType();
-		// Create the pin object.
+		// Create the pin object and initialize it.
 		Pin = CreatePin(PinDirection, PinType, PinName);
 		Pin->PinFriendlyName = FText::FromName(PinName);
 		Pin->DefaultObject = NodeAsset;

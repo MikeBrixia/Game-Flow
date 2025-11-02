@@ -12,4 +12,5 @@ public:
 	// Node commands.
 	TSharedPtr<FUICommandInfo> ReplaceNode;
 	TSharedPtr<FUICommandInfo> ValidateNode;
+	TSharedPtr<FUICommandInfo> RemovePin;
 };

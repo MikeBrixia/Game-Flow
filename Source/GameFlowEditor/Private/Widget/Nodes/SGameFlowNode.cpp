@@ -1,14 +1,14 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Widget/Nodes/SGameFlowNode.h"
-
-#include "GameFlow.h"
 #include "GameFlowAsset.h"
+#include "GraphEditorActions.h"
 #include "GraphEditorSettings.h"
 #include "SGraphPanel.h"
 #include "SlateOptMacros.h"
-#include "Animation/AnimInstanceProxy.h"
 #include "Asset/Graph/GameFlowGraphSchema.h"
+#include "Asset/Graph/Nodes/FGameFlowGraphNodeCommands.h"
+#include "Framework/Commands/GenericCommands.h"
 #include "Widget/Nodes/SGameFlowNodePin.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
@@ -132,8 +132,12 @@ void SGameFlowNode::AddButton_CreatePin(EEdGraphPinDirection PinDirection)
 {
 	// Create the new pin for this node.
 	UGameFlowGraphNode* GameFlowGraphNode = CastChecked<UGameFlowGraphNode>(GraphNode);
-	UEdGraphPin* NewPin = GameFlowGraphNode->CreateNodePin(PinDirection);
+	TArray<UEdGraphPin*> Pins = GameFlowGraphNode->Pins.FilterByPredicate([PinDirection](UEdGraphPin* Pin)
+	{
+		return Pin->Direction == PinDirection;
+	});
 	
+	UEdGraphPin* NewPin = GameFlowGraphNode->CreateNodePin(PinDirection, Pins.Last()->PinName);
 	// Create the new pin widget.
 	CreateStandardPinWidget(NewPin);
 }
